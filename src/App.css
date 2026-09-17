@@ -206,7 +206,10 @@
 
 .page-editor-content ul,
 .page-editor-content ol {
-  padding-left: 1.5em;
+  /* Wide enough for the bullet/number *and* the drag handle beside it,
+     clear of each other — see BlockDragHandle.tsx's computePositionConfig
+     offset, which is tuned to this value. */
+  padding-left: 3em;
 }
 
 .page-editor-content ul {

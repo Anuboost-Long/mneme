@@ -22,9 +22,9 @@ globalThis.pageTestStorage = {
 // of these known dependencies it references.
 const knownDeps = {
   'from "./migrations"': '../src/shared/lib/db/migrations/index.ts',
-  'from "./0001-initial"': '../src/shared/lib/db/migrations/0001-initial.ts',
-  'from "./0002-completion-tracking"': '../src/shared/lib/db/migrations/0002-completion-tracking.ts',
-  'from "./0003-numeric-enums"': '../src/shared/lib/db/migrations/0003-numeric-enums.ts',
+  'from "./0001-initial.ts"': '../src/shared/lib/db/migrations/0001-initial.ts',
+  'from "./0002-completion-tracking.ts"': '../src/shared/lib/db/migrations/0002-completion-tracking.ts',
+  'from "./0003-numeric-enums.ts"': '../src/shared/lib/db/migrations/0003-numeric-enums.ts',
   'from "./completion-status"': '../src/features/courses/lib/completion-status.ts',
 };
 
