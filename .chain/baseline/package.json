@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tauri dev",
-    "build": "tauri build",
+    "dev": "chain dev",
+    "build": "chain build",
     "preview": "vite preview",
     "tauri": "tauri",
     "dev:web": "vite",
@@ -28,6 +28,7 @@
     "vite": "^8.0.16",
     "@tauri-apps/cli": "^2",
     "tailwindcss": "^4",
-    "@tailwindcss/vite": "^4"
+    "@tailwindcss/vite": "^4",
+    "@chain/cli": "file:../chain-sdk/packages/cli"
   }
 }

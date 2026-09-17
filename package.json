@@ -4,30 +4,42 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tauri dev",
-    "build": "tauri build",
+    "dev": "chain dev",
+    "build": "chain build",
     "preview": "vite preview",
     "tauri": "tauri",
     "dev:web": "vite",
     "build:web": "tsc && vite build"
   },
   "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "@chain/sdk": "file:../chain-sdk/packages/sdk",
+    "@floating-ui/dom": "^1.8.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "@chain/sdk": "file:../chain-sdk/packages/sdk",
-    "react-router-dom": "^7",
-    "clsx": "^2"
+    "@tiptap/extension-drag-handle-react": "^3.31.3",
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-table": "^3.31.3",
+    "@tiptap/extension-task-item": "^3.31.3",
+    "@tiptap/extension-task-list": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "@tiptap/suggestion": "^3.31.3",
+    "clsx": "^2",
+    "prosemirror-view": "^1.42.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7"
   },
   "devDependencies": {
+    "@chain/cli": "file:../chain-sdk/packages/cli",
+    "@tailwindcss/vite": "^4",
+    "@tauri-apps/cli": "^2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
-    "typescript": "~6.0.3",
-    "vite": "^8.0.16",
-    "@tauri-apps/cli": "^2",
     "tailwindcss": "^4",
-    "@tailwindcss/vite": "^4"
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
   }
 }

@@ -1,16 +1,27 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
+import ThemeProvider from "./shared/providers/ThemeProvider";
+import SidebarModeProvider from "./shared/providers/SidebarModeProvider";
 
-import { initDb } from "./lib/db";
 import { router } from "./router";
 import "./App.css";
 
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || target.matches("input, textarea, select");
+}
+
 function App() {
   useEffect(() => {
-    initDb().catch((error: unknown) => console.error("Database initialization failed:", error));
+    function guardBackspaceNavigation(event: KeyboardEvent) {
+      if (event.key !== "Backspace" || isEditableTarget(event.target)) return;
+      event.preventDefault();
+    }
+    window.addEventListener("keydown", guardBackspaceNavigation);
+    return () => window.removeEventListener("keydown", guardBackspaceNavigation);
   }, []);
 
-  return <RouterProvider router={router} />;
+  return <ThemeProvider><SidebarModeProvider><RouterProvider router={router} /></SidebarModeProvider></ThemeProvider>;
 }
 
 export default App;
