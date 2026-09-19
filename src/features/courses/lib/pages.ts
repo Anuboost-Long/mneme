@@ -138,3 +138,9 @@ export async function updatePage(id: number, input: Partial<PageInput>) {
 export async function deletePage(id: number) {
   await desktop.storage.execute("DELETE FROM page WHERE id = ?", [id]);
 }
+
+export async function deletePages(ids: number[]) {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(", ");
+  await desktop.storage.execute(`DELETE FROM page WHERE id IN (${placeholders})`, ids);
+}
