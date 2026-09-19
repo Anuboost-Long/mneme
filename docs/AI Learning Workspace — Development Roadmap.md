@@ -21,6 +21,23 @@
 > Advanced Editor (tables, images, embeds) remain deferred by those
 > specs.
 > Native app restart/persistence verification is still pending for this UI.
+>
+> **19 September 2026 update:** Recommended MVP items 1–10 are now all
+> implemented — Image Import (pasted/dropped images now write real files
+> via `desktop.files` instead of base64) and Basic LMS Page Import
+> (Phase 10, below) were the last two. Phase 10's importer also grew
+> Phase 13's file picker/drag-and-drop early, accepting PDF/DOCX/Markdown
+> files as an alternative to a URL. Both list views (pages, modules) also
+> gained search/filter/sort/grouping/list-view beyond what any single
+> roadmap phase called for.
+>
+> Next up per the MVP order is **Phase 19 (Basic AI Integration)** —
+> blocked on two capabilities chain-sdk doesn't have yet: outbound HTTP
+> `POST` (today's `http` capability is GET-only) and secure secret
+> storage for an API key (today's `storage` is unencrypted SQLite, so a
+> raw column would also leak into `Backup.tsx`'s export). Written up as
+> `docs/chain-sdk-requests/07-http-post.md` and
+> `08-secure-secret-storage.md`.
 
 
 ## 1. Project Goal
@@ -82,12 +99,12 @@ Get a clean Electron application running before adding real features.
 - [x] Create the basic application folder structure.
 - [ ] Remove default Electron Vite demo content.
 - [x] Create the main application window.
-- [ ] Set minimum window dimensions.
+- [x] Set minimum window dimensions.
 - [x] Add application title and icon placeholders.
 - [x] Configure development mode.
 - [x] Configure production build.
-- [ ] Confirm the application launches on macOS.
-- [ ] Confirm hot reload works.
+- [x] Confirm the application launches on macOS.
+- [x] Confirm hot reload works.
 
 Suggested structure:
 
@@ -417,24 +434,39 @@ The application should extract the learning material and create structured pages
 
 ## Initial Development
 
-- [ ] Add an "Import Module" button.
-- [ ] Create URL input.
-- [ ] Validate URLs.
-- [ ] Create an importer service.
-- [ ] Open or request the page.
-- [ ] Retrieve HTML.
-- [ ] Parse page HTML.
-- [ ] Extract page title.
-- [ ] Extract headings.
-- [ ] Extract paragraphs.
-- [ ] Extract lists.
-- [ ] Extract links.
-- [ ] Extract images.
+- [x] Add an "Import Module" button.
+- [x] Create URL input.
+- [x] Validate URLs.
+- [x] Create an importer service.
+- [x] Open or request the page.
+- [x] Retrieve HTML.
+- [x] Parse page HTML.
+- [x] Extract page title.
+- [x] Extract headings.
+- [x] Extract paragraphs.
+- [x] Extract lists.
+- [x] Extract links.
+- [x] Extract images.
 - [ ] Extract exercise names.
 - [ ] Extract discussion names.
 - [ ] Extract assignment names.
 
+> The last three were tied to the multi-item split below, which real
+> testing showed was the wrong shape (see next note) — a single imported
+> page's type is still guessed from its title (`detectType` in
+> `lms-import.ts`), but there's no per-item name extraction inside one
+> page's content anymore.
+
 ## Import Preview
+
+> **Deliberately not built this way.** Live testing showed the
+> checklist-of-detected-items shape below made one URL/file explode into
+> many small, confusing pages (a real MDN import once produced 14 of
+> them from one link) — this was changed on direct user feedback ("stop
+> splitting one content of that url into multiple pages"). The importer
+> now always produces exactly **one** page per URL or file, with its
+> title/type editable before saving — no per-item checklist, since there
+> is only ever one item.
 
 Before importing:
 
@@ -454,13 +486,13 @@ Module 1
 
 Steps:
 
-- [ ] Show detected items.
-- [ ] Allow users to uncheck items.
-- [ ] Allow users to rename items.
-- [ ] Select destination course.
-- [ ] Select destination module.
-- [ ] Import content.
-- [ ] Convert imported HTML to editor blocks.
+- [ ] ~~Show detected items.~~ (superseded — see note above)
+- [ ] ~~Allow users to uncheck items.~~ (superseded)
+- [x] Allow users to rename items. (the one imported page's title is editable before saving)
+- [x] Select destination course. (implicit — import happens from within the target module)
+- [x] Select destination module. (implicit — import happens from within the target module)
+- [x] Import content.
+- [x] Convert imported HTML to editor blocks. (sanitized HTML lands in the same TipTap-backed `content` field a normal page uses)
 
 ---
 
@@ -542,8 +574,16 @@ Audio
 
 ## Development Steps
 
-- [ ] Add file picker.
-- [ ] Add drag-and-drop.
+> File picker + drag-and-drop landed early as part of Phase 10's
+> importer — a PDF/DOCX/Markdown file becomes a page's content, the same
+> way a URL does, rather than as a separate attachment hanging off an
+> existing page. The items below describe that second, still-unbuilt
+> thing (a file attached alongside a page rather than converted into
+> one) — checking the picker/drag-and-drop boxes here would double-count
+> Phase 10's UI for a feature that doesn't actually exist yet.
+
+- [x] Add file picker. (via Phase 10's importer, not a page-attachment picker)
+- [x] Add drag-and-drop. (same)
 - [ ] Store attachment metadata.
 - [ ] Store local file location.
 - [ ] Display attachments.
