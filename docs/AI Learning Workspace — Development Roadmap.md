@@ -31,13 +31,26 @@
 > gained search/filter/sort/grouping/list-view beyond what any single
 > roadmap phase called for.
 >
-> Next up per the MVP order is **Phase 19 (Basic AI Integration)** —
+> **Correction:** the AI direction here is agent-accessible, not a
+> chat-with-a-stored-API-key model — mneme should expose its data/actions
+> so an external AI agent (Claude Code, Claude Desktop, any MCP client)
+> can call into it, not have mneme call out to a provider itself. That's
+> **Phase 25 (AI Agent Tools)**, not Phase 19 — mneme never sends a
+> request to a model provider and never holds an API key under this
+> model, so the two requests below are withdrawn.
+>
+> ~~Next up per the MVP order is **Phase 19 (Basic AI Integration)** —
 > blocked on two capabilities chain-sdk doesn't have yet: outbound HTTP
 > `POST` (today's `http` capability is GET-only) and secure secret
 > storage for an API key (today's `storage` is unencrypted SQLite, so a
 > raw column would also leak into `Backup.tsx`'s export). Written up as
 > `docs/chain-sdk-requests/07-http-post.md` and
-> `08-secure-secret-storage.md`.
+> `08-secure-secret-storage.md`.~~
+>
+> Next up is actually **Phase 25 (AI Agent Tools)** — blocked on a local
+> server capability chain-sdk doesn't have (a webview can't open a
+> listening socket itself), so external agents have a way to call in.
+> Written up as `docs/chain-sdk-requests/09-agent-tool-server.md`.
 
 
 ## 1. Project Goal
