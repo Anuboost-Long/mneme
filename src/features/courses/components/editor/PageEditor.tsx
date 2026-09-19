@@ -2,6 +2,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type DragEvent,
   type FormEvent,
   type MouseEvent,
 } from "react";
@@ -87,29 +88,6 @@ export default function PageEditor({
             .then((src) => {
               const node = view.state.schema.nodes.image.create({ src });
               view.dispatch(view.state.tr.replaceSelectionWith(node));
-            })
-            .catch(() => {});
-        }
-        return true;
-      },
-      handleDrop: (view, event) => {
-        const files = Array.from(event.dataTransfer?.files ?? []).filter(
-          (file) => file.type.startsWith("image/"),
-        );
-        if (files.length === 0) return false;
-        event.preventDefault();
-        const coords = view.posAtCoords({
-          left: event.clientX,
-          top: event.clientY,
-        });
-        for (const file of files) {
-          void pageImage(file)
-            .then((src) => {
-              const node = view.state.schema.nodes.image.create({ src });
-              const tr = coords
-                ? view.state.tr.insert(coords.pos, node)
-                : view.state.tr.replaceSelectionWith(node);
-              view.dispatch(tr);
             })
             .catch(() => {});
         }
@@ -237,6 +215,37 @@ export default function PageEditor({
     setMenu({ x: event.clientX, y: event.clientY });
   }
 
+  // Registered on the wrapper, not editorProps.handleDrop: ProseMirror's own
+  // drop handling only covers .ProseMirror's own DOM box, so drops landing
+  // just outside it (e.g. empty space below short content) fell through to
+  // the webview's default "open this file" behavior instead of inserting.
+  function handlePageDragOver(event: DragEvent<HTMLDivElement>) {
+    if (Array.from(event.dataTransfer.items).some((item) => item.kind === "file")) {
+      event.preventDefault();
+    }
+  }
+
+  function handlePageDrop(event: DragEvent<HTMLDivElement>) {
+    const files = Array.from(event.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    if (files.length === 0) return;
+    event.preventDefault();
+    const coords = editor!.view.posAtCoords({
+      left: event.clientX,
+      top: event.clientY,
+    });
+    const pos = coords ? coords.pos : editor!.state.doc.content.size;
+    for (const file of files) {
+      void pageImage(file)
+        .then((src) => {
+          const node = editor!.state.schema.nodes.image.create({ src });
+          editor!.view.dispatch(editor!.view.state.tr.insert(pos, node));
+        })
+        .catch(() => {});
+    }
+  }
+
   return (
     <div>
       {linkOpen && (
@@ -278,7 +287,11 @@ export default function PageEditor({
           </button>
         </form>
       )}
-      <div onContextMenu={handleContextMenu}>
+      <div
+        onContextMenu={handleContextMenu}
+        onDragOver={handlePageDragOver}
+        onDrop={handlePageDrop}
+      >
         <EditorContent editor={editor} />
       </div>
       <BlockDragHandle editor={editor} />
