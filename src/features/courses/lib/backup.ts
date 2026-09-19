@@ -27,8 +27,13 @@ export function downloadBackup(backup: Backup) {
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
+  // The webview's download handling can read the blob: URL asynchronously,
+  // after this function returns — an unattached link and an immediate
+  // revoke both race that and can silently drop the download.
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 export function readBackupFile(file: File): Promise<Backup> {
