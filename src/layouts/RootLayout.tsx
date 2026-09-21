@@ -5,9 +5,11 @@ import { BodyText, PageTitle } from "../shared/ui/Typography";
 import NavBar from "../app/NavBar";
 import Sidebar from "../app/Sidebar";
 import CourseForm from "../features/courses/components/CourseForm";
+import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
 import { getCourses, type Course } from "../features/courses/lib/courses";
 import { initDb } from "../shared/lib/db";
+import { cleanUpConversations } from "../features/agent-chat/lib/retention";
 
 type CoursesContext = {
   courses: Course[];
@@ -69,7 +71,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     let active = true;
-    initDb().then(() => getCourses()).then((loaded) => {
+    initDb().then(cleanUpConversations).then(() => getCourses()).then((loaded) => {
       if (active) { setCourses(loaded); setStatus("ready"); }
     }).catch(() => { if (active) setStatus("error"); });
     return () => { active = false; };
@@ -117,6 +119,7 @@ export default function RootLayout() {
         </main>
       </div>
       {creating && <CourseForm onClose={() => setCreating(false)} onSave={(course) => { save(course); setCreating(false); navigate(`/courses/${course.id}`); }} />}
+      <ApprovalPrompt />
     </div>
   );
 }

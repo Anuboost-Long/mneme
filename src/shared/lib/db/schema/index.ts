@@ -7,3 +7,8 @@ export type { PageRow } from "./page";
 export type { AttachmentRow } from "./attachment";
 export type { AiActionRow } from "./ai-action";
 export type { SettingsRow } from "./settings";
+export type { AgentConnectionRow } from "./agent-connection";
+export type { AgentConversationRow } from "./agent-conversation";
+export type { AgentMessageRow } from "./agent-message";
+export type { AgentUsageRow } from "./agent-usage";
+export type { HighlightRow } from "./highlight";

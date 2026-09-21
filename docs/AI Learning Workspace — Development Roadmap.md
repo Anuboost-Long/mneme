@@ -761,6 +761,65 @@ Do not start with agents yet.
 
 First make basic AI communication reliable.
 
+> **19 September 2026 addendum — this phase's own approach changed.**
+> "Create an AI provider interface" / "Add API key settings" / "Store
+> keys securely" assumed mneme calls a model provider's API directly
+> with a key the user pastes in. The user redirected this: connect to
+> **an AI agent CLI the user already has installed and is already paying
+> for and authenticated into** — Claude Code, OpenAI Codex — the same
+> way they'd run it from a terminal, not a key mneme manages itself.
+>
+> Concretely: each chat turn spawns the CLI as a one-shot process
+> (`claude -p "<message>" --resume "<session_id>" --output-format
+> stream-json --include-partial-messages`), streaming its stdout into
+> the chat UI as tokens arrive, capturing `session_id` from the first
+> turn to pass into every later one. The CLI's own `--mcp-config` points
+> at mneme's own agent-server (Phase 25's capability, already built —
+> see `09-agent-tool-server.md`), so the agent gets `list_pages`/
+> `create_page`/etc. tool access for free — no separate wiring between
+> "AI chat" and "AI agent tools," they share the same server.
+>
+> An Anthropic Agent SDK route was considered and rejected: it's a
+> Node.js library requiring mneme to hold its own API key and bundle a
+> Node runtime it doesn't have — exactly the model this redirect moves
+> away from. Blocked on a new chain-sdk capability (spawn a process,
+> stream its stdout, know when it's done — a webview can't do this
+> itself) — written up as `docs/chain-sdk-requests/10-subprocess-runner.md`.
+> "Store keys securely" (`08-secure-secret-storage.md`, previously
+> withdrawn) stays withdrawn — there is still no key for mneme to store
+> under this model.
+>
+> App-level surface: an "Agent Tools" settings section (already has the
+> agent-server start/stop toggle from Phase 25) gains a way to pick which
+> installed CLI to use, and the chat UI itself is a new screen/panel
+> layered over the spawned process — a UI "skin" over an agent the user
+> already owns, not a UI over mneme's own AI integration.
+>
+> **Same day, follow-up correction — not Claude Code alone.** This has
+> to support multiple agents, the same way Lazify does: built-in presets
+> for Claude Code, Codex, and Gemini CLI (each with its own confirmed
+> flags/output format — only Claude Code's are actually verified so far,
+> Codex's and Gemini's need real research before implementing, not
+> guessing), **plus an open-ended custom entry** — same as Lazify's own
+> approach — where the user types in any other agent's name and invoke
+> command themselves. A custom agent's stdout format is unknown, so it
+> gets a plainer fallback: raw incremental stdout rendered live in the
+> chat (a terminal pass-through) rather than parsed token deltas.
+>
+> **Also added: per-agent usage/statistics** (Lazify tracks this; mneme
+> should too) and **mneme-owned session persistence** — "save the session
+> until the user deletes it or it reaches its time limit," not depend on
+> whatever a CLI's own local session files do. Neither needs a new
+> chain-sdk capability: usage/stats is parsing the same stdout stream
+> capability 10 already covers (Claude Code's `result` event reports
+> `usage`/`total_cost_usd`; an unknown custom agent still yields
+> invocation count + duration for free), and session storage is plain
+> `desktop.storage` — a new table for conversations/messages/which-agent,
+> with a retention setting (delete on user action, or after a configured
+> age), same capability every other page/module/course record already
+> uses. See `10-subprocess-runner.md`'s "Usage/statistics tracking and
+> session persistence" section for the full reasoning.
+
 ---
 
 # 22. Phase 20 — AI Context System

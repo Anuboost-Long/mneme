@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Matches asset/app-icon.svg: navy square, electric-lime + cream links. */
+/* Matches asset/app-icon.svg: midnight base with a cream memory thread and lime point. */
 @theme {
   --color-chain-navy: #171b24;
   --color-chain-lime: #c5f74f;
@@ -179,7 +179,6 @@
 .page-editor-content {
   font-size: 0.9375rem;
   line-height: 1.7;
-  min-height: 8rem;
 }
 
 .page-editor-content > * + * {
@@ -248,6 +247,14 @@
 .page-editor-content a {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.page-editor-content mark {
+  background: color-mix(in srgb, var(--color-chain-lime) 45%, transparent);
+  color: inherit;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .page-editor-content .react-renderer.node-image {

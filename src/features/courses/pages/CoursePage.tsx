@@ -102,10 +102,10 @@ export default function CoursePage({ course, modules, modulesReady, onSaveCourse
             ) : (
               <div className={clsx("mt-6 space-y-8")}>
                 {moduleGroups.map((group) => (
-                  <section key={group.key} aria-label={group.label || "Modules"} className={clsx(group.label && "@min-xl:grid @min-xl:grid-cols-[10rem_minmax(0,1fr)] @min-xl:gap-5")}>
-                    {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium @min-xl:mb-0 @min-xl:pt-3")}>{group.label}</Typography>}
+                  <section key={group.key} aria-label={group.label || "Modules"}>
+                    {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium")}>{group.label}</Typography>}
                     {viewMode === "gallery" ? (
-                      <ul className={clsx("grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-4")}>
+                      <ul className={clsx("grid min-w-0 grid-cols-1 gap-4 @min-md:grid-cols-2 @min-xl:grid-cols-3")}>
                         {group.items.map((module) => (
                           <GalleryCard key={module.id} title={module.name} badge={moduleStatusLabels[module.status]} description={module.description || ""} color={course.color} createdAt={module.created_at} to={`/courses/${course.id}/modules/${module.id}`} openLabel="Open module" onEdit={() => setModuleDialog({ type: "edit", module })} onDelete={() => setModuleDialog({ type: "delete", module })} />
                         ))}

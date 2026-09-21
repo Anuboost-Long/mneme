@@ -23,6 +23,10 @@ function SidebarLinks({ courses, ready, onCreate, onSave, onDelete }: Readonly<{
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 4h7v7H3zM14 4h7v7h-7zM3 15h7v6H3zM14 15h7v6h-7z" /></svg>
         All courses
       </NavLink>
+      <NavLink to="/agent-chat" className={({ isActive }) => clsx("flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium", isActive ? "bg-ink/7" : "hover:bg-ink/5")}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z" /></svg>
+        Chat
+      </NavLink>
       <div className={clsx("mt-6 flex items-center justify-between px-3")}>
         <Caption as="h2" tone="muted">Courses</Caption>
         <Caption as="span" tone="muted">{ready ? courses.length : ""}</Caption>

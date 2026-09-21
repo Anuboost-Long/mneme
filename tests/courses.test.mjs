@@ -27,6 +27,7 @@ const knownDeps = {
   'from "./0001-initial.ts"': '../src/shared/lib/db/migrations/0001-initial.ts',
   'from "./0002-completion-tracking.ts"': '../src/shared/lib/db/migrations/0002-completion-tracking.ts',
   'from "./0003-numeric-enums.ts"': '../src/shared/lib/db/migrations/0003-numeric-enums.ts',
+  'from "./0004-agent-chat.ts"': '../src/shared/lib/db/migrations/0004-agent-chat.ts',
   'from "./completion-status"': '../src/features/courses/lib/completion-status.ts',
 };
 

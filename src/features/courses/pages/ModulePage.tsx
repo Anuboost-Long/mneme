@@ -98,6 +98,7 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
           <Typography as="span" variant="caption" tone="muted" className={clsx("mt-2 inline-block rounded-full border border-ink/15 px-2 py-0.5")}>{moduleStatusLabels[module.status]}</Typography>
         </div>
         <div className={clsx("flex gap-2")}>
+          <Link to={`/courses/${course.id}/modules/${module.id}/highlights`} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Highlights</Link>
           <button type="button" onClick={() => setDialog("edit")} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Edit module</button>
           <button type="button" onClick={() => setDialog("delete")} className={clsx("rounded-md px-3 py-2 text-sm text-muted", "hover:bg-danger/10 hover:text-danger")}>Delete</button>
         </div>
@@ -153,10 +154,10 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
             ) : (
               <div className={clsx("mt-6 space-y-8")}>
                 {pageGroups.map((group) => (
-                  <section key={group.key} aria-label={group.label || "Pages"} className={clsx(group.label && "@min-xl:grid @min-xl:grid-cols-[10rem_minmax(0,1fr)] @min-xl:gap-5")}>
-                    {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium @min-xl:mb-0 @min-xl:pt-3")}>{group.label}</Typography>}
+                  <section key={group.key} aria-label={group.label || "Pages"}>
+                    {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium")}>{group.label}</Typography>}
                     {viewMode === "gallery" ? (
-                      <ul className={clsx("grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-4")}>
+                      <ul className={clsx("grid min-w-0 grid-cols-1 gap-4 @min-md:grid-cols-2 @min-xl:grid-cols-3")}>
                         {group.items.map((page) => (
                           <GalleryCard
                             key={page.id} title={page.title} badge={pageTypeLabels[page.type]} description={pageContentPreview(page.content)} color={course.color} createdAt={page.created_at}

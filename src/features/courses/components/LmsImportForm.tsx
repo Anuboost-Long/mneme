@@ -8,6 +8,7 @@ import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
+import { errorMessage } from "../../../shared/lib/errorMessage";
 
 type Source = "url" | "file";
 
@@ -83,7 +84,7 @@ export default function LmsImportForm({ moduleId, onImported, onClose }: Readonl
       setFetched(parsed);
       setBusy(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Couldn’t import that. Try again.");
+      setError(errorMessage(caught, "Couldn’t import that. Try again."));
       setBusy(false);
     }
   }

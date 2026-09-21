@@ -21,6 +21,7 @@ import AlignableImage from "./AlignableImage";
 import BlockDragHandle from "./BlockDragHandle";
 import FindBar from "./FindBar";
 import FindInPage from "./FindInPage";
+import HighlightMark from "./HighlightMark";
 import PageOutline from "./PageOutline";
 import SelectionMenu from "./SelectionMenu";
 import SlashCommands from "./SlashCommands";
@@ -71,6 +72,7 @@ export default function PageEditor({
       TaskItem.configure({ nested: true }),
       TableKit.configure({ table: { resizable: false } }),
       AlignableImage.configure({ allowBase64: true }),
+      HighlightMark,
       SlashCommands,
       FindInPage,
     ],
@@ -291,6 +293,7 @@ export default function PageEditor({
         onContextMenu={handleContextMenu}
         onDragOver={handlePageDragOver}
         onDrop={handlePageDrop}
+        className={clsx("min-h-32")}
       >
         <EditorContent editor={editor} />
       </div>

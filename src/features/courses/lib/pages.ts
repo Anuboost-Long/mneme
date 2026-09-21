@@ -1,6 +1,7 @@
 import { desktop } from "@chain/sdk";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
+import { syncPageHighlights } from "./highlights";
 
 // Numeric, not string, values — see completion-status.ts for why.
 export enum PageType {
@@ -77,6 +78,19 @@ function toPage(row: PageRow): Page {
   return { ...row, type: row.type as PageType, status: row.status as CompletionStatus, bookmarked: Boolean(row.bookmarked) };
 }
 
+// The highlight table is a derived index of a page's own content, not the
+// content itself — a page's content is what the user was actually trying
+// to save, so a sync failure here (a stale schema mid-migration, a
+// transient storage error) must not make that save look like it failed
+// too. The next successful save of this page re-syncs from scratch anyway.
+async function syncHighlightsSafely(pageId: number, moduleId: number, content: string | null) {
+  try {
+    await syncPageHighlights(pageId, moduleId, content);
+  } catch (error) {
+    console.error("Couldn't sync highlights for page", pageId, error);
+  }
+}
+
 export async function getPages(moduleId: number, filter: PageFilter = {}) {
   const conditions = ["module_id = ?"];
   const params: (string | number)[] = [moduleId];
@@ -88,6 +102,17 @@ export async function getPages(moduleId: number, filter: PageFilter = {}) {
   const rows = await desktop.storage.query<PageRow>(
     `SELECT * FROM page WHERE ${conditions.join(" AND ")} ORDER BY created_at, id`,
     params,
+  );
+  return rows.map(toPage);
+}
+
+export async function searchPages(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const like = `%${trimmed}%`;
+  const rows = await desktop.storage.query<PageRow>(
+    "SELECT * FROM page WHERE title LIKE ? OR content LIKE ? ORDER BY created_at, id",
+    [like, like],
   );
   return rows.map(toPage);
 }
@@ -112,6 +137,7 @@ export async function createPage(moduleId: number, input: PageInput) {
   );
   const page = await getPage(result.lastInsertId);
   if (!page) throw new Error("The saved page could not be found.");
+  if (page.content) await syncHighlightsSafely(page.id, moduleId, page.content);
   return page;
 }
 
@@ -132,6 +158,7 @@ export async function updatePage(id: number, input: Partial<PageInput>) {
   }
   const page = await getPage(id);
   if (!page) throw new Error("This page no longer exists.");
+  if (input.content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
   return page;
 }
 

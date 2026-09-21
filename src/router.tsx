@@ -6,8 +6,10 @@ import HomeRoute from "./routes/HomeRoute";
 import CoursesRoute from "./routes/CoursesRoute";
 import CourseRoute from "./routes/CourseRoute";
 import ModuleRoute from "./routes/ModuleRoute";
+import ModuleHighlightsRoute from "./routes/ModuleHighlightsRoute";
 import PageRoute from "./routes/PageRoute";
 import SettingsRoute from "./routes/SettingsRoute";
+import AgentChatRoute from "./routes/AgentChatRoute";
 
 // Add new top-level routes as siblings of HomeRoute/AboutRoute here; nest
 // under a parent route only when pages genuinely share layout beyond
@@ -22,8 +24,10 @@ export const router = createBrowserRouter([
       { path: "courses", element: <CoursesRoute /> },
       { path: "courses/:courseId", element: <CourseRoute /> },
       { path: "courses/:courseId/modules/:moduleId", element: <ModuleRoute /> },
+      { path: "courses/:courseId/modules/:moduleId/highlights", element: <ModuleHighlightsRoute /> },
       { path: "courses/:courseId/modules/:moduleId/pages/:pageId", element: <PageRoute /> },
       { path: "settings", element: <SettingsRoute /> },
+      { path: "agent-chat", element: <AgentChatRoute /> },
       { path: "about", element: <AboutRoute /> }
     ]
   }

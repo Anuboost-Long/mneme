@@ -31,8 +31,8 @@ export default function ListToolbar<K extends string>({
   sortOptions: readonly ToolbarOption[];
   groupBy: DateGroupBy;
   onGroupByChange: (value: DateGroupBy) => void;
-  viewMode: ViewMode;
-  onViewModeChange: (value: ViewMode) => void;
+  viewMode?: ViewMode;
+  onViewModeChange?: (value: ViewMode) => void;
   className?: string;
 }>) {
   const selectClassName = clsx(
@@ -58,7 +58,7 @@ export default function ListToolbar<K extends string>({
             )}
           />
         </div>
-        <fieldset className={clsx("flex shrink-0 overflow-hidden rounded-md border border-ink/20")}>
+        {onViewModeChange && <fieldset className={clsx("flex shrink-0 overflow-hidden rounded-md border border-ink/20")}>
           <legend className={clsx("sr-only")}>View</legend>
           <button
             type="button" aria-label="Gallery view" aria-pressed={viewMode === "gallery"} onClick={() => onViewModeChange("gallery")}
@@ -72,7 +72,7 @@ export default function ListToolbar<K extends string>({
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
-        </fieldset>
+        </fieldset>}
       </div>
       <div className={clsx("mt-3 grid grid-cols-2 gap-3 @min-xl:grid-cols-3")}>
         {filterOptions && (

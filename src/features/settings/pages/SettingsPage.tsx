@@ -5,6 +5,9 @@ import { useTheme } from "../../../shared/providers/ThemeProvider";
 import { useSidebarMode, type SidebarMode } from "../../../shared/providers/SidebarModeProvider";
 import { BodyText, Caption, PageTitle, SectionTitle, Typography } from "../../../shared/ui/Typography";
 import { createBackup, downloadBackup, readBackupFile, restoreBackup } from "../../courses/lib/backup";
+import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentServerState";
+import { useAgentServer } from "../../agent-server/lib/useAgentServer";
+import ChatRetention from "../../agent-chat/components/ChatRetention";
 
 const sidebarModes: { value: SidebarMode; label: string; hint: string }[] = [
   { value: "overlay", label: "Overlay", hint: "Floats over your content when open. Smoother animation, but covers what's underneath." },
@@ -18,6 +21,8 @@ export default function SettingsPage() {
   const [sidebarStatus, setSidebarStatus] = useState<"idle" | "saved" | "error">("idle");
   const [backupStatus, setBackupStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [restoreStatus, setRestoreStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [copied, setCopied] = useState(false);
+  const agentServer = useAgentServer();
 
   async function backUpNow() {
     setBackupStatus("busy");
@@ -37,6 +42,16 @@ export default function SettingsPage() {
       window.location.reload();
     } catch {
       setRestoreStatus("error");
+    }
+  }
+
+  async function copyAgentServerUrl(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   }
 
@@ -168,6 +183,38 @@ export default function SettingsPage() {
               {restoreStatus === "error" && <BodyText role="alert" tone="error">Couldn’t restore this file. Make sure it’s a Mneme backup and try again.</BodyText>}
             </div>
           </div>
+        </div>
+      </section>
+      <section aria-labelledby="agent-tools-title" className={clsx("grid gap-6 border-t border-ink/10 py-6 @min-3xl:grid-cols-3")}>
+        <div>
+          <SectionTitle id="agent-tools-title">Agent Tools</SectionTitle>
+          <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>Let an AI agent on this device — like Claude Code or Claude Desktop — read and edit your courses, modules and pages directly.</BodyText>
+        </div>
+        <div className={clsx("min-w-0 w-full max-w-xl @min-3xl:col-span-2")}>
+          <Typography as="span" variant="label">Local agent server</Typography>
+          <BodyText tone="muted" className={clsx("mt-1")}>Runs on this device only (127.0.0.1) — nothing is reachable over the network. An agent can list and read freely; the first time it creates or updates a page in a conversation, you'll get a popup to approve it before it happens. Deleting anything still always happens here in Mneme.</BodyText>
+          <div className={clsx("mt-3 flex flex-wrap items-center gap-3")}>
+            {agentServer.status === "running" ? (
+              <button type="button" onClick={stopAgentServer} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Stop</button>
+            ) : (
+              <button
+                type="button" disabled={agentServer.status === "starting" || agentServer.status === "stopping"} onClick={startAgentServer}
+                className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5", "disabled:cursor-not-allowed disabled:opacity-50")}
+              >
+                {agentServer.status === "starting" ? "Starting…" : agentServer.status === "stopping" ? "Stopping…" : "Start"}
+              </button>
+            )}
+            {agentServer.status === "running" && agentServer.port !== null && (
+              <button type="button" onClick={() => copyAgentServerUrl(`http://127.0.0.1:${agentServer.port}/mcp`)} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>
+                {copied ? "Copied!" : `Copy URL (port ${agentServer.port})`}
+              </button>
+            )}
+          </div>
+          <div className={clsx("mt-2 min-h-6")}>
+            {agentServer.status === "running" && <BodyText role="status" tone="muted">Running at http://127.0.0.1:{agentServer.port}/mcp — paste this into your AI agent’s MCP settings.</BodyText>}
+            {agentServer.error && <BodyText role="alert" tone="error">{agentServer.error}</BodyText>}
+          </div>
+          <ChatRetention />
         </div>
       </section>
     </div>

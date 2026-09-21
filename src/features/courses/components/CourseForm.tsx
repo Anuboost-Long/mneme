@@ -6,6 +6,7 @@ import CourseIcon, { courseColors, courseIcons } from "../../../shared/ui/Course
 import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
 import { BodyText, Typography } from "../../../shared/ui/Typography";
+import { errorMessage } from "../../../shared/lib/errorMessage";
 
 export default function CourseForm({ course, onSave, onClose }: Readonly<{
   course?: Course;
@@ -76,7 +77,7 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
                 setUploading(true);
                 setImageError("");
                 try { setIcon(await courseImage(file)); }
-                catch (error) { setImageError(error instanceof Error ? error.message : "Couldn’t add this picture. Try another file."); }
+                catch (error) { setImageError(errorMessage(error, "Couldn’t add this picture. Try another file.")); }
                 finally { setUploading(false); }
               }} />
             </label>
