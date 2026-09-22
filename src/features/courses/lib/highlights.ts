@@ -31,28 +31,80 @@ function parseHighlightMarks(pageHtml: string): { ref: string; html: string }[] 
   return Array.from(byRef, ([ref, parts]) => ({ ref, html: parts.map((part) => `<p>${part}</p>`).join("") }));
 }
 
+// Every individual <mark data-highlight-ref> element in `html`, ungrouped
+// (unlike parseHighlightMarks, which stitches a multi-block highlight's
+// fragments into one display string) — reconcileHighlights needs each
+// block's own exact fragment to search for on its own.
+function parseRawMarks(html: string): { ref: string; innerHtml: string }[] {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const marks: { ref: string; innerHtml: string }[] = [];
+  for (const mark of doc.querySelectorAll(`mark[${REF_ATTR}]`)) {
+    const ref = mark.getAttribute(REF_ATTR);
+    const innerHtml = mark.innerHTML.trim();
+    if (ref && innerHtml) marks.push({ ref, innerHtml });
+  }
+  return marks;
+}
+
+function countOccurrences(haystack: string, needle: string): number {
+  return needle ? haystack.split(needle).length - 1 : 0;
+}
+
+// Before new content overwrites a page's old content, checks whether a
+// previously-highlighted fragment vanished only because its <mark>
+// wrapper was dropped — its exact markup is still sitting there,
+// unchanged, just unwrapped. That's the common failure mode when
+// something rewrites a page's HTML without reproducing marks it had no
+// reason to touch (most often the AI agent's update_page tool): the text
+// itself is untouched, so the highlight should survive right where it
+// was. Reinjects the mark there. A fragment that isn't found at all, or
+// that now matches more than once (too ambiguous to place with
+// confidence), is left alone for syncPageHighlights to flag as orphaned
+// instead of guessing.
+export function reconcileHighlights(previousContent: string | null, nextContent: string | null): string | null {
+  if (!previousContent || !nextContent) return nextContent;
+  const previousMarks = parseRawMarks(previousContent);
+  if (previousMarks.length === 0) return nextContent;
+  const nextRefs = new Set(parseHighlightMarks(nextContent).map((mark) => mark.ref));
+  let content = nextContent;
+  for (const mark of previousMarks) {
+    if (nextRefs.has(mark.ref)) continue;
+    if (countOccurrences(content, mark.innerHtml) !== 1) continue;
+    content = content.replace(mark.innerHtml, `<mark ${REF_ATTR}="${mark.ref}">${mark.innerHtml}</mark>`);
+  }
+  return content;
+}
+
 // Keeps the `highlight` table's rows for one page in step with whatever
 // marks its just-saved content actually contains — called from
 // pages.ts's createPage/updatePage whenever content is written, so every
 // path that saves a page (the rich-text editor, PageForm, the agent's
 // create_page/update_page tools) keeps highlights in sync the same way,
-// not just the editor.
+// not just the editor. A ref whose mark is gone from the content isn't
+// deleted — reconcileHighlights already reinjected anything whose text
+// survived unchanged, so a ref still missing here means the highlighted
+// text was genuinely edited or removed; it's flagged orphaned instead,
+// so the user can decide whether to keep it as a standalone note (see
+// ModuleHighlightsPage) or remove it.
 export async function syncPageHighlights(pageId: number, moduleId: number, pageHtml: string | null) {
   const marks = pageHtml ? parseHighlightMarks(pageHtml) : [];
-  if (marks.length === 0) {
-    await desktop.storage.execute("DELETE FROM highlight WHERE page_id = ?", [pageId]);
-    return;
+  const activeRefs = marks.map((mark) => mark.ref);
+  if (activeRefs.length > 0) {
+    const placeholders = activeRefs.map(() => "?").join(", ");
+    await desktop.storage.execute(
+      `UPDATE highlight SET orphaned_at = datetime('now') WHERE page_id = ? AND orphaned_at IS NULL AND ref NOT IN (${placeholders})`,
+      [pageId, ...activeRefs],
+    );
+  } else {
+    await desktop.storage.execute(
+      "UPDATE highlight SET orphaned_at = datetime('now') WHERE page_id = ? AND orphaned_at IS NULL",
+      [pageId],
+    );
   }
-  const refs = marks.map((mark) => mark.ref);
-  const placeholders = refs.map(() => "?").join(", ");
-  await desktop.storage.execute(
-    `DELETE FROM highlight WHERE page_id = ? AND ref NOT IN (${placeholders})`,
-    [pageId, ...refs],
-  );
   for (const [position, mark] of marks.entries()) {
     await desktop.storage.execute(
       `INSERT INTO highlight (page_id, module_id, ref, html, position) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(page_id, ref) DO UPDATE SET html = excluded.html, position = excluded.position, module_id = excluded.module_id`,
+       ON CONFLICT(page_id, ref) DO UPDATE SET html = excluded.html, position = excluded.position, module_id = excluded.module_id, orphaned_at = NULL`,
       [pageId, moduleId, mark.ref, mark.html, position],
     );
   }
@@ -63,6 +115,20 @@ export async function getModuleHighlights(moduleId: number): Promise<Highlight[]
     "SELECT * FROM highlight WHERE module_id = ? ORDER BY page_id, position",
     [moduleId],
   );
+}
+
+// An orphaned highlight (see syncPageHighlights) has no mark left in its
+// page's content, so there's nothing for stripHighlight to unwrap —
+// removing it is just deleting the row.
+export async function deleteHighlight(id: number): Promise<void> {
+  await desktop.storage.execute("DELETE FROM highlight WHERE id = ?", [id]);
+}
+
+// The user chose to keep an orphaned highlight as a standalone note even
+// though its text is no longer found on the page — clears the flag so it
+// stops being offered the keep/remove choice.
+export async function keepOrphanedHighlight(id: number): Promise<void> {
+  await desktop.storage.execute("UPDATE highlight SET orphaned_at = NULL WHERE id = ?", [id]);
 }
 
 // Unwraps every highlighted mark matching `ref` in `html` — plural for the

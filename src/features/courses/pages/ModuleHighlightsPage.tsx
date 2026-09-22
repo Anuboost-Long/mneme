@@ -7,9 +7,9 @@ import type { Course } from "../lib/courses";
 import type { Module } from "../lib/modules";
 import type { Page } from "../lib/pages";
 import { updatePage } from "../lib/pages";
-import { stripHighlight, type Highlight } from "../lib/highlights";
+import { deleteHighlight, keepOrphanedHighlight, stripHighlight, type Highlight } from "../lib/highlights";
 
-export default function ModuleHighlightsPage({ course, module, moduleReady, pages, highlights, highlightsReady, onRemoveHighlight }: Readonly<{
+export default function ModuleHighlightsPage({ course, module, moduleReady, pages, highlights, highlightsReady, onRemoveHighlight, onKeepHighlight }: Readonly<{
   course: Course | undefined;
   module: Module | undefined;
   moduleReady: boolean;
@@ -17,20 +17,38 @@ export default function ModuleHighlightsPage({ course, module, moduleReady, page
   highlights: Highlight[];
   highlightsReady: boolean;
   onRemoveHighlight: (id: number) => void;
+  onKeepHighlight: (id: number) => void;
 }>) {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   async function remove(highlight: Highlight) {
-    const page = pages.find((item) => item.id === highlight.page_id);
-    if (!page?.content) return;
     setBusyId(highlight.id);
     setError("");
     try {
-      await updatePage(page.id, { content: stripHighlight(page.content, highlight.ref) });
+      if (highlight.orphaned_at) {
+        await deleteHighlight(highlight.id);
+      } else {
+        const page = pages.find((item) => item.id === highlight.page_id);
+        if (!page?.content) return;
+        await updatePage(page.id, { content: stripHighlight(page.content, highlight.ref) }, { skipHighlightReconciliation: true });
+      }
       onRemoveHighlight(highlight.id);
     } catch (error) {
       setError(errorMessage(error, "Couldn’t remove this highlight. Try again."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function keep(highlight: Highlight) {
+    setBusyId(highlight.id);
+    setError("");
+    try {
+      await keepOrphanedHighlight(highlight.id);
+      onKeepHighlight(highlight.id);
+    } catch (error) {
+      setError(errorMessage(error, "Couldn’t update this highlight. Try again."));
     } finally {
       setBusyId(null);
     }
@@ -82,13 +100,23 @@ export default function ModuleHighlightsPage({ course, module, moduleReady, page
                 <Link id={`highlight-page-${page.id}`} to={`/courses/${course.id}/modules/${module.id}/pages/${page.id}`} className={clsx("text-sm font-semibold text-ink hover:underline underline-offset-4")}>{page.title}</Link>
                 <ul className={clsx("mt-3 space-y-4")}>
                   {items.map((highlight) => (
-                    <li key={highlight.id} className={clsx("rounded-md border-l-4 border-chain-lime bg-chain-lime/10 py-3 pr-3 pl-4")}>
+                    <li key={highlight.id} className={clsx("rounded-md border-l-4 py-3 pr-3 pl-4", highlight.orphaned_at ? "border-ink/15 bg-ink/5" : "border-chain-lime bg-chain-lime/10")}>
                       <div className={clsx("flex items-start justify-between gap-3")}>
                         <div className={clsx("page-editor-content min-w-0 flex-1 wrap-anywhere")} dangerouslySetInnerHTML={{ __html: highlight.html }} />
-                        <button type="button" disabled={busyId === highlight.id} onClick={() => void remove(highlight)} aria-label="Remove highlight" title="Remove highlight" className={clsx("shrink-0 rounded-md px-2 py-1 text-xs text-muted", "hover:bg-ink/5 hover:text-ink", "disabled:opacity-50")}>
-                          {busyId === highlight.id ? "…" : "Remove"}
-                        </button>
+                        <div className={clsx("flex shrink-0 items-center gap-2")}>
+                          {highlight.orphaned_at && (
+                            <button type="button" disabled={busyId === highlight.id} onClick={() => void keep(highlight)} className={clsx("rounded-md px-2 py-1 text-xs text-muted", "hover:bg-ink/5 hover:text-ink", "disabled:opacity-50")}>
+                              Keep
+                            </button>
+                          )}
+                          <button type="button" disabled={busyId === highlight.id} onClick={() => void remove(highlight)} aria-label="Remove highlight" title="Remove highlight" className={clsx("rounded-md px-2 py-1 text-xs text-muted", "hover:bg-ink/5 hover:text-ink", "disabled:opacity-50")}>
+                            {busyId === highlight.id ? "…" : "Remove"}
+                          </button>
+                        </div>
                       </div>
+                      {highlight.orphaned_at && (
+                        <Caption tone="muted" className={clsx("mt-2")}>This passage changed since it was highlighted. Keep it as a note, or remove it.</Caption>
+                      )}
                     </li>
                   ))}
                 </ul>

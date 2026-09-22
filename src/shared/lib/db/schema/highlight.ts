@@ -6,7 +6,11 @@
 // copy of the owning page's module_id (see the migration's comment).
 // `html` (renamed from `text` in 0009-highlight-html) is the highlighted
 // span's own markup, not stripped plain text — one <p> per source block
-// for a selection that crossed a block boundary.
+// for a selection that crossed a block boundary. `orphaned_at` (added in
+// 0010-highlight-orphaning) is set when a save couldn't find this
+// highlight's mark or its underlying text in the page's new content —
+// the row is kept rather than deleted so the user can decide whether to
+// keep it as a standalone note or remove it.
 export interface HighlightRow {
   id: number;
   page_id: number;
@@ -15,4 +19,5 @@ export interface HighlightRow {
   html: string;
   position: number;
   created_at: string;
+  orphaned_at: string | null;
 }

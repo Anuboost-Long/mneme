@@ -43,6 +43,7 @@ export default function ModuleHighlightsRoute() {
       highlights={highlights}
       highlightsReady={highlightsReady}
       onRemoveHighlight={(id) => setHighlights((current) => current.filter((item) => item.id !== id))}
+      onKeepHighlight={(id) => setHighlights((current) => current.map((item) => item.id === id ? { ...item, orphaned_at: null } : item))}
     />
   );
 }

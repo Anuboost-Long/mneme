@@ -1,7 +1,7 @@
 import { desktop } from "@chain/sdk";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
-import { syncPageHighlights } from "./highlights";
+import { reconcileHighlights, syncPageHighlights } from "./highlights";
 
 // Numeric, not string, values — see completion-status.ts for why.
 export enum PageType {
@@ -91,6 +91,18 @@ async function syncHighlightsSafely(pageId: number, moduleId: number, content: s
   }
 }
 
+// Same reasoning as syncHighlightsSafely — reconciling highlights before
+// a save is a best-effort improvement to what gets written, not a
+// requirement of the save succeeding.
+function reconcileHighlightsSafely(previousContent: string | null, nextContent: string | null): string | null {
+  try {
+    return reconcileHighlights(previousContent, nextContent);
+  } catch (error) {
+    console.error("Couldn't reconcile highlights before saving page", error);
+    return nextContent;
+  }
+}
+
 export async function getPages(moduleId: number, filter: PageFilter = {}) {
   const conditions = ["module_id = ?"];
   const params: (string | number)[] = [moduleId];
@@ -141,12 +153,28 @@ export async function createPage(moduleId: number, input: PageInput) {
   return page;
 }
 
-export async function updatePage(id: number, input: Partial<PageInput>) {
+// `skipHighlightReconciliation` is for the one caller that already knows
+// exactly which highlight it's removing (ModuleHighlightsPage's stripHighlight
+// call): reconcileHighlights can't tell that apart from an unrelated edit
+// leaving the same text untouched, and would otherwise re-wrap the very
+// mark the user just asked to remove — see highlights.ts's reconcileHighlights.
+export async function updatePage(id: number, input: Partial<PageInput>, options: { skipHighlightReconciliation?: boolean } = {}) {
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
   if (input.title !== undefined) { fields.push("title = ?"); values.push(pageTitle(input.title)); }
   if (input.type !== undefined) { fields.push("type = ?"); values.push(input.type); }
-  if (input.content !== undefined) { fields.push("content = ?"); values.push(input.content?.trim() || null); }
+  let content: string | null | undefined;
+  if (input.content !== undefined) {
+    const trimmed = input.content?.trim() || null;
+    if (options.skipHighlightReconciliation) {
+      content = trimmed;
+    } else {
+      const previous = await getPage(id);
+      content = reconcileHighlightsSafely(previous?.content ?? null, trimmed);
+    }
+    fields.push("content = ?");
+    values.push(content);
+  }
   if (input.status !== undefined) { fields.push("status = ?"); values.push(input.status); }
   if (input.progress !== undefined) { fields.push("progress = ?"); values.push(clampProgress(input.progress)); }
   if (input.bookmarked !== undefined) { fields.push("bookmarked = ?"); values.push(input.bookmarked ? 1 : 0); }
@@ -158,7 +186,7 @@ export async function updatePage(id: number, input: Partial<PageInput>) {
   }
   const page = await getPage(id);
   if (!page) throw new Error("This page no longer exists.");
-  if (input.content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
+  if (content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
   return page;
 }
 

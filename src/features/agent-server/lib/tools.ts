@@ -161,7 +161,10 @@ export const tools: Tool[] = [
         id: { type: "number", description: "Page id." },
         title: { type: "string" },
         type: { type: "number", description: PAGE_TYPE_DESCRIPTION },
-        content: { type: "string", description: "Page body as HTML." },
+        content: {
+          type: "string",
+          description: "Page body as HTML. Replaces the entire current content, so first re-read it with get_page and reproduce any part you aren't intentionally changing byte-for-byte — including <mark data-highlight-ref=\"...\"> tags around text the user highlighted, which must stay wrapped around that exact text.",
+        },
         status: { type: "number", description: STATUS_DESCRIPTION },
       },
       required: ["id"],
