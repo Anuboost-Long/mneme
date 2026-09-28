@@ -63,17 +63,28 @@ This is the scaffold produced by `chain init`:
     multiple native windows are a different pattern (separate OS-level
     windows, not in-page navigation) and would be a deliberate later choice
     if this app ever needs genuinely separate windows, not a default.
-- Local SQLite schema lives in `src/shared/lib/db/`, modeled the way a
-  .NET project separates its migration history from its current model:
-  - `db/migrations/000N-name.ts` — one file per version, oldest first,
-    each a `{ version, sql }` batch for `desktop.storage.migrate`. Never
-    edit a shipped migration in place — add the next one and list it in
-    `db/migrations/index.ts`.
-  - `db/schema/<table>.ts` — one file per table, each a hand-maintained
-    `<Table>Row` interface documenting that table's full current column
-    list (with which migration added what) — the one place to see the
-    whole database without replaying migration history. Update it
-    alongside whichever migration changes that table.
+- Local SQLite schema lives in `src/shared/lib/db/`, managed the way
+  `dotnet ef` manages a .NET model (chain-sdk's `chain migration` /
+  `chain database` commands):
+  - `db/schema/<table>.ts` — one `@Table` class per table (decorators
+    from `@chain/sdk/schema`: `@PrimaryKey`, `@Column`, `@ForeignKey`,
+    `@Index`, `@Trigger`, `@NotMapped`). **This is the source of truth.**
+    Each file also exports `<Table>Row` as a type alias — the name the
+    rest of the app imports. Literal-union property types (e.g.
+    `agent_connection.kind`) are narrowed by hand; they're still TEXT.
+  - To change the database: edit the classes, then run
+    `chain migration add <name>`. It writes `db/migrations/000N-name.ts`
+    (up and `down` SQL, in its own transaction), a `.model.json`
+    snapshot, and regenerates `db/migrations/index.ts`. Review the SQL,
+    especially any table rebuild or data-loss warning.
+  - `chain migration check` fails when the classes have changes no
+    migration covers. `chain migration list` shows what's applied
+    locally. `chain migration remove` drops the latest migration if it
+    hasn't been applied. `chain database update [target]` applies
+    pending migrations or reverts to a version. Starting the app
+    (`initDb()`) also applies pending ones.
+  - Never edit a shipped migration — the runner stores a checksum. Add
+    the next one instead.
   - `features/<feature>/lib/*.ts` maps a table's raw `Row` type onto an
     app-facing type (e.g. `bookmarked` 0/1 -> `boolean`, numeric enum
     columns -> their TS enum) and owns that table's queries — see

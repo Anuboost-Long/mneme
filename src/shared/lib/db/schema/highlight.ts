@@ -1,23 +1,29 @@
-// Added in migration 0008-highlights. `ref` is the id the highlight mark
-// extension stamps on its `<mark data-highlight-ref="...">` in the page's
-// own content — the join key between a row here and its exact spot in
-// that page's HTML, kept in sync by features/courses/lib/highlights.ts
-// whenever the page's content is saved. `module_id` is a denormalized
-// copy of the owning page's module_id (see the migration's comment).
-// `html` (renamed from `text` in 0009-highlight-html) is the highlighted
-// span's own markup, not stripped plain text — one <p> per source block
-// for a selection that crossed a block boundary. `orphaned_at` (added in
-// 0010-highlight-orphaning) is set when a save couldn't find this
-// highlight's mark or its underlying text in the page's new content —
-// the row is kept rather than deleted so the user can decide whether to
-// keep it as a standalone note or remove it.
-export interface HighlightRow {
-  id: number;
-  page_id: number;
-  module_id: number;
-  ref: string;
-  html: string;
-  position: number;
-  created_at: string;
-  orphaned_at: string | null;
+import { Column, ForeignKey, Index, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Page } from "./page";
+
+@Table("highlight", { unique: [["page_id", "ref"]] })
+export class Highlight {
+  @PrimaryKey({ autoIncrement: true })
+  id!: number;
+
+  @ForeignKey(() => Page, { onDelete: "cascade" })
+  @Index({ name: "highlight_page" })
+  page_id!: number;
+
+  @Index({ name: "highlight_module" })
+  module_id!: number;
+
+  ref!: string;
+
+  html!: string;
+
+  position!: number;
+
+  @Column({ defaultSql: "datetime('now')" })
+  created_at!: string;
+
+  orphaned_at!: string | null;
 }
+
+// The name the rest of the app uses for a row of this table.
+export type HighlightRow = Highlight;
