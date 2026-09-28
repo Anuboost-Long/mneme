@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../../../shared/providers/ThemeProvider";
 import { useSidebarMode, type SidebarMode } from "../../../shared/providers/SidebarModeProvider";
 import { BodyText, Caption, PageTitle, SectionTitle, Typography } from "../../../shared/ui/Typography";
-import { createBackup, downloadBackup, pickBackupFile, readBackupFile, restoreBackup } from "../../courses/lib/backup";
+import { createBackup, pickBackupFile, readBackupFile, restoreBackup, saveBackup } from "../../courses/lib/backup";
+import { errorMessage } from "../../../shared/lib/errorMessage";
 import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentServerState";
 import { useAgentServer } from "../../agent-server/lib/useAgentServer";
 import ChatRetention from "../../agent-chat/components/ChatRetention";
@@ -23,6 +24,7 @@ export default function SettingsPage() {
   const [sidebarStatus, setSidebarStatus] = useState<"idle" | "saved" | "error">("idle");
   const [backupStatus, setBackupStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [restoreStatus, setRestoreStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [backupMessage, setBackupMessage] = useState("");
   const [copied, setCopied] = useState(false);
   const restoreInput = useRef<HTMLInputElement>(null);
   const agentServer = useAgentServer();
@@ -30,9 +32,14 @@ export default function SettingsPage() {
   async function backUpNow() {
     setBackupStatus("busy");
     try {
-      downloadBackup(await createBackup());
+      const name = await saveBackup(await createBackup());
+      if (name === null) { setBackupStatus("idle"); return; }
+      setBackupMessage(`Backup saved as ${name}.`);
       setBackupStatus("done");
-    } catch {
+    } catch (error) {
+      // UNAVAILABLE: a file panel is already open, which the user can see.
+      if ((error as { code?: string } | null)?.code === "UNAVAILABLE") { setBackupStatus("idle"); return; }
+      setBackupMessage(errorMessage(error, "Couldn’t save the backup. Try again."));
       setBackupStatus("error");
     }
   }
@@ -173,13 +180,13 @@ export default function SettingsPage() {
         <div className={clsx("min-w-0 w-full max-w-xl @min-3xl:col-span-2 space-y-6")}>
           <div>
             <Typography as="span" variant="label">Back up</Typography>
-            <BodyText tone="muted" className={clsx("mt-1")}>Downloads everything as a single file you can keep or restore later.</BodyText>
+            <BodyText tone="muted" className={clsx("mt-1")}>Saves everything to a single file, wherever you choose, so you can restore it later.</BodyText>
             <button type="button" disabled={backupStatus === "busy"} onClick={backUpNow} className={clsx("mt-3 rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>
-              {backupStatus === "busy" ? "Preparing backup…" : "Download a backup"}
+              {backupStatus === "busy" ? "Saving backup…" : "Save a backup"}
             </button>
             <div className={clsx("mt-2 min-h-6")}>
-              {backupStatus === "done" && <BodyText role="status" tone="muted">Backup downloaded.</BodyText>}
-              {backupStatus === "error" && <BodyText role="alert" tone="error">Couldn’t prepare a backup. Try again.</BodyText>}
+              {backupStatus === "done" && <BodyText role="status" tone="muted">{backupMessage}</BodyText>}
+              {backupStatus === "error" && <BodyText role="alert" tone="error">{backupMessage}</BodyText>}
             </div>
           </div>
           <div className={clsx("border-t border-ink/10 pt-6")}>

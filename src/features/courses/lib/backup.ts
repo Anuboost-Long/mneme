@@ -20,9 +20,25 @@ export async function createBackup(): Promise<Backup> {
   return { version: 1, exportedAt: new Date().toISOString(), courses, modules, pages };
 }
 
-export function downloadBackup(backup: Backup) {
+// Asks where to save, every time — the native save sheet never reuses a
+// remembered location. Resolves the saved file's name, or null if the user
+// cancelled. Outside the desktop runtime (UNSUPPORTED) it falls back to a
+// plain browser download.
+export async function saveBackup(backup: Backup): Promise<string | null> {
   const fileName = `mneme-backup-${backup.exportedAt.slice(0, 10)}.json`;
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const json = JSON.stringify(backup, null, 2);
+  try {
+    const saved = await desktop.files.save(new TextEncoder().encode(json), { suggestedName: fileName, extensions: ["json"] });
+    return saved?.name ?? null;
+  } catch (error) {
+    if ((error as { code?: string } | null)?.code !== "UNSUPPORTED") throw error;
+    downloadBackup(fileName, json);
+    return fileName;
+  }
+}
+
+function downloadBackup(fileName: string, json: string) {
+  const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
