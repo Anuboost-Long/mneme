@@ -16,19 +16,59 @@ const REF_ATTR = "data-highlight-ref";
 // together as one highlight instead of only its last fragment surviving.
 // Each fragment keeps its own inner HTML (not textContent) so formatting
 // survives, wrapped in its own <p> so a multi-block highlight still reads
-// as separate paragraphs rather than one run-on line.
+// as separate paragraphs rather than one run-on line — and, for a fragment
+// inside a bullet or numbered list, in that list too (see renderFragments).
 function parseHighlightMarks(pageHtml: string): { ref: string; html: string }[] {
   const doc = new DOMParser().parseFromString(pageHtml, "text/html");
-  const byRef = new Map<string, string[]>();
+  const byRef = new Map<string, Fragment[]>();
   for (const mark of doc.querySelectorAll(`mark[${REF_ATTR}]`)) {
     const ref = mark.getAttribute(REF_ATTR);
     if (!ref || !(mark.textContent ?? "").trim()) continue;
-    const fragment = mark.innerHTML.trim();
+    const fragment = { html: mark.innerHTML.trim(), ...enclosingListItem(mark) };
     const parts = byRef.get(ref);
     if (parts) parts.push(fragment);
     else byRef.set(ref, [fragment]);
   }
-  return Array.from(byRef, ([ref, parts]) => ({ ref, html: parts.map((part) => `<p>${part}</p>`).join("") }));
+  return Array.from(byRef, ([ref, parts]) => ({ ref, html: renderFragments(parts) }));
+}
+
+type Fragment = { html: string; list?: Element; item?: Element };
+
+// The bullet or numbered list a mark sits in, if any. Task lists are left
+// out — their marker is a checkbox, which an excerpt has nothing to bind to.
+function enclosingListItem(mark: Element): { list: Element; item: Element } | null {
+  const item = mark.closest("li");
+  const list = item?.parentElement;
+  if (!item || !list || !["UL", "OL"].includes(list.tagName) || list.dataset.type !== undefined) return null;
+  return { list, item };
+}
+
+// Rebuilds the list around consecutive fragments from the same list, so
+// the excerpt keeps its bullets/numbers. A numbered item carries its
+// original number as `value`, so highlighting only item 3 still shows "3."
+// rather than restarting at 1.
+function renderFragments(fragments: Fragment[]): string {
+  let html = "";
+  for (const [index, fragment] of fragments.entries()) {
+    const paragraph = `<p>${fragment.html}</p>`;
+    const { list, item } = fragment;
+    if (!list || !item) {
+      html += paragraph;
+      continue;
+    }
+    const previous = fragments[index - 1];
+    const next = fragments[index + 1];
+    const tag = list.tagName.toLowerCase();
+    if (previous?.list !== list) html += `<${tag}>`;
+    if (previous?.item !== item) {
+      const value = tag === "ol" ? ` value="${Number(list.getAttribute("start") ?? 1) + Array.from(list.children).indexOf(item)}"` : "";
+      html += `<li${value}>`;
+    }
+    html += paragraph;
+    if (next?.item !== item) html += "</li>";
+    if (next?.list !== list) html += `</${tag}>`;
+  }
+  return html;
 }
 
 // Every individual <mark data-highlight-ref> element in `html`, ungrouped
@@ -137,8 +177,9 @@ export async function keepOrphanedHighlight(id: number): Promise<void> {
 // any of them behind would un-highlight the excerpt everywhere except
 // where the user first selected it. Pure — the caller reads the page's
 // current content, calls this, then saves the result through updatePage
-// the same way any other content edit is saved (which re-runs
-// syncPageHighlights, so the table follows without a separate delete).
+// the same way any other content edit is saved. That re-runs
+// syncPageHighlights, which only orphans the row, so the caller deletes
+// it too (see ModuleHighlightsPage's remove).
 export function stripHighlight(html: string, ref: string): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const marks = doc.querySelectorAll(`mark[${REF_ATTR}="${CSS.escape(ref)}"]`);

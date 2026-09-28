@@ -11,6 +11,7 @@ export type Course = {
   status: CompletionStatus;
   progress: number;
   bookmarked: boolean;
+  ai_profile_id: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -23,6 +24,7 @@ export type CourseInput = {
   status?: CompletionStatus;
   progress?: number;
   bookmarked?: boolean;
+  ai_profile_id?: number | null;
 };
 
 export type CourseFilter = {
@@ -64,7 +66,7 @@ export async function getCourse(id: number) {
 
 export async function createCourse(input: CourseInput) {
   const result = await desktop.storage.execute(
-    "INSERT INTO course (name, description, icon, color, status, progress, bookmarked) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO course (name, description, icon, color, status, progress, bookmarked, ai_profile_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [
       courseName(input.name),
       input.description?.trim() || null,
@@ -73,6 +75,7 @@ export async function createCourse(input: CourseInput) {
       input.status ?? CompletionStatus.NotStarted,
       clampProgress(input.progress ?? 0),
       input.bookmarked ? 1 : 0,
+      input.ai_profile_id ?? null,
     ],
   );
   const course = await getCourse(result.lastInsertId);
@@ -96,6 +99,7 @@ export async function updateCourse(id: number, input: Partial<CourseInput>) {
   if (input.status !== undefined) { fields.push("status = ?"); values.push(input.status); }
   if (input.progress !== undefined) { fields.push("progress = ?"); values.push(clampProgress(input.progress)); }
   if (input.bookmarked !== undefined) { fields.push("bookmarked = ?"); values.push(input.bookmarked ? 1 : 0); }
+  if (input.ai_profile_id !== undefined) { fields.push("ai_profile_id = ?"); values.push(input.ai_profile_id); }
   if (fields.length) {
     await desktop.storage.execute(
       `UPDATE course SET ${fields.join(", ")}, updated_at = datetime('now') WHERE id = ?`,

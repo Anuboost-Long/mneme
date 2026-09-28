@@ -51,6 +51,30 @@
 > server capability chain-sdk doesn't have (a webview can't open a
 > listening socket itself), so external agents have a way to call in.
 > Written up as `docs/chain-sdk-requests/09-agent-tool-server.md`.
+>
+> **23 September 2026 update:** Phase 25 and agent chat (MVP item 11)
+> are in. Phase 21 (AI Quick Actions, MVP item 12 "Summarize Page") is
+> now implemented for selected text and whole pages, with no new
+> chain-sdk capability needed: see
+> [AI quick actions](features/21-ai-quick-actions.md). Module-wide
+> actions, flashcards/quiz, and transcribe are deferred there. Next is
+> Phase 22 (Custom AI Actions, MVP item 13).
+>
+> **23 September 2026, later:** Phase 22 (Custom AI Actions, MVP item 13)
+> is implemented: see [Custom AI actions](features/22-custom-ai-actions.md).
+> It needed one chain-sdk change, stdin for `processRunner`
+> (`chain-sdk-requests/12-process-runner-stdin.md`), now shipped. With
+> that, **Recommended MVP items 1–13 are all implemented.**
+>
+> **27 September 2026:** Phase 23 (AI Context Profiles) is implemented:
+> see [AI context profiles](features/23-ai-context-profiles.md). No
+> chain-sdk change was needed. Next is Phase 24 (AI Output to Editor).
+>
+> **27 September 2026, later:** Phase 24 (AI Output to Editor) is
+> implemented except child pages: see
+> [AI output to editor](features/24-ai-output-to-editor.md). No chain-sdk
+> change needed. A ⌘P command palette was added alongside
+> ([command palette](features/command-palette.md)).
 
 
 ## 1. Project Goal
@@ -889,16 +913,16 @@ Organize Notes
 
 ## Development Steps
 
-- [ ] Create AI Action model.
-- [ ] Add default actions.
-- [ ] Add action toolbar.
-- [ ] Allow actions on selected text.
-- [ ] Allow actions on current page.
-- [ ] Allow actions on current module.
-- [ ] Show generation progress.
-- [ ] Show result preview.
-- [ ] Allow insertion into document.
-- [ ] Allow replacement of selected text.
+- [x] Create AI Action model.
+- [x] Add default actions.
+- [x] Add action toolbar.
+- [x] Allow actions on selected text.
+- [x] Allow actions on current page.
+- [x] Allow actions on current module. (Via a custom action whose "Runs on" is Whole module — Phase 22.)
+- [x] Show generation progress.
+- [x] Show result preview.
+- [x] Allow insertion into document.
+- [x] Allow replacement of selected text.
 
 ---
 
@@ -936,18 +960,18 @@ Output:
 
 ## Development Steps
 
-- [ ] Create "New AI Action".
-- [ ] Add action name.
-- [ ] Add action icon.
-- [ ] Add custom prompt.
-- [ ] Select context sources.
-- [ ] Select output mode.
-- [ ] Save action.
-- [ ] Edit action.
-- [ ] Delete action.
-- [ ] Duplicate action.
-- [ ] Reorder actions.
-- [ ] Display custom action in toolbar.
+- [x] Create "New AI Action".
+- [x] Add action name.
+- [x] Add action icon.
+- [x] Add custom prompt.
+- [x] Select context sources.
+- [x] Select output mode.
+- [x] Save action.
+- [x] Edit action.
+- [x] Delete action.
+- [x] Duplicate action.
+- [x] Reorder actions.
+- [x] Display custom action in toolbar.
 
 ---
 
@@ -977,13 +1001,13 @@ I explicitly request an answer.
 
 ## Development Steps
 
-- [ ] Create AI Profile model.
-- [ ] Create profile editor.
-- [ ] Save system instructions.
-- [ ] Select active profile.
-- [ ] Add course-specific profiles.
-- [ ] Add default profile.
-- [ ] Include active profile in context builder.
+- [x] Create AI Profile model.
+- [x] Create profile editor.
+- [x] Save system instructions.
+- [x] Select active profile.
+- [x] Add course-specific profiles.
+- [x] Add default profile.
+- [x] Include active profile in context builder.
 
 ---
 
@@ -1008,14 +1032,14 @@ Create Child Page
 
 ## Development Steps
 
-- [ ] Insert AI output below cursor.
-- [ ] Replace selected text.
-- [ ] Append content to page.
-- [ ] Generate heading + content.
-- [ ] Generate editor blocks.
-- [ ] Create page from AI result.
-- [ ] Create child page.
-- [ ] Add undo support.
+- [x] Insert AI output below cursor.
+- [x] Replace selected text.
+- [x] Append content to page.
+- [x] Generate heading + content.
+- [x] Generate editor blocks.
+- [x] Create page from AI result.
+- [ ] Create child page. (Needs a page hierarchy first; pages are flat within a module. See features/24-ai-output-to-editor.md.)
+- [x] Add undo support.
 
 ---
 

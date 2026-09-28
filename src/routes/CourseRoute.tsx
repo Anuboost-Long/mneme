@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CoursePage from "../features/courses/pages/CoursePage";
 import { getModules, type Module } from "../features/courses/lib/modules";
+import { getModulePageProgress, type PageProgress } from "../features/courses/lib/pages";
 import { useCourses } from "../layouts/RootLayout";
 
 export default function CourseRoute() {
@@ -10,6 +11,7 @@ export default function CourseRoute() {
   const course = courses.find((item) => String(item.id) === courseId);
   const [modules, setModules] = useState<Module[]>([]);
   const [modulesReady, setModulesReady] = useState(false);
+  const [pageProgress, setPageProgress] = useState<Map<number, PageProgress>>(new Map());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +19,7 @@ export default function CourseRoute() {
     let active = true;
     setModulesReady(false);
     getModules(course.id).then((loaded) => { if (active) { setModules(loaded); setModulesReady(true); } });
+    getModulePageProgress(course.id).then((loaded) => { if (active) setPageProgress(loaded); });
     return () => { active = false; };
   }, [course?.id]);
 
@@ -35,6 +38,7 @@ export default function CourseRoute() {
       course={course}
       modules={modules}
       modulesReady={modulesReady}
+      pageProgress={pageProgress}
       onSaveCourse={save}
       onDeleteCourse={(id) => { remove(id); navigate("/courses", { replace: true }); }}
       onSaveModule={saveModule}

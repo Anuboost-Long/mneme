@@ -8,15 +8,18 @@ import PageForm, { pageTypeLabels } from "../components/PageForm";
 import LmsImportForm from "../components/LmsImportForm";
 import DeletePage from "../components/DeletePage";
 import DeletePages from "../components/DeletePages";
-import GalleryCard from "../components/GalleryCard";
-import GalleryListRow from "../components/GalleryListRow";
-import ListToolbar, { type ViewMode } from "../../../shared/ui/ListToolbar";
+import ReadingRow from "../components/ReadingRow";
+import StatusPicker, { statusMarkerStyles } from "../components/StatusPicker";
+import ProgressSummary from "../components/ProgressSummary";
+import ListToolbar from "../../../shared/ui/ListToolbar";
 import { useListView, type SortOption } from "../../../shared/lib/useListView";
 import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
 import { DATE_GROUP_VALUES, groupByDate } from "../../../shared/lib/dateGroups";
 import type { Course } from "../lib/courses";
-import type { Module } from "../lib/modules";
-import { pageContentPreview, pageTypes, type Page } from "../lib/pages";
+import { updateModule, type Module } from "../lib/modules";
+import { CompletionStatus } from "../lib/completion-status";
+import { pageTypes, setPageDone, type Page } from "../lib/pages";
+import { errorMessage } from "../../../shared/lib/errorMessage";
 
 type PageSortKey = "oldest" | "newest" | "name" | "type";
 
@@ -43,8 +46,9 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
   const [selectedPageIds, setSelectedPageIds] = useState<Set<number> | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
+  const [doneError, setDoneError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useStoredChoice("mneme.pages.group", DATE_GROUP_VALUES, "none");
-  const [viewMode, setViewMode] = useState<ViewMode>("gallery");
 
   const typeFilteredPages = useMemo(
     () => (typeFilter === "all" ? pages : pages.filter((page) => String(page.type) === typeFilter)),
@@ -83,7 +87,7 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
 
   return (
     <div className={clsx("px-4 py-5 sm:px-6")}>
-      <Link to={`/courses/${course.id}`} className={clsx("inline-flex items-center gap-2 rounded-md", "border border-ink/15", "px-3 py-2 text-sm font-medium", "hover:bg-ink/5")}>
+      <Link to={`/courses/${course.id}`} className={clsx("-ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg>
         Back to {course.name}
       </Link>
@@ -94,8 +98,13 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
       </nav>
       <div className={clsx("mt-6 flex flex-wrap items-start justify-between gap-4")}>
         <div className={clsx("min-w-0")}>
-          <PageTitle className={clsx("wrap-anywhere")}>{module.name}</PageTitle>
-          <Typography as="span" variant="caption" tone="muted" className={clsx("mt-2 inline-block rounded-full border border-ink/15 px-2 py-0.5")}>{moduleStatusLabels[module.status]}</Typography>
+          <PageTitle className={clsx("text-4xl wrap-anywhere")}>{module.name}</PageTitle>
+          <StatusPicker status={module.status} itemLabel={module.name} onChange={(status) => { setStatusError(null); updateModule(module.id, { status }).then(onSaveModule).catch((error) => setStatusError(errorMessage(error, "Couldn’t change this module’s status. Try again."))); }} triggerClassName={clsx("-ml-2 mt-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted", "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink")}>
+            <span aria-hidden="true" className={clsx("size-3.5 rounded-full", statusMarkerStyles[module.status])} />
+            {moduleStatusLabels[module.status]}
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+          </StatusPicker>
+          {statusError && <BodyText role="alert" tone="error" className={clsx("mt-1")}>{statusError}</BodyText>}
         </div>
         <div className={clsx("flex gap-2")}>
           <Link to={`/courses/${course.id}/modules/${module.id}/highlights`} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Highlights</Link>
@@ -103,7 +112,8 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
           <button type="button" onClick={() => setDialog("delete")} className={clsx("rounded-md px-3 py-2 text-sm text-muted", "hover:bg-danger/10 hover:text-danger")}>Delete</button>
         </div>
       </div>
-      {module.description && <BodyText tone="muted" className={clsx("mt-3 whitespace-pre-wrap wrap-anywhere")}>{module.description}</BodyText>}
+      {module.description && <BodyText tone="muted" className={clsx("mt-4 max-w-2xl text-base leading-7 whitespace-pre-wrap wrap-anywhere")}>{module.description}</BodyText>}
+      {pages.length > 0 && <ProgressSummary done={pages.filter((page) => page.status === CompletionStatus.Completed).length} total={pages.length} noun="pages" className={clsx("mt-6")} />}
       <section aria-label="Pages" className={clsx("@container mt-6 border-t border-ink/10 pt-5")}>
         <div className={clsx("flex flex-wrap items-center justify-between gap-3")}>
           <Typography as="h2" variant="label">Pages</Typography>
@@ -146,39 +156,26 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
               filterOptions={[{ value: "all", label: "All types" }, ...pageTypes.map((type) => ({ value: String(type), label: pageTypeLabels[type] }))]}
               sortValue={sortValue} onSortChange={setSortValue} sortOptions={PAGE_SORTS}
               groupBy={groupBy} onGroupByChange={setGroupBy}
-              viewMode={viewMode} onViewModeChange={setViewMode}
               className={clsx("mt-5")}
             />
             {visiblePages.length === 0 ? (
               <BodyText tone="muted" className={clsx("mt-8 text-center")}>No pages match your search or filter.</BodyText>
             ) : (
-              <div className={clsx("mt-6 space-y-8")}>
+              <div className={clsx("mt-4 space-y-8")}>
+                {doneError && <BodyText role="alert" tone="error">{doneError}</BodyText>}
                 {pageGroups.map((group) => (
                   <section key={group.key} aria-label={group.label || "Pages"}>
                     {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium")}>{group.label}</Typography>}
-                    {viewMode === "gallery" ? (
-                      <ul className={clsx("grid min-w-0 grid-cols-1 gap-4 @min-md:grid-cols-2 @min-xl:grid-cols-3")}>
-                        {group.items.map((page) => (
-                          <GalleryCard
-                            key={page.id} title={page.title} badge={pageTypeLabels[page.type]} description={pageContentPreview(page.content)} color={course.color} createdAt={page.created_at}
-                            to={`/courses/${course.id}/modules/${module.id}/pages/${page.id}`} openLabel="Open page"
-                            onEdit={() => setPageDialog({ type: "edit", page })} onDelete={() => setPageDialog({ type: "delete", page })}
-                            selectable={selectedPageIds !== null} selected={selectedPageIds?.has(page.id) ?? false} onToggleSelect={() => togglePageSelected(page.id)}
-                          />
-                        ))}
-                      </ul>
-                    ) : (
-                      <ul className={clsx("min-w-0 space-y-2")}>
-                        {group.items.map((page) => (
-                          <GalleryListRow
-                            key={page.id} title={page.title} badge={pageTypeLabels[page.type]} description={pageContentPreview(page.content)} color={course.color} createdAt={page.created_at}
-                            to={`/courses/${course.id}/modules/${module.id}/pages/${page.id}`}
-                            onEdit={() => setPageDialog({ type: "edit", page })} onDelete={() => setPageDialog({ type: "delete", page })}
-                            selectable={selectedPageIds !== null} selected={selectedPageIds?.has(page.id) ?? false} onToggleSelect={() => togglePageSelected(page.id)}
-                          />
-                        ))}
-                      </ul>
-                    )}
+                    <ul className={clsx("-mx-3 min-w-0")}>
+                      {group.items.map((page) => (
+                        <ReadingRow
+                          key={page.id} page={page} to={`/courses/${course.id}/modules/${module.id}/pages/${page.id}`}
+                          onToggleDone={() => { setDoneError(null); setPageDone(page.id, page.status !== CompletionStatus.Completed).then(onSavePage).catch((error) => setDoneError(errorMessage(error, "Couldn’t update this page. Try again."))); }}
+                          onEdit={() => setPageDialog({ type: "edit", page })} onDelete={() => setPageDialog({ type: "delete", page })}
+                          selectable={selectedPageIds !== null} selected={selectedPageIds?.has(page.id) ?? false} onToggleSelect={() => togglePageSelected(page.id)}
+                        />
+                      ))}
+                    </ul>
                   </section>
                 ))}
               </div>

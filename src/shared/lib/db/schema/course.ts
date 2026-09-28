@@ -16,6 +16,7 @@ export interface CourseRow {
   status: number; // INTEGER NOT NULL DEFAULT 1 (CompletionStatus)      -- 0002
   progress: number; // INTEGER NOT NULL DEFAULT 0 (0-100)               -- 0002
   bookmarked: number; // INTEGER NOT NULL DEFAULT 0 (0 | 1)             -- 0002
+  ai_profile_id: number | null; // INTEGER REFERENCES ai_profile(id), NULL = the default profile -- 0013
   created_at: string; // TEXT NOT NULL DEFAULT (datetime('now'))
   updated_at: string; // TEXT NOT NULL DEFAULT (datetime('now'))
 }

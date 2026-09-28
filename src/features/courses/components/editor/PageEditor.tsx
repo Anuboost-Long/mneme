@@ -3,7 +3,7 @@ import {
   useRef,
   useState,
   type DragEvent,
-  type FormEvent,
+  type SubmitEvent,
   type MouseEvent,
 } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -26,6 +26,8 @@ import PageOutline from "./PageOutline";
 import SelectionMenu from "./SelectionMenu";
 import SlashCommands from "./SlashCommands";
 import { BodyText } from "../../../../shared/ui/Typography";
+import AiActions from "../../../ai-actions/components/AiActions";
+import type { ActionLocation } from "../../../ai-actions/lib/useAiAction";
 
 const SAVE_DELAY = 800;
 const SAVED_VISIBLE_DELAY = 2000;
@@ -33,10 +35,14 @@ const SAVED_VISIBLE_DELAY = 2000;
 export default function PageEditor({
   pageId,
   content,
+  actionLocation,
+  onChangeProfile,
   onSaved,
 }: Readonly<{
   pageId: number;
   content: string | null;
+  actionLocation: ActionLocation;
+  onChangeProfile: (id: number | null) => Promise<void>;
   onSaved: (content: string) => void;
 }>) {
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
@@ -202,7 +208,7 @@ export default function PageEditor({
     setLinkOpen((open) => !open);
   }
 
-  function applyLink(event: FormEvent<HTMLFormElement>) {
+  function applyLink(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const href = linkValue.trim();
     const chain = editor!.chain().focus().extendMarkRange("link");
@@ -250,6 +256,7 @@ export default function PageEditor({
 
   return (
     <div>
+      <AiActions editor={editor} location={actionLocation} onChangeProfile={onChangeProfile} />
       {linkOpen && (
         <form
           onSubmit={applyLink}

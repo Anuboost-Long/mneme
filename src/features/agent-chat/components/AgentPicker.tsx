@@ -8,6 +8,10 @@ import { detectAgents, type DetectedAgent } from "../lib/detectAgents";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { parseArgs, presets, type KnownAgent } from "../lib/presets";
 
+function Chevron() {
+  return <svg aria-hidden="true" className={clsx("size-4")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 4 4 4-4 4" /></svg>;
+}
+
 function AgentIcon({ kind }: Readonly<{ kind: KnownAgent | "custom" }>) {
   const className = clsx("flex size-8 shrink-0 items-center justify-center rounded-md bg-ink/5", {
     claude: "text-[#d97757]",
@@ -104,14 +108,14 @@ export default function AgentPicker({ onStart, onResume, onClose }: Readonly<{
             <button type="button" disabled={busy || loading || !installed} onClick={() => void choose(preset.value, complete)} className={clsx("flex w-full items-center gap-3 rounded-md px-2 py-3 text-left text-sm", "hover:bg-ink/5 disabled:text-muted disabled:hover:bg-transparent")}>
               <AgentIcon kind={preset.value} />
               <span className={clsx("flex-1")}>{preset.label}</span>
-              <span className={clsx("text-xs text-muted")}>{loading ? "Checking…" : installed ? "›" : "Not installed"}</span>
+              <span className={clsx("text-xs text-muted")}>{loading ? "Checking…" : installed ? <Chevron /> : "Not installed"}</span>
             </button>
           </li>;
         })}
         {connections.filter((connection) => connection.kind === "custom").map((connection) => <li key={connection.id}>
           <button type="button" disabled={busy} onClick={() => void start(connection.id, complete)} className={clsx("flex w-full items-center gap-3 rounded-md px-2 py-3 text-left text-sm", "hover:bg-ink/5 disabled:opacity-50")}>
             <AgentIcon kind="custom" />
-            <span className={clsx("min-w-0 flex-1 truncate")}>{connection.name}</span><span className={clsx("text-xs text-muted")}>Custom ›</span>
+            <span className={clsx("min-w-0 flex-1 truncate")}>{connection.name}</span><span className={clsx("flex items-center gap-1 text-xs text-muted")}>Custom <Chevron /></span>
           </button>
         </li>)}
       </ul>

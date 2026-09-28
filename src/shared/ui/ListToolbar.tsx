@@ -1,8 +1,8 @@
+import { useId, useState } from "react";
 import clsx from "clsx";
 import type { DateGroupBy } from "../lib/dateGroups";
 
 export type ToolbarOption = { value: string; label: string };
-export type ViewMode = "gallery" | "list";
 
 const GROUP_OPTIONS: { value: DateGroupBy; label: string }[] = [
   { value: "none", label: "Don’t group" },
@@ -16,7 +16,6 @@ export default function ListToolbar<K extends string>({
   filterLabel, filterValue, onFilterChange, filterOptions,
   sortValue, onSortChange, sortOptions,
   groupBy, onGroupByChange,
-  viewMode, onViewModeChange,
   className,
 }: Readonly<{
   query: string;
@@ -31,14 +30,14 @@ export default function ListToolbar<K extends string>({
   sortOptions: readonly ToolbarOption[];
   groupBy: DateGroupBy;
   onGroupByChange: (value: DateGroupBy) => void;
-  viewMode?: ViewMode;
-  onViewModeChange?: (value: ViewMode) => void;
   className?: string;
 }>) {
   const selectClassName = clsx(
     "h-9 w-full rounded-md border border-ink/20 bg-surface px-2 text-sm text-ink",
     "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink",
   );
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsId = useId();
   const hasActiveSearch = query.trim().length > 0;
   const hasActiveFilter = filterOptions && filterValue !== filterOptions[0]?.value;
 
@@ -58,23 +57,13 @@ export default function ListToolbar<K extends string>({
             )}
           />
         </div>
-        {onViewModeChange && <fieldset className={clsx("flex shrink-0 overflow-hidden rounded-md border border-ink/20")}>
-          <legend className={clsx("sr-only")}>View</legend>
-          <button
-            type="button" aria-label="Gallery view" aria-pressed={viewMode === "gallery"} onClick={() => onViewModeChange("gallery")}
-            className={clsx("flex h-9 w-9 items-center justify-center", viewMode === "gallery" ? "bg-ink/10 text-ink" : "text-muted hover:bg-ink/5")}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></svg>
-          </button>
-          <button
-            type="button" aria-label="List view" aria-pressed={viewMode === "list"} onClick={() => onViewModeChange("list")}
-            className={clsx("flex h-9 w-9 items-center justify-center border-l border-ink/20", viewMode === "list" ? "bg-ink/10 text-ink" : "text-muted hover:bg-ink/5")}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-          </button>
-        </fieldset>}
+        <button type="button" aria-expanded={optionsOpen} aria-controls={optionsId} onClick={() => setOptionsOpen(!optionsOpen)} className={clsx("flex h-9 shrink-0 items-center gap-2 rounded-md border border-ink/20 px-3 text-sm text-ink", optionsOpen ? "bg-ink/7" : "hover:bg-ink/5", "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink")}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+          Sort &amp; filter
+          {hasActiveFilter && <span className={clsx("size-1.5 rounded-full bg-chain-lime")}><span className={clsx("sr-only")}>(filter on)</span></span>}
+        </button>
       </div>
-      <div className={clsx("mt-3 grid grid-cols-2 gap-3 @min-xl:grid-cols-3")}>
+      {optionsOpen && <div id={optionsId} className={clsx("mt-3 grid grid-cols-2 gap-3 @min-xl:grid-cols-3")}>
         {filterOptions && (
           <label className={clsx("min-w-0 text-xs font-medium text-muted")}>
             {filterLabel}
@@ -95,7 +84,7 @@ export default function ListToolbar<K extends string>({
             {GROUP_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
-      </div>
+      </div>}
       {(hasActiveSearch || hasActiveFilter) && (
         <button type="button" onClick={() => { onQueryChange(""); if (filterOptions) onFilterChange?.(filterOptions[0].value); }} className={clsx("mt-3 h-9 rounded-md bg-ink/8 px-3 text-sm font-medium text-ink", "hover:bg-ink/15")}>Clear search and filter</button>
       )}

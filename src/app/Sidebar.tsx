@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { NavLink } from "react-router-dom";
 import type { Course } from "../features/courses/lib/courses";
 import type { SidebarMode } from "../shared/providers/SidebarModeProvider";
+import TruncatedText from "../shared/ui/TruncatedText";
 import CourseIcon from "../shared/ui/CourseIcon";
 import CourseActions from "../features/courses/components/CourseActions";
 import { Caption } from "../shared/ui/Typography";
@@ -36,7 +37,7 @@ function SidebarLinks({ courses, ready, onCreate, onSave, onDelete }: Readonly<{
           <CourseActions key={course.id} course={course} onSave={onSave} onDelete={onDelete}>
             <NavLink to={`/courses/${course.id}`} className={({ isActive }) => clsx("mb-1 flex items-center gap-2 rounded-md py-1.5 pr-12 pl-2 text-sm", isActive ? "bg-ink/7 font-medium" : "hover:bg-ink/5")}>
               <CourseIcon icon={course.icon} color={course.color} />
-              <span className={clsx("truncate")} title={course.name}>{course.name}</span>
+              <TruncatedText text={course.name} className={clsx("min-w-0 flex-1")} />
             </NavLink>
           </CourseActions>
         ))}

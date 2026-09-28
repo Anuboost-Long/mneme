@@ -27,7 +27,7 @@ async function moduleUrl(url) {
 }
 
 const load = async (path) => import(await moduleUrl(new URL(`../src/${path}.ts`, import.meta.url)));
-for (const name of ['0001-initial', '0002-completion-tracking', '0003-numeric-enums', '0004-agent-chat']) {
+for (const name of ['0001-initial', '0002-completion-tracking', '0003-numeric-enums', '0004-agent-chat', '0015-agent-message-attachments']) {
   database.exec(Object.values(await load(`shared/lib/db/migrations/${name}`))[0].sql);
 }
 const connections = await load('features/agent-chat/lib/connections');
@@ -147,7 +147,7 @@ async function invoke(connection, id, session = null, message = 'hello') {
   const events = [];
   let resolve;
   const done = new Promise((finish) => { resolve = finish; });
-  const handle = await runTurn(connection, id, session, message, (event) => {
+  const handle = await runTurn(connection, id, session, message, [], (event) => {
     events.push(event);
     if (event.type === 'done' || event.type === 'error') resolve(event);
   });

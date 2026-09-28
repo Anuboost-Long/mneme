@@ -6,6 +6,7 @@ export type { ModuleRow } from "./module";
 export type { PageRow } from "./page";
 export type { AttachmentRow } from "./attachment";
 export type { AiActionRow } from "./ai-action";
+export type { AiProfileRow } from "./ai-profile";
 export type { SettingsRow } from "./settings";
 export type { AgentConnectionRow } from "./agent-connection";
 export type { AgentConversationRow } from "./agent-conversation";
