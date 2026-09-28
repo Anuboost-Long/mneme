@@ -1,11 +1,13 @@
-import { desktop, type ProcessOutputChunk } from "@chain/sdk";
+import { desktop, type ProcessArg, type ProcessOutputChunk } from "@chain/sdk";
 import type { AgentConnection } from "./connections";
 import type { KnownAgent } from "./presets";
 import { appendMessage } from "./messages";
 import { updateConversationSessionId } from "./conversations";
 import { recordUsage } from "./usage";
 import { getAgentServerSnapshot, startAgentServer } from "../../agent-server/lib/agentServerState";
+import { getActiveProfile, withProfile, withProfileMessage, type AiProfile } from "../../ai-profiles/lib/profiles";
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { formatAttachments, imageMediaType, type ChatAttachment } from "./attachments";
 
 export type ToolActivity = { id: string; name: string; input: string; result?: string; isError?: boolean };
 
@@ -38,8 +40,21 @@ type Invoker = {
   // model is null when the connection hasn't set one, meaning the CLI's own default.
   buildArgs(message: string, sessionId: string | null, mcpUrl: string | null, framing: string, model: string | null): string[];
   needsMcp: boolean;
+  takesFraming: boolean;
   handleLine(line: string, ctx: TurnContext): void;
+  // Only for a CLI that can take images: rewrites the built invocation to
+  // carry them. `stdin` is the attached text files, if any.
+  withImages?(args: string[], images: StoredImage[], stdin: string | undefined): { args: ProcessArg[]; stdin: string | undefined };
 };
+
+// An attached image after runTurn has written it to desktop.files.
+type StoredImage = { reference: string; mediaType: string; bytes: Uint8Array };
+
+function toBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  return btoa(binary);
+}
 
 // Both Claude and Codex inherit mneme's own process cwd (chain-sdk's
 // processRunner has no cwd override — see CONTRACT.md), which is mneme's
@@ -73,17 +88,81 @@ function parseJsonLine(line: string): Record<string, unknown> | null {
 // usable stdout. Tool-call streaming confirmed too: a "tool_use" content
 // block under stream_event (name prefixed "mcp__mneme__" for mneme's own
 // tools), its result as a separate top-level {"type":"user",...} line.
+type ClaudeStreamEvent = { type?: string; index?: number; content_block?: { type?: string; id?: string; name?: string; input?: unknown }; delta?: { type?: string; text?: string; partial_json?: string } };
+
+function handleClaudeToolResults(parsed: Record<string, unknown>, ctx: TurnContext) {
+  const content = (parsed.message as { content?: { type?: string; tool_use_id?: string; content?: unknown; is_error?: boolean }[] } | undefined)?.content;
+  for (const block of content ?? []) {
+    const tool = ctx.tools.get(block.tool_use_id ?? "");
+    if (block.type !== "tool_result" || !tool) continue;
+    tool.result = typeof block.content === "string" ? block.content : JSON.stringify(block.content ?? null);
+    tool.isError = block.is_error === true;
+    ctx.onEvent({ type: "tool", tool: { ...tool } });
+  }
+}
+
+function handleClaudeResult(parsed: Record<string, unknown>, ctx: TurnContext) {
+  ctx.completionSeen = true;
+  if (typeof parsed.result === "string") ctx.finalText = parsed.result;
+  ctx.usage = parsed.usage as TurnContext["usage"];
+  ctx.cost = parsed.total_cost_usd as number | undefined;
+  if (parsed.is_error) {
+    const errors = parsed.errors as string[] | undefined;
+    ctx.resultError = errors?.join("\n") || (typeof parsed.result === "string" ? parsed.result : "") || "The agent could not complete this turn.";
+  }
+}
+
+// Images: `-p` can't take one in argv, so the whole message moves to stdin
+// as one `--input-format stream-json` user message: the prompt and any
+// attached files as a text block, then each image as a base64 block.
+// Confirmed live, including with --resume: a 16×16 red PNG sent this way
+// was answered "Red", and a resumed turn still remembered it.
+function claudeWithImages(args: string[], images: StoredImage[], stdin: string | undefined) {
+  const [printFlag, prompt, ...rest] = args;
+  const content = [
+    { type: "text", text: stdin ? `${prompt}\n\n${stdin}` : prompt },
+    ...images.map((image) => ({ type: "image", source: { type: "base64", media_type: image.mediaType, data: toBase64(image.bytes) } })),
+  ];
+  return {
+    args: [printFlag, "--input-format", "stream-json", ...rest],
+    stdin: `${JSON.stringify({ type: "user", message: { role: "user", content } })}\n`,
+  };
+}
+
 function createClaudeInvoker(): Invoker {
   const blocks = new Map<number, { tool: ToolActivity; partial: string }>();
+
+  function handleStreamEvent(event: ClaudeStreamEvent | undefined, ctx: TurnContext) {
+    if (event?.delta?.type === "text_delta" && event.delta.text) {
+      ctx.finalText += event.delta.text;
+      ctx.onEvent({ type: "text", text: event.delta.text });
+    }
+    const block = event?.content_block;
+    if (event?.type === "content_block_start" && block?.type === "tool_use" && block.id && block.name?.startsWith("mcp__mneme__")) {
+      const tool: ToolActivity = { id: block.id, name: block.name.slice("mcp__mneme__".length), input: JSON.stringify(block.input ?? {}) };
+      ctx.tools.set(tool.id, tool);
+      blocks.set(event.index ?? 0, { tool, partial: "" });
+      ctx.onEvent({ type: "tool", tool: { ...tool } });
+    }
+    const active = blocks.get(event?.index ?? -1);
+    if (active && event?.delta?.type === "input_json_delta") {
+      active.partial += event.delta.partial_json ?? "";
+      active.tool.input = active.partial;
+      ctx.onEvent({ type: "tool", tool: { ...active.tool } });
+    }
+    if (event?.type === "content_block_stop") blocks.delete(event.index ?? -1);
+  }
+
   return {
     needsMcp: true,
+    takesFraming: true,
+    withImages: claudeWithImages,
     buildArgs(message, sessionId, mcpUrl, framing, model) {
       const args = ["-p", message, "--append-system-prompt", framing, "--output-format", "stream-json", "--verbose", "--include-partial-messages"];
       if (sessionId) args.push("--resume", sessionId);
       if (model) args.push("--model", model);
       if (mcpUrl) {
-        args.push("--mcp-config", JSON.stringify({ mcpServers: { mneme: { type: "http", url: mcpUrl } } }));
-        args.push("--allowedTools", "mcp__mneme__*");
+        args.push("--mcp-config", JSON.stringify({ mcpServers: { mneme: { type: "http", url: mcpUrl } } }), "--allowedTools", "mcp__mneme__*");
       }
       return args;
     },
@@ -91,47 +170,9 @@ function createClaudeInvoker(): Invoker {
       const parsed = parseJsonLine(line);
       if (!parsed) return;
       if (typeof parsed.session_id === "string") ctx.newSessionId = parsed.session_id;
-      const event = parsed.event as { type?: string; index?: number; content_block?: { type?: string; id?: string; name?: string; input?: unknown }; delta?: { type?: string; text?: string; partial_json?: string } } | undefined;
-      if (parsed.type === "stream_event") {
-        if (event?.delta?.type === "text_delta" && event.delta.text) {
-          ctx.finalText += event.delta.text;
-          ctx.onEvent({ type: "text", text: event.delta.text });
-        }
-        const block = event?.content_block;
-        if (event?.type === "content_block_start" && block?.type === "tool_use" && block.id && block.name?.startsWith("mcp__mneme__")) {
-          const tool: ToolActivity = { id: block.id, name: block.name.slice("mcp__mneme__".length), input: JSON.stringify(block.input ?? {}) };
-          ctx.tools.set(tool.id, tool);
-          blocks.set(event.index ?? 0, { tool, partial: "" });
-          ctx.onEvent({ type: "tool", tool: { ...tool } });
-        }
-        const active = blocks.get(event?.index ?? -1);
-        if (active && event?.delta?.type === "input_json_delta") {
-          active.partial += event.delta.partial_json ?? "";
-          active.tool.input = active.partial;
-          ctx.onEvent({ type: "tool", tool: { ...active.tool } });
-        }
-        if (event?.type === "content_block_stop") blocks.delete(event.index ?? -1);
-      }
-      if (parsed.type === "user") {
-        const content = (parsed.message as { content?: { type?: string; tool_use_id?: string; content?: unknown; is_error?: boolean }[] } | undefined)?.content;
-        for (const block of content ?? []) {
-          const tool = ctx.tools.get(block.tool_use_id ?? "");
-          if (block.type !== "tool_result" || !tool) continue;
-          tool.result = typeof block.content === "string" ? block.content : JSON.stringify(block.content ?? null);
-          tool.isError = block.is_error === true;
-          ctx.onEvent({ type: "tool", tool: { ...tool } });
-        }
-      }
-      if (parsed.type === "result") {
-        ctx.completionSeen = true;
-        if (typeof parsed.result === "string") ctx.finalText = parsed.result;
-        ctx.usage = parsed.usage as TurnContext["usage"];
-        ctx.cost = parsed.total_cost_usd as number | undefined;
-        if (parsed.is_error) {
-          const errors = parsed.errors as string[] | undefined;
-          ctx.resultError = errors?.join("\n") || (typeof parsed.result === "string" ? parsed.result : "") || "The agent could not complete this turn.";
-        }
-      }
+      if (parsed.type === "stream_event") handleStreamEvent(parsed.event as ClaudeStreamEvent | undefined, ctx);
+      if (parsed.type === "user") handleClaudeToolResults(parsed, ctx);
+      if (parsed.type === "result") handleClaudeResult(parsed, ctx);
     },
   };
 }
@@ -148,6 +189,13 @@ function createClaudeInvoker(): Invoker {
 function createCodexInvoker(): Invoker {
   return {
     needsMcp: true,
+    takesFraming: true,
+    // `-i, --image <FILE>...` per `codex exec --help` takes a path on disk
+    // only, hence a desktop.files reference the native side resolves.
+    // Appended last, so a greedy multi-value flag can't swallow the prompt.
+    withImages(args, images, stdin) {
+      return { args: [...args, ...images.flatMap((image) => ["--image", { fileReference: image.reference }])], stdin };
+    },
     buildArgs(message, sessionId, mcpUrl, framing, model) {
       const framedMessage = `${framing}\n\n${message}`;
       const modelArgs = model ? ["--model", model] : [];
@@ -194,6 +242,7 @@ function createCodexInvoker(): Invoker {
 function createPassthroughInvoker(baseArgs: string[], modelFlag?: string): Invoker {
   return {
     needsMcp: false,
+    takesFraming: false,
     buildArgs(message, _sessionId, _mcpUrl, _framing, model) {
       const modelArgs = model && modelFlag ? [modelFlag, model] : [];
       return [...baseArgs, ...modelArgs, message];
@@ -223,6 +272,11 @@ function createInvoker(kind: KnownAgent | "custom", baseArgs: string[]): Invoker
   return createPassthroughInvoker(baseArgs, passthroughModelFlags[kind]);
 }
 
+function buildArgs(invoker: Invoker, connection: AgentConnection, message: string, sessionId: string | null, mcpUrl: string | null, framing: string, profile: AiProfile | null) {
+  if (invoker.takesFraming) return invoker.buildArgs(message, sessionId, mcpUrl, withProfile(framing, profile), connection.model);
+  return invoker.buildArgs(withProfileMessage(message, profile), sessionId, mcpUrl, framing, connection.model);
+}
+
 // A chat turn gets tool access to mneme's own data by pointing an
 // invoker's own MCP flag at the already-built agent-server — starting it
 // on demand here so sending a message doesn't require a separate trip to
@@ -244,16 +298,121 @@ export async function runTurn(
   conversationId: number,
   sessionId: string | null,
   message: string,
+  attachments: ChatAttachment[],
   onEvent: (event: TurnEvent) => void,
 ): Promise<{ kill: () => Promise<void> }> {
-  await appendMessage(conversationId, "user", message);
-
   const invoker = createInvoker(connection.kind, connection.args);
+  const images = attachments.filter((file) => file.kind === "image");
+  if (images.length && !invoker.withImages) throw new Error(`${connection.name} can’t receive images. Remove the image, or chat with Claude or Codex.`);
+
+  // Attached files ride on stdin where the CLI reads it (same split as
+  // runAction.ts); anything else gets them inline, under the argv cap.
+  const files = formatAttachments(attachments);
+  const viaStdin = files !== "" && acceptsStdin(connection);
+  if (files && !viaStdin && files.length > MAX_ARGV_CONTEXT_CHARS) throw new Error("These files are too long for this agent. Attach fewer or smaller files, or chat with Claude or Codex.");
+  let prompt = message;
+  if (viaStdin) prompt = `${message}\n\nThe attached files follow, each in its own <file> element.`;
+  else if (files) prompt = `${message}\n\n${files}`;
+
+  // Written before the message is saved, so the transcript can show them.
+  const stored: StoredImage[] = [];
+  for (const image of images) {
+    const mediaType = imageMediaType(image.name) ?? "image/png";
+    const bytes = image.bytes ?? new Uint8Array();
+    image.reference = await desktop.files.write(bytes, { extension: mediaType.split("/")[1] });
+    stored.push({ reference: image.reference, mediaType, bytes });
+  }
+
+  await appendMessage(conversationId, "user", message, attachments);
+
   // The conversation id rides along in the query string so mcp.ts's handler
   // can tell which conversation a tool call came from — see mcp.ts's
   // conversationIdFromPath for why that's the only channel available.
   const mcpUrl = invoker.needsMcp ? `${await ensureAgentServerUrl()}?conversation=${conversationId}` : null;
-  const args = invoker.buildArgs(message, sessionId, mcpUrl, framingInstructions(invoker.needsMcp), connection.model);
+  const built = buildArgs(invoker, connection, prompt, sessionId, mcpUrl, framingInstructions(invoker.needsMcp), await getActiveProfile());
+  const command = stored.length && invoker.withImages
+    ? invoker.withImages(built, stored, viaStdin ? files : undefined)
+    : { args: built, stdin: viaStdin ? files : undefined };
+  const { kill, finished } = await invokeAgent(connection, invoker, command.args, onEvent, command.stdin);
+
+  finished.then(async (invocation) => {
+    const { ctx } = invocation;
+    try {
+      await recordInvocationUsage(connection, conversationId, invocation);
+      for (const tool of ctx.tools.values()) await appendMessage(conversationId, "tool", JSON.stringify(tool));
+      if (ctx.finalText.trim()) await appendMessage(conversationId, "assistant", ctx.finalText.trim());
+      const failure = failureMessage(connection, invocation);
+      if (failure) {
+        await appendMessage(conversationId, "error", failure);
+        onEvent({ type: "error", message: failure });
+        return;
+      }
+      if (ctx.newSessionId) await updateConversationSessionId(conversationId, ctx.newSessionId);
+      onEvent({ type: "done", text: ctx.finalText.trim() });
+    } catch (error) {
+      onEvent({ type: "error", message: errorMessage(error, String(error)) });
+    }
+  });
+
+  return { kill };
+}
+
+// Claude's `-p` and Codex's `exec` both read piped stdin as context for
+// the prompt given in argv (Claude confirmed live; Codex per its own
+// --help) — see docs/chain-sdk-requests/12-process-runner-stdin.md. Every
+// other connection is a literal pass-through, so mneme can't assume its
+// CLI reads stdin at all.
+// Only binds agents that can't take the content on stdin (see
+// acceptsStdin): theirs travels as a single argv element, and macOS caps a
+// spawn's total argument size at about 1 MB — see
+// docs/features/21-ai-quick-actions.md.
+export const MAX_ARGV_CONTEXT_CHARS = 200_000;
+
+export function acceptsStdin(connection: Pick<AgentConnection, "kind">): boolean {
+  return connection.kind === "claude" || connection.kind === "codex";
+}
+
+// A single prompt with no conversation behind it — no session to resume,
+// no agent-server tools, nothing persisted but usage. Used by quick
+// actions (features/ai-actions), which pass their own `framing`. `stdin`
+// is only for a connection acceptsStdin() allows.
+export async function runOnce(
+  connection: AgentConnection,
+  message: string,
+  framing: string,
+  profile: AiProfile | null,
+  onEvent: (event: TurnEvent) => void,
+  stdin?: string,
+): Promise<{ kill: () => Promise<void> }> {
+  const invoker = createInvoker(connection.kind, connection.args);
+  const args = buildArgs(invoker, connection, message, null, null, framing, profile);
+  const { kill, finished } = await invokeAgent(connection, invoker, args, onEvent, stdin);
+
+  finished.then(async (invocation) => {
+    try {
+      await recordInvocationUsage(connection, null, invocation);
+      const failure = failureMessage(connection, invocation);
+      onEvent(failure ? { type: "error", message: failure } : { type: "done", text: invocation.ctx.finalText.trim() });
+    } catch (error) {
+      onEvent({ type: "error", message: errorMessage(error, String(error)) });
+    }
+  });
+
+  return { kill };
+}
+
+type Invocation = { ctx: TurnContext; result: { code: number | null; killed: boolean }; stderrText: string; durationMs: number };
+
+// Spawns the CLI and turns its stdout into invoker events, line by line.
+// Knows nothing about conversations — runTurn/runOnce decide what to
+// persist once `finished` resolves.
+async function invokeAgent(
+  connection: AgentConnection,
+  invoker: Invoker,
+  args: ProcessArg[],
+  onEvent: (event: TurnEvent) => void,
+  stdin?: string,
+): Promise<{ kill: () => Promise<void>; finished: Promise<Invocation> }> {
   const startedAt = Date.now();
 
   let buffer = "";
@@ -277,41 +436,36 @@ export async function runTurn(
     }
   }
 
-  const handle = await desktop.processRunner.run(connection.command, args, handleChunk);
+  const handle = await desktop.processRunner.run(connection.command, args, handleChunk, stdin === undefined ? undefined : { stdin });
 
-  handle.exited.then(async (result) => {
-    try {
-      if (buffer.trim()) handleLine(buffer);
-      await recordUsage({
-        agent_connection_id: connection.id,
-        conversation_id: conversationId,
-        duration_ms: Date.now() - startedAt,
-        input_tokens: ctx.usage?.input_tokens ?? null,
-        output_tokens: ctx.usage?.output_tokens ?? null,
-        cost_usd: ctx.cost ?? null,
-        exit_code: result.code,
-      });
-      for (const tool of ctx.tools.values()) await appendMessage(conversationId, "tool", JSON.stringify(tool));
-      if (ctx.finalText.trim()) await appendMessage(conversationId, "assistant", ctx.finalText.trim());
-      // A non-zero exit with nothing usable on stdout means the CLI itself
-      // rejected the invocation (bad flags, auth, MCP config) — stderr is
-      // where that message actually lands, not stdout's JSON stream.
-      const failure = result.killed
-        ? "Generation stopped."
-        : ctx.resultError
-          || (result.code !== 0 ? stderrText.trim() || `${connection.name} exited with code ${result.code ?? "unknown"}.` : "")
-          || (!ctx.completionSeen ? "The agent exited without completing its response. Try again." : "");
-      if (failure) {
-        await appendMessage(conversationId, "error", failure);
-        onEvent({ type: "error", message: failure });
-        return;
-      }
-      if (ctx.newSessionId) await updateConversationSessionId(conversationId, ctx.newSessionId);
-      onEvent({ type: "done", text: ctx.finalText.trim() });
-    } catch (error) {
-      onEvent({ type: "error", message: errorMessage(error, String(error)) });
-    }
+  const finished = handle.exited.then((result) => {
+    if (buffer.trim()) handleLine(buffer);
+    return { ctx, result, stderrText, durationMs: Date.now() - startedAt };
   });
 
-  return { kill: () => handle.kill() };
+  return { kill: () => handle.kill(), finished };
+}
+
+function recordInvocationUsage(connection: AgentConnection, conversationId: number | null, { ctx, result, durationMs }: Invocation) {
+  return recordUsage({
+    agent_connection_id: connection.id,
+    conversation_id: conversationId,
+    duration_ms: durationMs,
+    input_tokens: ctx.usage?.input_tokens ?? null,
+    output_tokens: ctx.usage?.output_tokens ?? null,
+    cost_usd: ctx.cost ?? null,
+    exit_code: result.code,
+  });
+}
+
+// Empty when the invocation succeeded.
+function failureMessage(connection: AgentConnection, { ctx, result, stderrText }: Invocation): string {
+  if (result.killed) return "Generation stopped.";
+  if (ctx.resultError) return ctx.resultError;
+  // A non-zero exit with nothing usable on stdout means the CLI itself
+  // rejected the invocation (bad flags, auth, MCP config) — stderr is
+  // where that message actually lands, not stdout's JSON stream.
+  if (result.code !== 0) return stderrText.trim() || `${connection.name} exited with code ${result.code ?? "unknown"}.`;
+  if (!ctx.completionSeen) return "The agent exited without completing its response. Try again.";
+  return "";
 }

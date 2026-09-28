@@ -17,6 +17,8 @@
   --color-action: var(--action);
   --color-on-action: var(--on-action);
   --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-success: var(--success);
 }
 
 :root {
@@ -28,6 +30,8 @@
   --action: #171b24;
   --on-action: #ffffff;
   --danger: #b91c1c;
+  --info: #1d4ed8;
+  --success: #15803d;
 }
 
 :root[data-theme="dark"] {
@@ -39,6 +43,8 @@
   --action: #c5f74f;
   --on-action: #171b24;
   --danger: #fca5a5;
+  --info: #93c5fd;
+  --success: #86efac;
 }
 
 .course-icon {
@@ -49,34 +55,6 @@
 [data-theme="dark"] .course-icon {
   color: color-mix(in srgb, var(--course-color) 45%, var(--ink));
   background: color-mix(in srgb, var(--course-color) 25%, var(--ink) 8%);
-}
-
-.gallery-card-header {
-  background: color-mix(in srgb, var(--gallery-color) 12%, var(--surface));
-}
-
-[data-theme="dark"] .gallery-card-header {
-  background: color-mix(in srgb, var(--gallery-color) 24%, var(--surface));
-}
-
-.gallery-card {
-  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease-out, border-color 220ms ease-out;
-}
-
-.gallery-card:is(:hover, :focus-within) {
-  z-index: 1;
-  transform: translateY(-4px) scale(1.025);
-  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.3);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gallery-card {
-    transition: none;
-  }
-
-  .gallery-card:is(:hover, :focus-within) {
-    transform: none;
-  }
 }
 
 .sidebar-overlay {
@@ -98,7 +76,7 @@
 
 .sidebar-push {
   grid-template-rows: 0fr;
-  transition: grid-template-rows 100ms 100ms cubic-bezier(0, 0, 0.2, 1);
+  transition: grid-template-rows 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .sidebar-push[data-expanded="true"] {
@@ -126,7 +104,9 @@
   .sidebar-push {
     width: 0;
     grid-template-rows: 1fr;
-    transition: width 100ms 100ms cubic-bezier(0, 0, 0.2, 1);
+    /* Same duration and curve as .sidebar-push-content's slide, so the
+       panel's edge and the content it pushes move in lockstep. */
+    transition: width 200ms cubic-bezier(0, 0, 0.2, 1);
   }
 
   .sidebar-push[data-expanded="true"] {
@@ -138,6 +118,46 @@
 .sidebar-push[data-instant="true"],
 .sidebar-push[data-instant="true"] .sidebar-push-content {
   transition: none !important;
+}
+
+/* FileDropOverlay.tsx: fades over the conversation while files are dragged
+   over it; the three tiles fan out of a stack as it appears. */
+.file-drop-overlay {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 150ms cubic-bezier(0, 0, 0.2, 1),
+    visibility 0s 150ms;
+}
+
+.file-drop-overlay[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.file-drop-tile {
+  transform: translateY(8px) scale(0.9);
+  transition: transform 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.file-drop-overlay[data-visible="true"] .file-drop-tile:nth-child(1) {
+  transform: translate(-44px, 4px) rotate(-10deg);
+}
+
+.file-drop-overlay[data-visible="true"] .file-drop-tile:nth-child(2) {
+  transform: translate(44px, 4px) rotate(10deg);
+}
+
+.file-drop-overlay[data-visible="true"] .file-drop-tile:nth-child(3) {
+  transform: translateY(-6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .file-drop-overlay,
+  .file-drop-tile {
+    transition: none;
+  }
 }
 
 .app-dialog {
@@ -152,6 +172,14 @@
   opacity: 1;
   transform: translateY(0);
   transition-delay: 150ms;
+}
+
+/* Dialog.tsx's `origin` animates the box itself; only the backdrop keeps
+   the transition above. */
+.app-dialog[data-morph="true"] {
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 .app-dialog::backdrop {

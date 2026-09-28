@@ -6,7 +6,7 @@ import { errorMessage } from "../../../shared/lib/errorMessage";
 import type { Course } from "../lib/courses";
 import type { Module } from "../lib/modules";
 import type { Page } from "../lib/pages";
-import { updatePage } from "../lib/pages";
+import { getPage, updatePage } from "../lib/pages";
 import { deleteHighlight, keepOrphanedHighlight, stripHighlight, type Highlight } from "../lib/highlights";
 
 export default function ModuleHighlightsPage({ course, module, moduleReady, pages, highlights, highlightsReady, onRemoveHighlight, onKeepHighlight }: Readonly<{
@@ -26,13 +26,17 @@ export default function ModuleHighlightsPage({ course, module, moduleReady, page
     setBusyId(highlight.id);
     setError("");
     try {
-      if (highlight.orphaned_at) {
-        await deleteHighlight(highlight.id);
-      } else {
-        const page = pages.find((item) => item.id === highlight.page_id);
+      if (!highlight.orphaned_at) {
+        // Read the page fresh rather than from `pages`, which still holds
+        // content from before any earlier removal on this screen — stripping
+        // that stale copy would put back marks already removed.
+        const page = await getPage(highlight.page_id);
         if (!page?.content) return;
         await updatePage(page.id, { content: stripHighlight(page.content, highlight.ref) }, { skipHighlightReconciliation: true });
       }
+      // Stripping the mark only orphans the row (see syncPageHighlights),
+      // so it's deleted here too, or it would come back as orphaned.
+      await deleteHighlight(highlight.id);
       onRemoveHighlight(highlight.id);
     } catch (error) {
       setError(errorMessage(error, "Couldn’t remove this highlight. Try again."));
@@ -86,9 +90,8 @@ export default function ModuleHighlightsPage({ course, module, moduleReady, page
       </div>
       {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
       <div className={clsx("mt-6 border-t border-ink/10 pt-5")}>
-        {!highlightsReady ? (
-          <BodyText role="status" tone="muted">Loading highlights…</BodyText>
-        ) : groups.length === 0 ? (
+        {!highlightsReady && <BodyText role="status" tone="muted">Loading highlights…</BodyText>}
+        {highlightsReady && (groups.length === 0 ? (
           <div className={clsx("py-16 text-center sm:py-24")}>
             <SectionTitle>Nothing highlighted yet</SectionTitle>
             <BodyText tone="muted" className={clsx("mx-auto mt-2 max-w-sm")}>Select text on a page, right-click, and choose Highlight to add it here.</BodyText>
@@ -123,7 +126,7 @@ export default function ModuleHighlightsPage({ course, module, moduleReady, page
               </section>
             ))}
           </div>
-        )}
+        ))}
       </div>
       <Caption tone="muted" className={clsx("mt-8 border-t border-ink/10 pt-4")}>Removing a highlight here also un-highlights it on its page.</Caption>
     </div>

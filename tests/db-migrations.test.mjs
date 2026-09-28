@@ -50,3 +50,76 @@ test('0003 converts existing TEXT status/type values to their matching numeric e
   for (const { status } of database.prepare('SELECT status FROM module').all()) assert.equal(typeof status, 'number');
   for (const { type } of database.prepare('SELECT type FROM page').all()) assert.equal(typeof type, 'number');
 });
+
+test('0011 adds ai_action.position and seeds the default quick actions in menu order', async () => {
+  const database = new DatabaseSync(':memory:');
+  database.exec(await loadMigration('0001-initial'));
+  database.exec(await loadMigration('0011-ai-action-defaults'));
+
+  const actions = database.prepare('SELECT name, prompt, position FROM ai_action ORDER BY position').all();
+  assert.deepEqual(actions.map((action) => action.name), [
+    'Summarize', 'Explain', 'Simplify', 'Translate to English',
+    'Find key points', 'Create revision notes', 'Extract tasks', 'Organize notes',
+  ]);
+  assert.ok(actions.every((action) => action.prompt.length > 0));
+});
+
+test('0012 replaces ai_action.output_mode with numeric scope/output and keeps the seeded defaults', async () => {
+  const database = new DatabaseSync(':memory:');
+  database.exec(await loadMigration('0001-initial'));
+  database.exec(await loadMigration('0011-ai-action-defaults'));
+  database.exec(await loadMigration('0012-custom-ai-actions'));
+
+  const columns = database.prepare('PRAGMA table_info(ai_action)').all().map((column) => column.name);
+  assert.ok(!columns.includes('output_mode'));
+  for (const column of ['icon', 'scope', 'output', 'page_types']) assert.ok(columns.includes(column), column);
+
+  const actions = database.prepare('SELECT scope, output, page_types FROM ai_action').all();
+  assert.equal(actions.length, 8);
+  assert.ok(actions.every((action) => action.scope === 1 && action.output === 1 && action.page_types === null));
+});
+
+test('0013 adds ai_profile and an optional course.ai_profile_id that existing courses leave unset', async () => {
+  const database = new DatabaseSync(':memory:');
+  database.exec(await loadMigration('0001-initial'));
+  database.exec("INSERT INTO course (id, name) VALUES (1, 'Biology')");
+  database.exec(await loadMigration('0013-ai-profiles'));
+
+  assert.equal(database.prepare('SELECT ai_profile_id FROM course WHERE id = 1').get().ai_profile_id, null);
+  database.exec("INSERT INTO ai_profile (id, name, instructions) VALUES (1, 'University study', 'Use Australian English.')");
+  database.exec('UPDATE course SET ai_profile_id = 1 WHERE id = 1');
+  const profile = database.prepare('SELECT ai_profile.name FROM ai_profile JOIN course ON course.ai_profile_id = ai_profile.id WHERE course.id = 1').get();
+  assert.equal(profile.name, 'University study');
+});
+
+test('0014 swaps ai_profile.instructions for fixed settings and keeps existing profiles at "no preference"', async () => {
+  const database = new DatabaseSync(':memory:');
+  database.exec(await loadMigration('0001-initial'));
+  database.exec(await loadMigration('0013-ai-profiles'));
+  database.exec("INSERT INTO ai_profile (id, name, instructions) VALUES (1, 'Study', 'Anything at all')");
+  database.exec(await loadMigration('0014-ai-profile-settings'));
+
+  const columns = database.prepare('PRAGMA table_info(ai_profile)').all().map((column) => column.name);
+  assert.ok(!columns.includes('instructions'));
+  const profile = database.prepare('SELECT * FROM ai_profile WHERE id = 1').get();
+  assert.equal(profile.name, 'Study');
+  assert.equal(profile.language, null);
+  for (const column of ['explanation_level', 'tone', 'answer_length']) assert.equal(profile[column], 1, column);
+  for (const column of ['keep_terms', 'use_examples', 'hints_for_assessed']) assert.equal(profile[column], 0, column);
+});
+
+test('0015 adds agent_message.attachments and leaves existing messages without any', async () => {
+  const database = new DatabaseSync(':memory:');
+  for (const name of ['0001-initial', '0004-agent-chat']) database.exec(await loadMigration(name));
+  database.exec("INSERT INTO agent_connection (id, name, kind, command) VALUES (1, 'Echo', 'custom', 'echo')");
+  database.exec('INSERT INTO agent_conversation (id, agent_connection_id) VALUES (1, 1)');
+  database.exec("INSERT INTO agent_message (conversation_id, role, content) VALUES (1, 'user', 'Before')");
+  database.exec(await loadMigration('0015-agent-message-attachments'));
+
+  database.exec(`INSERT INTO agent_message (conversation_id, role, content, attachments) VALUES (1, 'user', 'After', '[{"name":"notes.md","size":12}]')`);
+  const rows = database.prepare('SELECT content, attachments FROM agent_message ORDER BY id').all();
+  assert.deepEqual(rows.map((row) => ({ ...row })), [
+    { content: 'Before', attachments: null },
+    { content: 'After', attachments: '[{"name":"notes.md","size":12}]' },
+  ]);
+});

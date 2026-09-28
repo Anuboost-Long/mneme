@@ -12,7 +12,12 @@ import { modelCommandHint, modelOptionsFor, supportsModelCommand } from "../lib/
 import AgentPicker from "../components/AgentPicker";
 import Composer from "../components/Composer";
 import ChatMessage, { ToolMessage } from "../components/ChatMessage";
+import { AttachmentList } from "../components/AttachmentCard";
+import FileDropOverlay from "../components/FileDropOverlay";
+import { useAttachments, useFileDrop } from "../lib/useAttachments";
+import { parseAttachments, type ChatAttachment } from "../lib/attachments";
 import ConversationActions from "../components/ConversationActions";
+import ProfilePicker from "../../ai-profiles/components/ProfilePicker";
 
 const sorts: SortOption<Conversation, "updated" | "title">[] = [
   { value: "updated", label: "Last active", compare: (a, b) => b.updated_at.localeCompare(a.updated_at) || b.id - a.id },
@@ -35,10 +40,13 @@ export default function AgentChatPage({ chat, selectedId, onSelect }: Readonly<{
   const conversation = chat.conversations.find((item) => item.id === selectedId);
   const connection = chat.connections.find((item) => item.id === conversation?.agent_connection_id);
   const groups = groupByDate(list.visible, (item) => `${item.updated_at.replace(" ", "T")}Z`, groupBy);
+  const files = useAttachments(conversation?.id ?? null);
+  const canAttach = conversation !== undefined && connection !== undefined && !chat.turn?.busy && chat.messagesLoaded && !chat.messageError;
+  const drop = useFileDrop(canAttach, (dropped) => void files.add(dropped));
 
-  async function handleSend(message: string) {
+  async function handleSend(message: string, attachments: ChatAttachment[]) {
     if (connection && await chat.runCommand(connection, message)) return;
-    await chat.send(message);
+    await chat.send(message, attachments);
   }
 
   useEffect(() => { followOutput.current = true; }, [selectedId]);
@@ -77,13 +85,14 @@ export default function AgentChatPage({ chat, selectedId, onSelect }: Readonly<{
             </div>)}
           </div>
         </section>
-        <section aria-label="Active conversation" className={clsx("flex min-h-0 min-w-0 flex-col border-t border-ink/10 pt-5 @min-3xl:col-span-2 @min-3xl:border-l @min-3xl:border-t-0 @min-3xl:pl-6 @min-3xl:pt-0")}>
+        <section aria-label="Active conversation" {...drop.handlers} className={clsx("relative flex min-h-0 min-w-0 flex-col border-t border-ink/10 pt-5 @min-3xl:col-span-2 @min-3xl:border-l @min-3xl:border-t-0 @min-3xl:pl-6 @min-3xl:pt-0")}>
           {conversation ? <>
             <div className={clsx("flex shrink-0 flex-wrap items-start justify-between gap-3")}>
               <div className={clsx("min-w-0")}>
                 <SectionTitle className={clsx("break-words")}>{conversation.title ?? "New conversation"}</SectionTitle>
                 <Caption tone="muted" className={clsx("mt-1")}>{connection?.name ?? "Unavailable connection"}{connection && connection.name !== agentLabel(connection.kind) && ` · ${agentLabel(connection.kind)}`}{supportsModelCommand(connection) && ` · ${connection?.model ?? "Default model"}`}</Caption>
               </div>
+              <div className={clsx("w-full max-w-56")}><ProfilePicker /></div>
             </div>
             <div ref={transcriptRef} onScroll={(event) => { const element = event.currentTarget; followOutput.current = element.scrollHeight - element.scrollTop - element.clientHeight < 64; }} className={clsx("min-h-0 flex-1 overflow-y-auto py-6")}>
               {!chat.messagesLoaded && <BodyText role="status" tone="muted">Loading messages…</BodyText>}
@@ -92,11 +101,13 @@ export default function AgentChatPage({ chat, selectedId, onSelect }: Readonly<{
               <ol className={clsx("space-y-6")}>
                 {chat.messages.map((message) => <li key={message.id} className={clsx("py-4 first:pt-0")}>
                   {message.role !== "tool" && <Caption tone={message.role === "error" ? "error" : "muted"}>{roles[message.role]}</Caption>}
+                  {message.role === "user" && <AttachmentList attachments={parseAttachments(message.attachments)} />}
                   {message.role === "tool" ? <ToolMessage content={message.content} /> : <ChatMessage content={message.content} markdown={message.role === "assistant" && connection?.kind !== "custom"} />}
                 </li>)}
               </ol>
             {chat.turn?.busy && <div className={clsx("pb-6")}>
               <Caption tone="muted">You</Caption>
+              <AttachmentList attachments={chat.turn.attachments} />
               <ChatMessage content={chat.turn.message} />
               <div className={clsx("mt-5")}>
                 <Caption tone="muted">{connection?.name ?? "Agent"}</Caption>
@@ -108,11 +119,12 @@ export default function AgentChatPage({ chat, selectedId, onSelect }: Readonly<{
             </div>
             {chat.turn?.error && !chat.messages.some((message) => message.role === "error" && message.content === chat.turn?.error) && <BodyText role="alert" tone="error" className={clsx("mb-3")}>{chat.turn.error}</BodyText>}
             {chat.notice && !chat.turn?.busy && <Caption tone="muted" className={clsx("mb-3")}>{chat.notice}</Caption>}
-            <Composer key={conversation.id} busy={chat.turn?.busy ?? false} stopping={chat.turn?.stopping ?? false}
+            <Composer key={conversation.id} files={files} busy={chat.turn?.busy ?? false} stopping={chat.turn?.stopping ?? false}
               supported={connection !== undefined} ready={chat.messagesLoaded && !chat.messageError}
               custom={connection?.kind === "custom"} modelCommand={supportsModelCommand(connection)} modelHint={modelCommandHint(connection)}
               modelOptions={modelOptionsFor(connection)} onSend={handleSend} onStop={chat.stop} />
           </> : <BodyText tone="muted">{selectedId === null ? "Select a conversation or create one to get started." : "This conversation no longer exists. Select another conversation."}</BodyText>}
+          <FileDropOverlay visible={drop.dragging} />
         </section>
       </div>}
       {action === "create" && <AgentPicker onClose={() => setAction(null)} onStart={async (id) => onSelect(await chat.create(id))}

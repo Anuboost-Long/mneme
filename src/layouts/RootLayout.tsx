@@ -3,6 +3,7 @@ import { Outlet, useLocation, useMatch, useNavigate, useOutletContext } from "re
 import clsx from "clsx";
 import { BodyText, PageTitle } from "../shared/ui/Typography";
 import NavBar from "../app/NavBar";
+import CommandPalette from "../app/CommandPalette";
 import Sidebar from "../app/Sidebar";
 import CourseForm from "../features/courses/components/CourseForm";
 import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
@@ -35,11 +36,9 @@ export default function RootLayout() {
   const { sidebarMode } = useSidebarMode();
   const navigate = useNavigate();
   const settingsRoute = useMatch("/settings") !== null;
-  const homeRoute = useMatch("/") !== null;
   const { pathname } = useLocation();
   const previousPath = useRef(pathname);
   const previousSidebarMode = useRef(sidebarMode);
-  const workspace = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
@@ -61,8 +60,7 @@ export default function RootLayout() {
     const from = previousPath.current;
     previousPath.current = pathname;
     if (from === pathname || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const surface = from === "/" || pathname === "/" ? workspace.current : content.current;
-    const animation = surface?.animate([{ opacity: 0 }, { opacity: 1 }], {
+    const animation = content.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
       duration: 160,
       easing: "ease-out",
     });
@@ -103,9 +101,9 @@ export default function RootLayout() {
   return (
     <div className={clsx("flex h-screen flex-col overflow-hidden bg-surface text-ink")}>
       <a href="#main-content" className={clsx("sr-only focus:not-sr-only focus:p-3")}>Skip to content</a>
-      <NavBar sidebarExpanded={sidebarExpanded} onToggleSidebar={homeRoute ? undefined : toggleSidebar} />
-      <div ref={workspace} className={clsx("flex min-h-0 flex-1 flex-col sm:flex-row")}>
-        {!homeRoute && <Sidebar mode={sidebarMode} expanded={sidebarExpanded} instant={sidebarInstant} courses={courses} ready={status === "ready"} onCreate={() => setCreating(true)} onSave={save} onDelete={remove} />}
+      <NavBar sidebarExpanded={sidebarExpanded} onToggleSidebar={toggleSidebar} />
+      <div className={clsx("flex min-h-0 flex-1 flex-col sm:flex-row")}>
+        <Sidebar mode={sidebarMode} expanded={sidebarExpanded} instant={sidebarInstant} courses={courses} ready={status === "ready"} onCreate={() => setCreating(true)} onSave={save} onDelete={remove} />
         <main ref={content} id="main-content" onClick={collapseOverlayOnContentClick} className={clsx("flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto")}>
           {!settingsRoute && status === "loading" && <BodyText role="status" tone="muted" className={clsx("p-8")}>Opening your workspace…</BodyText>}
           {!settingsRoute && status === "error" && (
@@ -120,6 +118,7 @@ export default function RootLayout() {
       </div>
       {creating && <CourseForm onClose={() => setCreating(false)} onSave={(course) => { save(course); setCreating(false); navigate(`/courses/${course.id}`); }} />}
       <ApprovalPrompt />
+      <CommandPalette courses={courses} />
     </div>
   );
 }

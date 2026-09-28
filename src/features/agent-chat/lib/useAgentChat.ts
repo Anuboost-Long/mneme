@@ -4,6 +4,7 @@ import { createConversation, deleteConversation, getConversations, renameConvers
 import { forgetTurn, getTurns, startTurn, stopTurn, subscribeTurns } from "./turns";
 import { getMessages, type AgentMessage } from "./messages";
 import { isModelCommand, parseCommand, supportsModelCommand } from "./commands";
+import type { ChatAttachment } from "./attachments";
 
 export function useAgentChat(selectedId: number | null) {
   const turns = useSyncExternalStore(subscribeTurns, getTurns);
@@ -89,7 +90,7 @@ export function useAgentChat(selectedId: number | null) {
   return {
     connections, conversations, loaded, error, create, rename, remove, runCommand, notice, turn,
     isBusy: (id: number) => turns.get(id)?.busy ?? false,
-    send: (message: string) => { setNotice(""); return selectedId === null ? Promise.resolve() : startTurn(selectedId, message); },
+    send: (message: string, attachments: ChatAttachment[]) => { setNotice(""); return selectedId === null ? Promise.resolve() : startTurn(selectedId, message, attachments); },
     stop: () => selectedId === null ? Promise.resolve() : stopTurn(selectedId),
     messages: turn?.messages ?? (transcript.id === selectedId ? transcript.messages : []),
     messagesLoaded: turn?.messages !== null && turn?.messages !== undefined || transcript.id === selectedId,

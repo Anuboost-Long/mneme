@@ -2,12 +2,14 @@ import { getConversation } from "./conversations";
 import { getConnections } from "./connections";
 import { appendMessage, getMessages, type AgentMessage } from "./messages";
 import { runTurn, type ToolActivity } from "./runTurn";
+import type { ChatAttachment } from "./attachments";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 
 export type Turn = {
   busy: boolean;
   stopping: boolean;
   message: string;
+  attachments: ChatAttachment[];
   text: string;
   tools: ToolActivity[];
   messages: AgentMessage[] | null;
@@ -45,9 +47,9 @@ export async function stopTurn(id: number) {
   catch (error) { update(id, { stopping: false, error: errorMessage(error, "Couldn’t stop generating. Try again.") }); }
 }
 
-export async function startTurn(id: number, message: string) {
+export async function startTurn(id: number, message: string, attachments: ChatAttachment[] = []) {
   if (!message.trim() || turns.get(id)?.busy) return;
-  turns = new Map(turns).set(id, { busy: true, stopping: false, message, text: "", tools: [], messages: null, error: "" });
+  turns = new Map(turns).set(id, { busy: true, stopping: false, message, attachments, text: "", tools: [], messages: null, error: "" });
   listeners.forEach((listener) => listener());
 
   async function finish(error = "") {
@@ -66,7 +68,7 @@ export async function startTurn(id: number, message: string) {
     update(id, { messages: await getMessages(id) });
     if (turns.get(id)?.stopping) { await finish(); return; }
     let ended = false;
-    const handle = await runTurn(connection, id, conversation.external_session_id, message, (event) => {
+    const handle = await runTurn(connection, id, conversation.external_session_id, message, attachments, (event) => {
       switch (event.type) {
         case "text": update(id, { text: (turns.get(id)?.text ?? "") + event.text }); break;
         case "tool": {

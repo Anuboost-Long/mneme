@@ -3,11 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import PageDetailPage from "../features/courses/pages/PageDetailPage";
 import { getModule } from "../features/courses/lib/modules";
 import { getPage, type Page as PageRecord } from "../features/courses/lib/pages";
+import { updateCourse } from "../features/courses/lib/courses";
 import { useCourses } from "../layouts/RootLayout";
 
 export default function PageRoute() {
   const { courseId, pageId } = useParams();
-  const { courses } = useCourses();
+  const { courses, save } = useCourses();
   const course = courses.find((item) => String(item.id) === courseId);
   const [page, setPage] = useState<PageRecord>();
   const [pageReady, setPageReady] = useState(false);
@@ -36,6 +37,7 @@ export default function PageRoute() {
       pageReady={pageReady}
       moduleName={moduleName}
       onSavePage={setPage}
+      onChangeCourseProfile={async (id) => { if (course) save(await updateCourse(course.id, { ai_profile_id: id })); }}
       onDeletePage={() => navigate(`/courses/${courseId}/modules/${page?.module_id}`, { replace: true })}
     />
   );

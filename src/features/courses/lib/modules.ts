@@ -60,6 +60,26 @@ export async function getModules(courseId: number, filter: ModuleFilter = {}) {
   return rows.map(toModule);
 }
 
+export async function getModuleCounts() {
+  const rows = await desktop.storage.query<{ course_id: number; count: number }>(
+    "SELECT course_id, COUNT(*) AS count FROM module GROUP BY course_id",
+  );
+  return new Map(rows.map((row) => [row.course_id, row.count]));
+}
+
+export type ModuleLink = { id: number; name: string; course_id: number; course_name: string };
+
+export function searchModuleLinks(query: string, limit: number) {
+  const trimmed = query.trim().replace(/[\\%_]/g, "\\$&");
+  return desktop.storage.query<ModuleLink>(
+    `SELECT module.id, module.name, module.course_id, course.name AS course_name
+     FROM module JOIN course ON course.id = module.course_id
+     WHERE module.name LIKE ? ESCAPE '\\'
+     ORDER BY module.name LIKE ? ESCAPE '\\' DESC, module.name COLLATE NOCASE LIMIT ?`,
+    [`%${trimmed}%`, `${trimmed}%`, limit],
+  );
+}
+
 export async function getModule(id: number) {
   const [row] = await desktop.storage.query<ModuleRow>("SELECT * FROM module WHERE id = ?", [id]);
   return row ? toModule(row) : undefined;

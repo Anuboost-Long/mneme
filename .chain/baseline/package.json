@@ -16,7 +16,7 @@
     "react-dom": "^19.1.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "@chain/sdk": "file:../chain-sdk/packages/sdk",
+    "@chain/sdk": "^0.1.0",
     "react-router-dom": "^7",
     "clsx": "^2"
   },
@@ -29,6 +29,6 @@
     "@tauri-apps/cli": "^2",
     "tailwindcss": "^4",
     "@tailwindcss/vite": "^4",
-    "@chain/cli": "file:../chain-sdk/packages/cli"
+    "@chain/cli": "^0.1.0"
   }
 }

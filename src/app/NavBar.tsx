@@ -19,7 +19,7 @@ export default function NavBar({ sidebarExpanded, onToggleSidebar }: Readonly<{
         </Link>
       </div>
       <Caption as="span" tone="muted" className={clsx("hidden translate-y-0.5 sm:block")}>Learning workspace</Caption>
-      <span aria-hidden="true" className={clsx("absolute inset-x-0 bottom-0 h-1 bg-chain-lime")} />
+      <span aria-hidden="true" className={clsx("absolute inset-x-0 bottom-0 h-0.5 bg-chain-lime")} />
     </header>
   );
 }

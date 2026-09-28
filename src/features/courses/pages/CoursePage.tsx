@@ -3,18 +3,20 @@ import { Link } from "react-router-dom";
 import clsx from "clsx";
 import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
 import CourseIcon from "../../../shared/ui/CourseIcon";
-import GalleryCard from "../components/GalleryCard";
-import GalleryListRow from "../components/GalleryListRow";
+import ChapterRow from "../components/ChapterRow";
+import ProgressSummary from "../components/ProgressSummary";
 import CourseForm from "../components/CourseForm";
 import DeleteCourse from "../components/DeleteCourse";
 import ModuleForm, { moduleStatusLabels } from "../components/ModuleForm";
 import DeleteModule from "../components/DeleteModule";
-import ListToolbar, { type ViewMode } from "../../../shared/ui/ListToolbar";
+import ListToolbar from "../../../shared/ui/ListToolbar";
 import { useListView, type SortOption } from "../../../shared/lib/useListView";
 import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
 import { DATE_GROUP_VALUES, groupByDate } from "../../../shared/lib/dateGroups";
 import type { Course } from "../lib/courses";
-import { moduleStatuses, type Module } from "../lib/modules";
+import type { PageProgress } from "../lib/pages";
+import { ModuleStatus, moduleStatuses, updateModule, type Module } from "../lib/modules";
+import { errorMessage } from "../../../shared/lib/errorMessage";
 
 type ModuleSortKey = "oldest" | "newest" | "name" | "status";
 
@@ -25,10 +27,11 @@ const MODULE_SORTS: SortOption<Module, ModuleSortKey>[] = [
   { value: "status", label: "Status", compare: (a, b) => moduleStatusLabels[a.status].localeCompare(moduleStatusLabels[b.status]) },
 ];
 
-export default function CoursePage({ course, modules, modulesReady, onSaveCourse, onDeleteCourse, onSaveModule, onDeleteModule }: Readonly<{
+export default function CoursePage({ course, modules, modulesReady, pageProgress, onSaveCourse, onDeleteCourse, onSaveModule, onDeleteModule }: Readonly<{
   course: Course | undefined;
   modules: Module[];
   modulesReady: boolean;
+  pageProgress: Map<number, PageProgress>;
   onSaveCourse: (course: Course) => void;
   onDeleteCourse: (id: number) => void;
   onSaveModule: (module: Module) => void;
@@ -37,8 +40,8 @@ export default function CoursePage({ course, modules, modulesReady, onSaveCourse
   const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
   const [moduleDialog, setModuleDialog] = useState<{ type: "edit" | "delete"; module: Module } | "create" | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useStoredChoice("mneme.modules.group", DATE_GROUP_VALUES, "none");
-  const [viewMode, setViewMode] = useState<ViewMode>("gallery");
 
   const statusFilteredModules = useMemo(
     () => (statusFilter === "all" ? modules : modules.filter((module) => String(module.status) === statusFilter)),
@@ -46,7 +49,16 @@ export default function CoursePage({ course, modules, modulesReady, onSaveCourse
   );
   const matchesModuleQuery = (module: Module, query: string) => module.name.toLowerCase().includes(query);
   const { query, setQuery, sortValue, setSortValue, visible: visibleModules } = useListView(statusFilteredModules, matchesModuleQuery, MODULE_SORTS, "mneme.modules.sort");
+  const moduleNumbers = new Map(modules.map((module, index) => [module.id, index + 1]));
+  const coursePages = [...pageProgress.values()].reduce((sum, progress) => ({ total: sum.total + progress.total, done: sum.done + progress.done }), { total: 0, done: 0 });
+  const upNextId = modules.find((module) => module.status !== ModuleStatus.Completed)?.id;
+  const inCourseOrder = sortValue === "oldest" && groupBy === "none";
   const moduleGroups = useMemo(() => groupByDate(visibleModules, (module) => module.created_at, groupBy, sortValue === "oldest" ? "oldest" : "newest"), [visibleModules, groupBy, sortValue]);
+
+  function changeStatus(module: Module, status: ModuleStatus) {
+    setStatusError(null);
+    updateModule(module.id, { status }).then(onSaveModule).catch((error) => setStatusError(errorMessage(error, "Couldn’t change this module’s status. Try again.")));
+  }
 
   if (!course) return (
     <section className={clsx("p-8 sm:p-14")}>
@@ -58,21 +70,22 @@ export default function CoursePage({ course, modules, modulesReady, onSaveCourse
 
   return (
     <div className={clsx("px-4 py-5 sm:px-6")}>
-      <Link to="/courses" className={clsx("inline-flex items-center gap-2 rounded-md", "border border-ink/15", "px-3 py-2 text-sm font-medium", "hover:bg-ink/5")}>
+      <Link to="/courses" className={clsx("-ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg>
         Back to courses
       </Link>
-      <div className={clsx("mt-6 flex flex-wrap items-start justify-between gap-4")}>
-        <div className={clsx("flex min-w-0 grow basis-64 items-center gap-4")}>
-          <CourseIcon icon={course.icon} color={course.color} />
-          <PageTitle className={clsx("min-w-0 wrap-anywhere")}>{course.name}</PageTitle>
+      <div className={clsx("mt-4 flex flex-wrap items-start justify-between gap-4")}>
+        <div className={clsx("flex min-w-0 grow basis-64 items-center gap-5")}>
+          <CourseIcon icon={course.icon} color={course.color} large />
+          <PageTitle className={clsx("min-w-0 text-4xl wrap-anywhere")}>{course.name}</PageTitle>
         </div>
         <div className={clsx("flex gap-2")}>
           <button type="button" onClick={() => setDialog("edit")} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Edit course</button>
           <button type="button" onClick={() => setDialog("delete")} className={clsx("rounded-md px-3 py-2 text-sm text-muted", "hover:bg-danger/10 hover:text-danger")}>Delete</button>
         </div>
       </div>
-      {course.description && <BodyText tone="muted" className={clsx("mt-3 whitespace-pre-wrap wrap-anywhere")}>{course.description}</BodyText>}
+      {course.description && <BodyText tone="muted" className={clsx("mt-4 max-w-2xl text-base leading-7 whitespace-pre-wrap wrap-anywhere")}>{course.description}</BodyText>}
+      {coursePages.total > 0 && <ProgressSummary done={coursePages.done} total={coursePages.total} noun="pages" className={clsx("mt-6")} />}
       <section aria-label="Modules" className={clsx("@container mt-6 border-t border-ink/10 pt-5")}>
         <div className={clsx("flex items-center justify-between gap-4")}>
           <Typography as="h2" variant="label">Modules</Typography>
@@ -94,29 +107,26 @@ export default function CoursePage({ course, modules, modulesReady, onSaveCourse
               filterOptions={[{ value: "all", label: "All statuses" }, ...moduleStatuses.map((status) => ({ value: String(status), label: moduleStatusLabels[status] }))]}
               sortValue={sortValue} onSortChange={setSortValue} sortOptions={MODULE_SORTS}
               groupBy={groupBy} onGroupByChange={setGroupBy}
-              viewMode={viewMode} onViewModeChange={setViewMode}
               className={clsx("mt-5")}
             />
             {visibleModules.length === 0 ? (
               <BodyText tone="muted" className={clsx("mt-8 text-center")}>No modules match your search or filter.</BodyText>
             ) : (
-              <div className={clsx("mt-6 space-y-8")}>
+              <div className={clsx("mt-4 space-y-8")}>
+                {statusError && <BodyText role="alert" tone="error">{statusError}</BodyText>}
                 {moduleGroups.map((group) => (
                   <section key={group.key} aria-label={group.label || "Modules"}>
                     {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium")}>{group.label}</Typography>}
-                    {viewMode === "gallery" ? (
-                      <ul className={clsx("grid min-w-0 grid-cols-1 gap-4 @min-md:grid-cols-2 @min-xl:grid-cols-3")}>
-                        {group.items.map((module) => (
-                          <GalleryCard key={module.id} title={module.name} badge={moduleStatusLabels[module.status]} description={module.description || ""} color={course.color} createdAt={module.created_at} to={`/courses/${course.id}/modules/${module.id}`} openLabel="Open module" onEdit={() => setModuleDialog({ type: "edit", module })} onDelete={() => setModuleDialog({ type: "delete", module })} />
-                        ))}
-                      </ul>
-                    ) : (
-                      <ul className={clsx("min-w-0 space-y-2")}>
-                        {group.items.map((module) => (
-                          <GalleryListRow key={module.id} title={module.name} badge={moduleStatusLabels[module.status]} description={module.description || ""} color={course.color} createdAt={module.created_at} to={`/courses/${course.id}/modules/${module.id}`} onEdit={() => setModuleDialog({ type: "edit", module })} onDelete={() => setModuleDialog({ type: "delete", module })} />
-                        ))}
-                      </ul>
-                    )}
+                    <ol className={clsx("min-w-0")}>
+                      {group.items.map((module) => (
+                        <ChapterRow
+                          key={module.id} module={module} number={moduleNumbers.get(module.id) ?? 0} progress={pageProgress.get(module.id)}
+                          upNext={module.id === upNextId} rail={inCourseOrder} to={`/courses/${course.id}/modules/${module.id}`}
+                          onStatusChange={(status) => changeStatus(module, status)}
+                          onEdit={() => setModuleDialog({ type: "edit", module })} onDelete={() => setModuleDialog({ type: "delete", module })}
+                        />
+                      ))}
+                    </ol>
                   </section>
                 ))}
               </div>

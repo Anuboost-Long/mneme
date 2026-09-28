@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "chain dev",
     "build": "chain build",
+    "build:mac": "chain build --target aarch64-apple-darwin && chain build --target x86_64-apple-darwin",
+    "build:win": "chain build --target x86_64-pc-windows-msvc",
     "preview": "vite preview",
     "tauri": "tauri",
     "dev:web": "vite",
+    "dev:website": "npm --prefix website run dev",
     "build:web": "tsc && vite build"
   },
   "dependencies": {

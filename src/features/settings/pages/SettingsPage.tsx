@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import clsx from "clsx";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../../shared/providers/ThemeProvider";
 import { useSidebarMode, type SidebarMode } from "../../../shared/providers/SidebarModeProvider";
 import { BodyText, Caption, PageTitle, SectionTitle, Typography } from "../../../shared/ui/Typography";
-import { createBackup, downloadBackup, readBackupFile, restoreBackup } from "../../courses/lib/backup";
+import { createBackup, downloadBackup, pickBackupFile, readBackupFile, restoreBackup } from "../../courses/lib/backup";
 import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentServerState";
 import { useAgentServer } from "../../agent-server/lib/useAgentServer";
 import ChatRetention from "../../agent-chat/components/ChatRetention";
+import ActionSettings from "../../ai-actions/components/ActionSettings";
+import ProfileSettings from "../../ai-profiles/components/ProfileSettings";
 
 const sidebarModes: { value: SidebarMode; label: string; hint: string }[] = [
   { value: "overlay", label: "Overlay", hint: "Floats over your content when open. Smoother animation, but covers what's underneath." },
@@ -22,6 +24,7 @@ export default function SettingsPage() {
   const [backupStatus, setBackupStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [restoreStatus, setRestoreStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [copied, setCopied] = useState(false);
+  const restoreInput = useRef<HTMLInputElement>(null);
   const agentServer = useAgentServer();
 
   async function backUpNow() {
@@ -42,6 +45,17 @@ export default function SettingsPage() {
       window.location.reload();
     } catch {
       setRestoreStatus("error");
+    }
+  }
+
+  async function chooseBackupFile() {
+    try {
+      await restoreFromFile(await pickBackupFile() ?? undefined);
+    } catch (error) {
+      const code = (error as { code?: string } | null)?.code;
+      if (code === "UNSUPPORTED") restoreInput.current?.click();
+      // UNAVAILABLE: a picker is already open, which the user can see.
+      else if (code !== "UNAVAILABLE") setRestoreStatus("error");
     }
   }
 
@@ -171,14 +185,14 @@ export default function SettingsPage() {
           <div className={clsx("border-t border-ink/10 pt-6")}>
             <Typography as="span" variant="label">Restore</Typography>
             <BodyText tone="muted" className={clsx("mt-1")}>Adds courses, modules and pages from a backup file. Existing ones are left untouched.</BodyText>
-            <label className={clsx("relative mt-3 inline-flex cursor-pointer items-center rounded-md", "border border-ink/20", "px-4 py-2 text-sm font-medium", "hover:bg-ink/5 has-focus-visible:outline-1 has-focus-visible:outline-offset-4", restoreStatus === "busy" && "pointer-events-none opacity-50")}>
+            <button type="button" disabled={restoreStatus === "busy"} onClick={() => void chooseBackupFile()} className={clsx("mt-3 inline-flex items-center rounded-md", "border border-ink/20", "px-4 py-2 text-sm font-medium", "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-offset-4 disabled:opacity-50")}>
               {restoreStatus === "busy" ? "Restoring…" : "Restore from a backup file"}
-              <input type="file" accept="application/json" disabled={restoreStatus === "busy"} className={clsx("sr-only")} onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                restoreFromFile(file);
-              }} />
-            </label>
+            </button>
+            <input ref={restoreInput} type="file" accept="application/json,.json" hidden onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              restoreFromFile(file);
+            }} />
             <div className={clsx("mt-2 min-h-6")}>
               {restoreStatus === "error" && <BodyText role="alert" tone="error">Couldn’t restore this file. Make sure it’s a Mneme backup and try again.</BodyText>}
             </div>
@@ -217,6 +231,8 @@ export default function SettingsPage() {
           <ChatRetention />
         </div>
       </section>
+      <ProfileSettings />
+      <ActionSettings />
     </div>
   );
 }

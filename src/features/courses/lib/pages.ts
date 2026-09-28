@@ -118,6 +118,29 @@ export async function getPages(moduleId: number, filter: PageFilter = {}) {
   return rows.map(toPage);
 }
 
+export type PageProgress = { total: number; done: number };
+
+export function percentDone(progress: PageProgress | undefined) {
+  return progress?.total ? Math.round((progress.done / progress.total) * 100) : 0;
+}
+
+async function queryPageProgress(key: "id" | "course_id", where: string, params: number[]) {
+  const rows = await desktop.storage.query<{ key: number; total: number; done: number }>(
+    `SELECT module.${key} AS key, COUNT(*) AS total, SUM(page.status = ?) AS done
+     FROM page JOIN module ON module.id = page.module_id ${where} GROUP BY module.${key}`,
+    [CompletionStatus.Completed, ...params],
+  );
+  return new Map(rows.map((row): [number, PageProgress] => [row.key, { total: row.total, done: row.done ?? 0 }]));
+}
+
+export function getModulePageProgress(courseId: number) {
+  return queryPageProgress("id", "WHERE module.course_id = ?", [courseId]);
+}
+
+export function getCoursePageProgress() {
+  return queryPageProgress("course_id", "", []);
+}
+
 export async function searchPages(query: string) {
   const trimmed = query.trim();
   if (!trimmed) return [];
@@ -127,6 +150,21 @@ export async function searchPages(query: string) {
     [like, like],
   );
   return rows.map(toPage);
+}
+
+export type PageLink = { id: number; title: string; module_id: number; module_name: string; course_id: number; in_title: number };
+
+export function searchPageLinks(query: string, limit: number) {
+  const trimmed = query.trim().replace(/[\\%_]/g, "\\$&");
+  const like = `%${trimmed}%`;
+  return desktop.storage.query<PageLink>(
+    `SELECT page.id, page.title, page.module_id, module.name AS module_name, module.course_id,
+       page.title LIKE ? ESCAPE '\\' AS in_title
+     FROM page JOIN module ON module.id = page.module_id
+     WHERE page.title LIKE ? ESCAPE '\\' OR page.content LIKE ? ESCAPE '\\'
+     ORDER BY in_title DESC, page.title LIKE ? ESCAPE '\\' DESC, page.title COLLATE NOCASE LIMIT ?`,
+    [like, like, like, `${trimmed}%`, limit],
+  );
 }
 
 export async function getPage(id: number) {
@@ -188,6 +226,12 @@ export async function updatePage(id: number, input: Partial<PageInput>, options:
   if (!page) throw new Error("This page no longer exists.");
   if (content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
   return page;
+}
+
+export function setPageDone(id: number, done: boolean) {
+  return updatePage(id, done
+    ? { status: CompletionStatus.Completed, progress: 100 }
+    : { status: CompletionStatus.NotStarted, progress: 0 });
 }
 
 export async function deletePage(id: number) {

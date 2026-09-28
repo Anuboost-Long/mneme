@@ -1,11 +1,5 @@
 import { escapeHtml } from "./import-sanitize";
-
-// The only structure pdf.js exposes per text run: its string, whether it
-// ends a line in the source PDF, its vertical position (`transform`'s
-// translateY), and its rendered size (a stand-in for font size — headings
-// are reliably bigger than body text even when nothing else marks them as
-// headings).
-export type PdfTextRun = { str: string; hasEOL: boolean; height: number; transform: number[] };
+import type { PdfTextRun } from "../../../shared/lib/pdf";
 
 type PdfLine = { text: string; y: number; height: number };
 

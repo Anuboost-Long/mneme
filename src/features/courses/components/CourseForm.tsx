@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { createCourse, updateCourse, type Course } from "../lib/courses";
 import { courseImage } from "../lib/course-image";
@@ -7,6 +7,7 @@ import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
 import { BodyText, Typography } from "../../../shared/ui/Typography";
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { getProfiles, type AiProfile } from "../../ai-profiles/lib/profiles";
 
 export default function CourseForm({ course, onSave, onClose }: Readonly<{
   course?: Course;
@@ -17,11 +18,17 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
   const [description, setDescription] = useState(course?.description ?? "");
   const [icon, setIcon] = useState(course?.icon ?? "book");
   const [color, setColor] = useState(course?.color ?? courseColors[0].value);
+  const [aiProfileId, setAiProfileId] = useState(course?.ai_profile_id ?? null);
+  const [profiles, setProfiles] = useState<AiProfile[]>([]);
   const [rgbDraft, setRgbDraft] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageError, setImageError] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    getProfiles().then(setProfiles, () => setProfiles([]));
+  }, []);
 
   function chooseColor(value: string) {
     setColor(value);
@@ -35,7 +42,7 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
     setBusy(true);
     setError("");
     try {
-      const input = { name, description, icon, color };
+      const input = { name, description, icon, color, ai_profile_id: aiProfileId };
       const saved = course ? await updateCourse(course.id, input) : await createCourse(input);
       complete(() => onSave(saved));
     } catch {
@@ -55,6 +62,17 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
           </div>
           <TextInput label="Course name" autoFocus required name="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Introduction to psychology" />
           <TextArea label="Description" name="description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What will you explore in this course?" />
+          {profiles.length > 0 && (
+            <fieldset>
+              <Typography as="legend" variant="label" className={clsx("mb-1")}>AI profile</Typography>
+              {[null, ...profiles].map((profile) => (
+                <label key={profile?.id ?? "default"} className={clsx("flex cursor-pointer items-center gap-3 py-1.5 text-sm")}>
+                  <input type="radio" name="aiProfile" checked={aiProfileId === (profile?.id ?? null)} onChange={() => setAiProfileId(profile?.id ?? null)} className={clsx("accent-current")} />
+                  {profile ? profile.name : "Use the default profile"}
+                </label>
+              ))}
+            </fieldset>
+          )}
           <fieldset>
             <Typography as="legend" variant="label" className={clsx("mb-2")}>Icon</Typography>
             <div className={clsx("flex flex-wrap gap-2")}>

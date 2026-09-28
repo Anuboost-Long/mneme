@@ -36,6 +36,15 @@ export function downloadBackup(backup: Backup) {
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
+// The native picker only offers .json files — the webview's own
+// <input type="file"> ignores `accept` (wry's open panel sets no file
+// types). Resolves null on cancel. Rejects UNSUPPORTED outside the desktop
+// runtime, where the caller falls back to that input.
+export async function pickBackupFile(): Promise<File | null> {
+  const [picked] = await desktop.files.pick({ extensions: ["json"] });
+  return picked ? new File([new Uint8Array(picked.bytes)], picked.name) : null;
+}
+
 export function readBackupFile(file: File): Promise<Backup> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
