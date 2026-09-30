@@ -31,6 +31,20 @@ export class Page {
 
   @Column({ default: 1 })
   type!: number;
+
+  // A preset name, an emoji, or a small data URL, like course.icon.
+  icon!: string | null;
+
+  // A `desktop.files` reference to the cover image, never a path.
+  cover!: string | null;
+
+  // Order within its module; ties fall back to creation order.
+  @Column({ default: 0 })
+  position!: number;
+
+  // Last time the page was opened; separate from updated_at so reading a
+  // page doesn't count as editing it.
+  opened_at!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

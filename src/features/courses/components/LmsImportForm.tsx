@@ -1,47 +1,44 @@
-import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
+import { useState, type DragEvent, type FormEvent } from "react";
 import clsx from "clsx";
-import { fetchLmsPage, parseLmsPage, type ParsedImport } from "../lib/lms-import";
+import { fetchLmsPage, parseLmsPage, storePageImages, type ParsedImport } from "../lib/lms-import";
 import { parseImportFile, fileImportKind, IMPORTABLE_FILE_EXTENSIONS } from "../lib/file-import";
 import { createPage, pageTypes, type Page } from "../lib/pages";
+import ImportFileSlot from "./ImportFileSlot";
 import { pageTypeLabels } from "./PageForm";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { pickFiles } from "../../../shared/lib/pickFiles";
 
 type Source = "url" | "file";
 
-const FILE_ACCEPT = IMPORTABLE_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 
-export default function LmsImportForm({ moduleId, onImported, onClose }: Readonly<{
+export default function LmsImportForm({ moduleId, initialSource = "url", onImported, onClose }: Readonly<{
   moduleId: number;
+  initialSource?: Source;
   onImported: (pages: Page[]) => void;
   onClose: () => void;
 }>) {
-  const [source, setSource] = useState<Source>("url");
+  const [source, setSource] = useState<Source>(initialSource);
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fetched, setFetched] = useState<ParsedImport | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // The file `<input>` only reflects a browser-native pick on its own —
-  // a drop sets React state directly instead, which would leave the
-  // input's own `.files` empty and fail its `required` validation on
-  // submit even though we already have a file. Mirroring `file` onto the
-  // input here keeps the native input and this component's state in
-  // agreement regardless of which path set `file`.
-  useEffect(() => {
-    const input = fileInputRef.current;
-    if (!input) return;
-    if (!file) { input.value = ""; return; }
-    const transfer = new DataTransfer();
-    transfer.items.add(file);
-    input.files = transfer.files;
-  }, [file]);
+  async function chooseFile() {
+    try {
+      const [picked] = await pickFiles({ extensions: IMPORTABLE_FILE_EXTENSIONS });
+      if (!picked) return;
+      setError("");
+      setFile(picked);
+    } catch (error_) {
+      setError(errorMessage(error_, "Couldn’t open the file picker. Try again."));
+    }
+  }
 
   function switchSource(next: Source) {
     setSource(next);
@@ -95,7 +92,8 @@ export default function LmsImportForm({ moduleId, onImported, onClose }: Readonl
     setBusy(true);
     setError("");
     try {
-      const page = await createPage(moduleId, { title: fetched.title, type: fetched.type, content: fetched.html });
+      const content = source === "url" ? await storePageImages(fetched.html) : fetched.html;
+      const page = await createPage(moduleId, { title: fetched.title, type: fetched.type, content });
       complete(() => onImported([page]));
     } catch {
       setError("Couldn’t create this page. Try again.");
@@ -113,7 +111,7 @@ export default function LmsImportForm({ moduleId, onImported, onClose }: Readonl
           </div>
           <div className={clsx(
             "mt-5 rounded-md border-2 border-dashed p-4 transition-colors motion-reduce:transition-none",
-            dragActive ? "border-action bg-action/5" : "border-transparent",
+            dragActive && source === "url" ? "border-action bg-action/5" : "border-transparent",
           )}>
             <fieldset disabled={busy} className={clsx("space-y-5")}>
               {source === "url" ? (
@@ -124,16 +122,20 @@ export default function LmsImportForm({ moduleId, onImported, onClose }: Readonl
                   hint="Paste a public course or module page. Pages that require login aren’t supported yet."
                 />
               ) : (
-                <TextInput
-                  ref={fileInputRef}
-                  label="File" autoFocus required type="file" name="file" accept={FILE_ACCEPT}
-                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                  hint="PDF, Word (.docx), or Markdown (.md) files."
+                <ImportFileSlot
+                  file={file}
+                  dragging={dragActive}
+                  disabled={busy}
+                  onChoose={() => void chooseFile()}
+                  onClear={() => setFile(null)}
                 />
               )}
             </fieldset>
-            {source === "file" && file && <Caption tone="muted" className={clsx("mt-2")}>Selected: {file.name}</Caption>}
-            <Caption tone="muted" className={clsx("mt-3 text-center")}>{dragActive ? "Drop to import" : "or drag a file in from anywhere in this window"}</Caption>
+            {source === "url" && (
+              <Caption tone="muted" className={clsx("mt-3 text-center")}>
+                {dragActive ? "Drop to import the file instead" : "or drag a PDF, Word or Markdown file in from anywhere in this window"}
+              </Caption>
+            )}
           </div>
           {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
           <div className={clsx("mt-8 flex justify-end gap-3 border-t border-ink/10 pt-5")}>

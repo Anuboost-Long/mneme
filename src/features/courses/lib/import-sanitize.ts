@@ -42,7 +42,7 @@ export function escapeHtml(text: string) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function escapeAttr(text: string) {
+export function escapeAttr(text: string) {
   return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
 
@@ -51,7 +51,10 @@ function escapeAttr(text: string) {
 // then behaves exactly like `new URL(value)`: an already-absolute http(s)
 // link/image still passes through, a relative one throws and gets dropped,
 // which is correct since there's no source page to resolve it against.
-function resolveUrl(value: string, baseUrl?: string): string | undefined {
+// `stored` holds image URLs the importer itself just saved through
+// desktop.files: asset-protocol URLs, trusted exactly and nothing wider.
+function resolveUrl(value: string, baseUrl?: string, stored?: ReadonlySet<string>): string | undefined {
+  if (stored?.has(value)) return escapeAttr(value);
   try {
     const resolved = new URL(value, baseUrl);
     if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return undefined;
@@ -61,19 +64,19 @@ function resolveUrl(value: string, baseUrl?: string): string | undefined {
   }
 }
 
-export function sanitizeNode(node: Node, baseUrl?: string): string {
+export function sanitizeNode(node: Node, baseUrl?: string, stored?: ReadonlySet<string>): string {
   if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.textContent ?? "");
   if (node.nodeType !== Node.ELEMENT_NODE) return "";
   const element = node as Element;
   const tag = element.tagName.toLowerCase();
   if (SKIPPED_TAGS.has(tag)) return "";
-  const children = Array.from(element.childNodes).map((child) => sanitizeNode(child, baseUrl)).join("");
+  const children = Array.from(element.childNodes).map((child) => sanitizeNode(child, baseUrl, stored)).join("");
   if (!ALLOWED_TAGS.has(tag)) return children;
   const attributes = (ALLOWED_ATTRIBUTES[tag] ?? [])
     .map((name) => {
       const value = element.getAttribute(name);
       if (!value) return "";
-      const resolved = name === "href" || name === "src" ? resolveUrl(value, baseUrl) : escapeAttr(value);
+      const resolved = name === "href" || name === "src" ? resolveUrl(value, baseUrl, stored) : escapeAttr(value);
       return resolved ? ` ${name}="${resolved}"` : "";
     })
     .join("");
@@ -81,6 +84,6 @@ export function sanitizeNode(node: Node, baseUrl?: string): string {
   return `<${tag}${attributes}>${children}</${tag}>`;
 }
 
-export function sanitizeChildren(root: Element, baseUrl?: string): string {
-  return Array.from(root.childNodes).map((node) => sanitizeNode(node, baseUrl)).join("").trim();
+export function sanitizeChildren(root: Element, baseUrl?: string, stored?: ReadonlySet<string>): string {
+  return Array.from(root.childNodes).map((node) => sanitizeNode(node, baseUrl, stored)).join("").trim();
 }

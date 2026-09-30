@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { desktop } from "@chain/sdk";
 import { readAttachment, type ChatAttachment } from "./attachments";
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { pickFiles } from "../../../shared/lib/pickFiles";
 
 // The files waiting to go out with the next message. Owned by the page, not
 // the composer, because files can be dropped anywhere on the conversation.
@@ -33,20 +33,12 @@ export function useAttachments(conversationId: number | null) {
     setError(failed ? errorMessage(failed.reason, "Couldn’t read that file. Try again.") : "");
   }
 
-  // Opens the native picker as a sheet on this window. Resolves false only
-  // outside the desktop runtime, where the caller falls back to
-  // <input type="file">.
-  async function pick(): Promise<boolean> {
+  async function pick() {
     try {
-      const picked = await desktop.files.pick({ multiple: true });
-      await add(picked.map((file) => new File([new Uint8Array(file.bytes)], file.name)));
+      await add(await pickFiles({ multiple: true }));
     } catch (pickError) {
-      const code = (pickError as { code?: string } | null)?.code;
-      if (code === "UNSUPPORTED") return false;
-      // UNAVAILABLE: a picker is already open, which the user can see.
-      if (code !== "UNAVAILABLE") setError(errorMessage(pickError, "Couldn’t open the file picker. Try again."));
+      setError(errorMessage(pickError, "Couldn’t open the file picker. Try again."));
     }
-    return true;
   }
 
   return {

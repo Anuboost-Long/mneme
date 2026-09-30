@@ -31,6 +31,21 @@ export class Course {
 
   @ForeignKey(() => AiProfile, { onDelete: "set null" })
   ai_profile_id!: number | null;
+
+  // A `desktop.files` reference to the cover image, never a path.
+  cover!: string | null;
+
+  // Order in lists; ties fall back to creation order.
+  @Column({ default: 0 })
+  position!: number;
+
+  code!: string | null;
+
+  semester!: string | null;
+
+  school!: string | null;
+
+  instructor!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

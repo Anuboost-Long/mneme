@@ -1,3 +1,4 @@
+import { formatSize } from "../../../shared/lib/formatSize";
 import { readPdf } from "../../../shared/lib/pdf";
 
 // What's saved with the message: enough to draw the file's card and
@@ -35,7 +36,7 @@ function describe(name: string, size: number, kind: AttachmentInfo["kind"], coun
 async function readPdfAttachment(file: File): Promise<ChatAttachment> {
   if (file.size > MAX_PDF_BYTES) throw new Error(`${file.name} is larger than 20 MB. Attach a smaller PDF.`);
   const { pages } = await readPdf(await file.arrayBuffer()).catch(() => { throw new Error(`Couldn’t read ${file.name}. Check that it opens as a PDF, then try again.`); });
-  const pageTexts = pages.map((runs) => runs.map((run) => run.str + (run.hasEOL ? "\n" : "")).join("").trim());
+  const pageTexts = pages.map(({ runs }) => runs.map((run) => run.str + (run.hasEOL ? "\n" : "")).join("").trim());
   if (!pageTexts.some(Boolean)) throw new Error(`${file.name} has no selectable text, so it’s probably a scanned image. Attach a PDF with real text.`);
   const text = pageTexts.map((page, index) => `[Page ${index + 1}]\n${page}`).join("\n\n");
   return describe(file.name, file.size, "pdf", pages.length, pageTexts.filter(Boolean).join("\n\n"), text);
@@ -76,12 +77,6 @@ export function parseAttachments(json: string | null): AttachmentInfo[] {
 export function fileExtension(name: string): string {
   const match = /\.([^./]+)$/.exec(name);
   return match ? match[1].toLowerCase() : "";
-}
-
-export function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function describeAttachment({ kind, count, size }: AttachmentInfo): string {

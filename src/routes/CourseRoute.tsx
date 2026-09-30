@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CoursePage from "../features/courses/pages/CoursePage";
-import { getModules, type Module } from "../features/courses/lib/modules";
+import { getModules, reorderModules, type Module } from "../features/courses/lib/modules";
 import { getModulePageProgress, type PageProgress } from "../features/courses/lib/pages";
 import { useCourses } from "../layouts/RootLayout";
 
@@ -33,6 +33,13 @@ export default function CourseRoute() {
     setModules((current) => current.filter((item) => item.id !== id));
   }
 
+  // Shows the new order right away and puts the old one back if saving fails.
+  function reorder(next: Module[]) {
+    const previous = modules;
+    setModules(next.map((module, index) => ({ ...module, position: index + 1 })));
+    reorderModules(next.map((module) => module.id)).catch(() => setModules(previous));
+  }
+
   return (
     <CoursePage
       course={course}
@@ -43,6 +50,7 @@ export default function CourseRoute() {
       onDeleteCourse={(id) => { remove(id); navigate("/courses", { replace: true }); }}
       onSaveModule={saveModule}
       onDeleteModule={removeModule}
+      onReorderModules={reorder}
     />
   );
 }

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getPageAudio, type PageAudio } from "../features/audiobook/lib/pageAudio";
 import PageDetailPage from "../features/courses/pages/PageDetailPage";
 import { getModule } from "../features/courses/lib/modules";
-import { getPage, type Page as PageRecord } from "../features/courses/lib/pages";
+import { getPage, markPageOpened, type Page as PageRecord } from "../features/courses/lib/pages";
 import { updateCourse } from "../features/courses/lib/courses";
 import { useCourses } from "../layouts/RootLayout";
 
@@ -13,13 +14,23 @@ export default function PageRoute() {
   const [page, setPage] = useState<PageRecord>();
   const [pageReady, setPageReady] = useState(false);
   const [moduleName, setModuleName] = useState<string>();
+  const [pageAudio, setPageAudio] = useState<PageAudio | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!pageId) return;
     let active = true;
     setPageReady(false);
+    void markPageOpened(Number(pageId)).catch(() => undefined);
     getPage(Number(pageId)).then((loaded) => { if (active) { setPage(loaded); setPageReady(true); } });
+    return () => { active = false; };
+  }, [pageId]);
+
+  useEffect(() => {
+    if (!pageId) return;
+    let active = true;
+    setPageAudio(null);
+    getPageAudio(Number(pageId)).then((loaded) => { if (active) setPageAudio(loaded); });
     return () => { active = false; };
   }, [pageId]);
 
@@ -37,6 +48,8 @@ export default function PageRoute() {
       pageReady={pageReady}
       moduleName={moduleName}
       onSavePage={setPage}
+      pageAudio={pageAudio}
+      onChangePageAudio={setPageAudio}
       onChangeCourseProfile={async (id) => { if (course) save(await updateCourse(course.id, { ai_profile_id: id })); }}
       onDeletePage={() => navigate(`/courses/${courseId}/modules/${page?.module_id}`, { replace: true })}
     />

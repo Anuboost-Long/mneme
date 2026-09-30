@@ -1,5 +1,11 @@
 # Home screen
 
+> **Superseded for Home itself (30 September 2026):** Home is now the
+> customizable widget board described in
+> [34-dashboard-widgets.md](34-dashboard-widgets.md). The clock-centred
+> layout below no longer exists; the navigation, dialog and sidebar
+> notes still apply.
+
 The root route `/` opens a clock-centred home inspired by Lazify’s desktop.
 `src/pages/Home.tsx` shows local time/date, All courses, New course and Settings
 shortcuts, and the three newest courses with descriptions and direct links. The
@@ -15,10 +21,15 @@ to animate it. Interrupted fades are cancelled, and reduced-motion preferences
 skip the animation. Browser checks cover links, back/forward navigation and
 reduced motion; theme updates do not replay the route fade.
 
-Shared dialogs match Lazify’s 300ms ease-out fade and 12px vertical slide,
-with a 150ms opening delay and a lightly blurred backdrop. Cancel, Escape and the
-close button and successful saves/deletions share a 300ms exit transition
-before dismissal. CSS transitions reverse from the current opacity and position;
+Shared dialogs open at once with a 180ms ease-out fade (opacity only)
+over a plain dimmed backdrop. The backdrop blur and slide were removed on
+30 September 2026 as the likely cause of a reported delay opening the
+course form: rendering measured under 70ms, but a blur of the whole
+window is heavy compositor work in WebKit. (They used to follow Lazify’s 300ms
+fade with a 150ms delay; that made them feel slow to open, about half a
+second, and was cut on 30 September 2026.) Cancel, Escape and the close
+button and successful saves/deletions share a 160ms exit transition before
+dismissal; dialogs that grow from their button morph in over 240ms. CSS transitions reverse from the current opacity and position;
 the backdrop stays mounted and fades with the panel.
 Busy dialogs cannot be dismissed, closing dialogs are inert, and reduced motion
 skips animation. Native dialog focus restoration remains intact.

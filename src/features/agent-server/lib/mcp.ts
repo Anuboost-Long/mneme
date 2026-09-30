@@ -1,5 +1,5 @@
 import type { AgentServerRequest, AgentServerResponse } from "@chain/sdk";
-import { tools } from "./tools";
+import { isToolContent, tools } from "./tools";
 import { requestApproval } from "./approvals";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 
@@ -47,6 +47,7 @@ async function callTool(params: Record<string, unknown> | undefined, conversatio
   }
   try {
     const result = await tool.execute(args);
+    if (isToolContent(result)) return { ...result, isError: false };
     return { content: [{ type: "text", text: JSON.stringify(result) }], isError: false };
   } catch (error) {
     return { content: [{ type: "text", text: errorMessage(error, String(error)) }], isError: true };

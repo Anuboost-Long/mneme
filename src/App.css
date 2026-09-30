@@ -7,6 +7,7 @@
   --color-chain-navy: #171b24;
   --color-chain-lime: #c5f74f;
   --color-chain-cream: #eef2e4;
+  --animate-reel: spin 2.4s linear infinite;
 }
 
 @theme inline {
@@ -18,6 +19,7 @@
   --color-on-action: var(--on-action);
   --color-danger: var(--danger);
   --color-info: var(--info);
+  --color-warning: var(--warning);
   --color-success: var(--success);
 }
 
@@ -31,6 +33,7 @@
   --on-action: #ffffff;
   --danger: #b91c1c;
   --info: #1d4ed8;
+  --warning: #b45309;
   --success: #15803d;
 }
 
@@ -44,6 +47,7 @@
   --on-action: #171b24;
   --danger: #fca5a5;
   --info: #93c5fd;
+  --warning: #fcd34d;
   --success: #86efac;
 }
 
@@ -160,18 +164,20 @@
   }
 }
 
+/* Quick on purpose: a dialog is something the user asked for, so it
+   appears at once and fades in over 180ms; closing (160ms) matches the
+   timer in Dialog.tsx. Opacity only, and no backdrop blur: a blur of the
+   whole window is expensive compositor work in WebKit, redone every frame
+   the backdrop fades, and was the likely cause of a reported ~1s delay
+   before the course form showed (JS rendering measured under 70ms). */
 .app-dialog {
   opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity 300ms cubic-bezier(0, 0, 0.2, 1),
-    transform 300ms cubic-bezier(0, 0, 0.2, 1);
+  transition: opacity 160ms cubic-bezier(0.3, 0, 1, 1);
 }
 
 .app-dialog[data-visible="true"] {
   opacity: 1;
-  transform: translateY(0);
-  transition-delay: 150ms;
+  transition: opacity 180ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 /* Dialog.tsx's `origin` animates the box itself; only the backdrop keeps
@@ -184,7 +190,7 @@
 
 .app-dialog::backdrop {
   opacity: 0;
-  transition: opacity 300ms cubic-bezier(0, 0, 0.2, 1);
+  transition: opacity 180ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .app-dialog[data-visible="true"]::backdrop {
@@ -388,6 +394,123 @@
   font-weight: 600;
 }
 
+.page-editor-content .callout {
+  --tone: var(--info);
+  background: color-mix(in srgb, var(--tone) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.page-editor-content .callout[data-callout="tip"] {
+  --tone: var(--success);
+}
+
+.page-editor-content .callout[data-callout="warning"] {
+  --tone: var(--warning);
+}
+
+.page-editor-content .callout-icon {
+  color: var(--tone);
+}
+
+/* Blocks drawn by React (callout, AI block) hold their content one
+   wrapper deeper, so it doesn't get the page's own block spacing. */
+.page-editor-content [data-node-view-content-react] > * + * {
+  margin-top: 0.75em;
+}
+
+/* Collapsible section: @tiptap/extension-details renders a toggle button
+   beside a summary and its content. */
+.page-editor-content div[data-type="details"] {
+  display: flex;
+  gap: 0.25em;
+}
+
+.page-editor-content div[data-type="details"] > button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.5em;
+  height: 1.7em;
+  border-radius: 0.375em;
+  color: var(--muted);
+}
+
+.page-editor-content div[data-type="details"] > button:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.page-editor-content div[data-type="details"] > button:focus-visible {
+  outline: 1px solid var(--ink);
+}
+
+.page-editor-content div[data-type="details"] > button::before {
+  content: "";
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease;
+}
+
+.page-editor-content div[data-type="details"].is-open > button::before {
+  transform: rotate(45deg);
+}
+
+.page-editor-content div[data-type="details"] > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-editor-content div[data-type="details"] summary {
+  font-weight: 600;
+  list-style: none;
+}
+
+.page-editor-content div[data-type="details"] summary::-webkit-details-marker {
+  display: none;
+}
+
+.page-editor-content div[data-type="details"] div[data-type="detailsContent"] {
+  margin-top: 0.25em;
+}
+
+.page-editor-content div[data-type="details"] div[data-type="detailsContent"] > * + * {
+  margin-top: 0.5em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-editor-content div[data-type="details"] > button::before {
+    transition: none;
+  }
+}
+
+/* Home's edit mode, like arranging an iPhone home screen: a slight
+   wiggle, offset per widget so they don't move in lockstep. */
+@media (prefers-reduced-motion: no-preference) {
+  .widget-wiggle {
+    animation: widget-wiggle 0.28s ease-in-out infinite alternate;
+  }
+
+  li:nth-child(2n) > .widget-wiggle {
+    animation-delay: -0.14s;
+  }
+
+  li:nth-child(3n) > .widget-wiggle {
+    animation-duration: 0.32s;
+  }
+}
+
+@keyframes widget-wiggle {
+  from {
+    transform: rotate(-0.35deg);
+  }
+  to {
+    transform: rotate(0.35deg);
+  }
+}
+
 @layer base {
   body {
     margin: 0;
@@ -413,9 +536,22 @@
     outline-offset: 2px;
   }
 
-  ::selection {
+  /* A selected node (e.g. a just-inserted recording block) keeps a hidden
+     text selection; recolouring its text would blank it on the dark surface. */
+  :not(.ProseMirror-hideselection, .ProseMirror-hideselection *)::selection {
     color: var(--color-chain-navy);
     background: color-mix(in srgb, var(--color-chain-lime) 55%, transparent);
+  }
+
+  /* The word read-aloud is saying (see useReadAloud). */
+  ::highlight(read-aloud) {
+    color: var(--color-chain-navy);
+    background-color: var(--color-chain-lime);
+  }
+
+  /* The sentence page audio is playing (see AudiobookBar). */
+  ::highlight(audiobook) {
+    background-color: color-mix(in srgb, var(--color-chain-lime) 40%, transparent);
   }
 
   .ProseMirror-hideselection::selection,

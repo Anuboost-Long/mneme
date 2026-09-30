@@ -47,7 +47,7 @@ export async function stopTurn(id: number) {
   catch (error) { update(id, { stopping: false, error: errorMessage(error, "Couldn’t stop generating. Try again.") }); }
 }
 
-export async function startTurn(id: number, message: string, attachments: ChatAttachment[] = []) {
+export async function startTurn(id: number, message: string, attachments: ChatAttachment[] = [], context?: string) {
   if (!message.trim() || turns.get(id)?.busy) return;
   turns = new Map(turns).set(id, { busy: true, stopping: false, message, attachments, text: "", tools: [], messages: null, error: "" });
   listeners.forEach((listener) => listener());
@@ -68,7 +68,7 @@ export async function startTurn(id: number, message: string, attachments: ChatAt
     update(id, { messages: await getMessages(id) });
     if (turns.get(id)?.stopping) { await finish(); return; }
     let ended = false;
-    const handle = await runTurn(connection, id, conversation.external_session_id, message, attachments, (event) => {
+    const handle = await runTurn(connection, id, conversation.external_session_id, message, attachments, context, (event) => {
       switch (event.type) {
         case "text": update(id, { text: (turns.get(id)?.text ?? "") + event.text }); break;
         case "tool": {

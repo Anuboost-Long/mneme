@@ -21,18 +21,26 @@ const paths: Record<string, string> = {
   music: "M9 18V5l11-2v13M9 8l11-2M9 18a3 2 0 1 1-6 0 3 2 0 0 1 6 0Zm11-2a3 2 0 1 1-6 0 3 2 0 0 1 6 0Z",
 };
 
-export default function CourseIcon({ icon, color, large = false }: Readonly<{
+const sizes = {
+  small: { box: "size-6", text: "text-sm", glyph: "size-3.5" },
+  base: { box: "size-8", text: "text-base", glyph: "size-4" },
+  large: { box: "size-16", text: "text-3xl", glyph: "size-8" },
+};
+
+export default function CourseIcon({ icon, color, large = false, small = false }: Readonly<{
   icon?: string | null;
   color?: string | null;
   large?: boolean;
+  small?: boolean;
 }>) {
+  const size = (large && "large") || (small && "small") || "base";
   return (
     <span
-      className={clsx("course-icon inline-flex shrink-0 items-center justify-center rounded-md", large ? "size-16" : "size-8")}
+      className={clsx("course-icon inline-flex shrink-0 items-center justify-center rounded-md", sizes[size].box)}
       style={{ "--course-color": color?.match(/^#[0-9a-f]{6}$/i) ? color : courseColors[0].value } as CSSProperties}
     >
-      {icon?.startsWith("data:image/png;base64,") ? <img src={icon} alt="" className={clsx("size-full rounded-md object-contain")} /> : icon && !paths[icon] ? <span className={clsx("truncate", large ? "text-3xl" : "text-base")}>{icon}</span> : (
-        <svg className={clsx(large ? "size-8" : "size-4")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {icon?.startsWith("data:image/png;base64,") ? <img src={icon} alt="" className={clsx("size-full rounded-md object-contain")} /> : icon && !paths[icon] ? <span className={clsx("truncate", sizes[size].text)}>{icon}</span> : (
+        <svg className={clsx(sizes[size].glyph)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d={paths[icon || "book"]} />
         </svg>
       )}

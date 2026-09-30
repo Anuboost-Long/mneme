@@ -1,21 +1,24 @@
 import { useId, useState } from "react";
 import clsx from "clsx";
 import type { DateGroupBy } from "../lib/dateGroups";
+import Select from "./Select";
 
 export type ToolbarOption = { value: string; label: string };
 
-const GROUP_OPTIONS: { value: DateGroupBy; label: string }[] = [
+export const DATE_GROUP_OPTIONS: { value: DateGroupBy; label: string }[] = [
   { value: "none", label: "Don’t group" },
   { value: "day", label: "By day" },
   { value: "week", label: "By week" },
   { value: "month", label: "By month" },
 ];
 
-export default function ListToolbar<K extends string>({
+// `groupOptions` defaults to the date groupings; a list can add its own
+// (pages add "By type").
+export default function ListToolbar<K extends string, G extends string = DateGroupBy>({
   query, onQueryChange, searchPlaceholder,
   filterLabel, filterValue, onFilterChange, filterOptions,
   sortValue, onSortChange, sortOptions,
-  groupBy, onGroupByChange,
+  groupBy, onGroupByChange, groupOptions,
   className,
 }: Readonly<{
   query: string;
@@ -28,14 +31,11 @@ export default function ListToolbar<K extends string>({
   sortValue: K;
   onSortChange: (value: K) => void;
   sortOptions: readonly ToolbarOption[];
-  groupBy: DateGroupBy;
-  onGroupByChange: (value: DateGroupBy) => void;
+  groupBy: G;
+  onGroupByChange: (value: G) => void;
+  groupOptions?: readonly { value: G; label: string }[];
   className?: string;
 }>) {
-  const selectClassName = clsx(
-    "h-9 w-full rounded-md border border-ink/20 bg-surface px-2 text-sm text-ink",
-    "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink",
-  );
   const [optionsOpen, setOptionsOpen] = useState(false);
   const optionsId = useId();
   const hasActiveSearch = query.trim().length > 0;
@@ -65,25 +65,10 @@ export default function ListToolbar<K extends string>({
       </div>
       {optionsOpen && <div id={optionsId} className={clsx("mt-3 grid grid-cols-2 gap-3 @min-xl:grid-cols-3")}>
         {filterOptions && (
-          <label className={clsx("min-w-0 text-xs font-medium text-muted")}>
-            {filterLabel}
-            <select value={filterValue} onChange={(event) => onFilterChange?.(event.target.value)} className={clsx(selectClassName, "mt-1")}>
-              {filterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </label>
+          <Select compact label={filterLabel ?? "Filter"} value={filterValue ?? filterOptions[0].value} onChange={(value) => onFilterChange?.(value)} options={filterOptions} className={clsx("min-w-0")} />
         )}
-        <label className={clsx("min-w-0 text-xs font-medium text-muted")}>
-          Sort by
-          <select value={sortValue} onChange={(event) => onSortChange(event.target.value as K)} className={clsx(selectClassName, "mt-1")}>
-            {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-        </label>
-        <label className={clsx("min-w-0 text-xs font-medium text-muted")}>
-          Group by
-          <select value={groupBy} onChange={(event) => onGroupByChange(event.target.value as DateGroupBy)} className={clsx(selectClassName, "mt-1")}>
-            {GROUP_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-        </label>
+        <Select<string> compact label="Sort by" value={sortValue} onChange={(value) => onSortChange(value as K)} options={sortOptions} className={clsx("min-w-0")} />
+        <Select<string> compact label="Group by" value={groupBy} onChange={(value) => onGroupByChange(value as G)} options={groupOptions ?? DATE_GROUP_OPTIONS} className={clsx("min-w-0")} />
       </div>}
       {(hasActiveSearch || hasActiveFilter) && (
         <button type="button" onClick={() => { onQueryChange(""); if (filterOptions) onFilterChange?.(filterOptions[0].value); }} className={clsx("mt-3 h-9 rounded-md bg-ink/8 px-3 text-sm font-medium text-ink", "hover:bg-ink/15")}>Clear search and filter</button>

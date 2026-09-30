@@ -25,6 +25,13 @@ export class Module {
 
   @Column({ default: 1 })
   status!: number;
+
+  // A preset name, an emoji, or a small data URL, like course.icon.
+  icon!: string | null;
+
+  // Order within its course; ties fall back to creation order.
+  @Column({ default: 0 })
+  position!: number;
 }
 
 // The name the rest of the app uses for a row of this table.

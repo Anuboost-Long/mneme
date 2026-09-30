@@ -7,7 +7,32 @@ import type { Course } from "../features/courses/lib/courses";
 import { searchModuleLinks, type ModuleLink } from "../features/courses/lib/modules";
 import { searchPageLinks, type PageLink } from "../features/courses/lib/pages";
 
-type Group = { name: string; items: PaletteCommand[] };
+// `path` marks a navigation item, so it can be reopened from Recent after
+// the search that found it is gone.
+type Item = PaletteCommand & { path?: string };
+
+type Group = { name: string; items: Item[] };
+
+type RecentItem = { id: string; label: string; detail?: string; path?: string };
+
+const RECENT_KEY = "mneme.palette.recent";
+const RECENT_LIMIT = 5;
+const RECENT_PREFIX = "recent-";
+
+function readRecent(): RecentItem[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
+function remember({ id, label, detail, path }: Item) {
+  const original = id.startsWith(RECENT_PREFIX) ? id.slice(RECENT_PREFIX.length) : id;
+  const next = [{ id: original, label, detail, path }, ...readRecent().filter((item) => item.id !== original)].slice(0, RECENT_LIMIT);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { return; }
+}
 
 const places = [
   { label: "Home", path: "/" },
@@ -30,6 +55,7 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
   const [commandGroups, setCommandGroups] = useState<{ group: string; commands: PaletteCommand[] }[]>([]);
   const [found, setFound] = useState<{ modules: ModuleLink[]; pages: PageLink[] }>({ modules: [], pages: [] });
   const [active, setActive] = useState(0);
+  const [recent] = useState(readRecent);
   const listId = useId();
 
   useLayoutEffect(() => {
@@ -58,16 +84,24 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
     return () => { current = false; clearTimeout(timer); };
   }, [query]);
 
-  const go = (path: string) => () => navigate(path);
+  const link = (id: string, label: string, detail: string | undefined, path: string): Item => ({ id, label, detail, path, run: () => navigate(path) });
   const searching = query.trim() !== "";
+  const commandItems = commandGroups.map(({ group, commands }) => ({ name: group, items: commands.filter((command) => matches(command.label, query)) }));
+  const placeItems = places.filter((place) => matches(place.label, query)).map((place) => link(`go-${place.path}`, place.label, undefined, place.path));
+  const available: Item[] = [...commandGroups.flatMap((group) => group.commands), ...places.map((place) => link(`go-${place.path}`, place.label, undefined, place.path))];
+  const recentItems = recent.flatMap((saved): Item[] => {
+    const live = available.find((item) => item.id === saved.id);
+    if (live) return [{ ...live, id: RECENT_PREFIX + saved.id }];
+    return saved.path ? [link(RECENT_PREFIX + saved.id, saved.label, saved.detail, saved.path)] : [];
+  });
   const groups: Group[] = [
     ...(searching ? [
-      { name: "Courses", items: courses.filter((course) => matches(course.name, query)).slice(0, 5).map((course) => ({ id: `course-${course.id}`, label: course.name, detail: "Course", run: go(`/courses/${course.id}`) })) },
-      { name: "Modules", items: found.modules.map((module) => ({ id: `module-${module.id}`, label: module.name, detail: module.course_name, run: go(`/courses/${module.course_id}/modules/${module.id}`) })) },
-      { name: "Pages", items: found.pages.map((page) => ({ id: `page-${page.id}`, label: page.title, detail: page.in_title ? page.module_name : `${page.module_name} · matches content`, run: go(`/courses/${page.course_id}/modules/${page.module_id}/pages/${page.id}`) })) },
-    ] : []),
-    ...commandGroups.map(({ group, commands }) => ({ name: group, items: commands.filter((command) => matches(command.label, query)) })),
-    { name: "Go to", items: places.filter((place) => matches(place.label, query)).map((place) => ({ id: `go-${place.path}`, label: place.label, run: go(place.path) })) },
+      { name: "Courses", items: courses.filter((course) => matches(course.name, query)).slice(0, 5).map((course) => link(`course-${course.id}`, course.name, "Course", `/courses/${course.id}`)) },
+      { name: "Modules", items: found.modules.map((module) => link(`module-${module.id}`, module.name, module.course_name, `/courses/${module.course_id}/modules/${module.id}`)) },
+      { name: "Pages", items: found.pages.map((page) => link(`page-${page.id}`, page.title, page.in_title ? page.module_name : `${page.module_name} · matches content`, `/courses/${page.course_id}/modules/${page.module_id}/pages/${page.id}`)) },
+    ] : [{ name: "Recent", items: recentItems }]),
+    ...commandItems,
+    { name: "Go to", items: placeItems },
   ].filter((group) => group.items.length > 0);
   const items = groups.flatMap((group) => group.items);
   const activeIndex = Math.min(active, items.length - 1);
@@ -78,7 +112,8 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
     list.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
-  function run(item: PaletteCommand) {
+  function run(item: Item) {
+    remember(item);
     onClose();
     item.run();
   }

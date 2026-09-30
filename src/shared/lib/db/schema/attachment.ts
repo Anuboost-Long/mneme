@@ -13,6 +13,8 @@ export class Attachment {
 
   mime_type!: string | null;
 
+  size_bytes!: number | null;
+
   @Column({ defaultSql: "datetime('now')" })
   created_at!: string;
 }

@@ -1,7 +1,9 @@
 import mammoth from "mammoth";
 import { marked } from "marked";
 import { detectType, sanitizeChildren, type ParsedImport } from "./import-sanitize";
+import { pageImage } from "./page-image";
 import { pdfPagesToHtml } from "./pdf-structure";
+import { recognizeDocument } from "../../../shared/lib/ocr";
 import { readPdf } from "../../../shared/lib/pdf";
 
 export type ImportableFileKind = "markdown" | "docx" | "pdf";
@@ -30,9 +32,9 @@ function titleFromFilename(name: string): string {
 // control the output of — reusing the same allowlist sanitizeChildren()
 // applies to fetched web pages keeps one definition of "safe HTML this app
 // will store", rather than trusting each converter's output differently.
-function sanitizeHtmlFragment(html: string): string {
+function sanitizeHtmlFragment(html: string, storedImages?: ReadonlySet<string>): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
-  return sanitizeChildren(doc.body);
+  return sanitizeChildren(doc.body, undefined, storedImages);
 }
 
 async function parseMarkdownFile(file: File): Promise<ParsedImport> {
@@ -44,14 +46,43 @@ async function parseMarkdownFile(file: File): Promise<ParsedImport> {
 
 async function parseDocxFile(file: File): Promise<ParsedImport> {
   const arrayBuffer = await file.arrayBuffer();
-  const { value: rawHtml } = await mammoth.convertToHtml({ arrayBuffer });
+  const storedImages = new Set<string>();
+  const { value: rawHtml } = await mammoth.convertToHtml(
+    { arrayBuffer },
+    {
+      // Stored as files like pasted images rather than inlined as data
+      // URLs. A format pageImage can't read (EMF, TIFF) is left out.
+      convertImage: mammoth.images.imgElement(async (image) => {
+        const imageFile = new File([await image.readAsArrayBuffer()], "docx-image", { type: image.contentType });
+        const src = await pageImage(imageFile).catch(() => "");
+        if (src) storedImages.add(src);
+        return { src };
+      })
+    }
+  );
   const title = titleFromFilename(file.name);
-  return { title, type: detectType(title), html: sanitizeHtmlFragment(rawHtml) };
+  return { title, type: detectType(title), html: sanitizeHtmlFragment(rawHtml, storedImages) };
 }
 
 async function parsePdfFile(file: File): Promise<ParsedImport> {
-  const { pages, title: metaTitle } = await readPdf(await file.arrayBuffer());
-  const html = pdfPagesToHtml(pages);
+  const { pages, title: metaTitle } = await readPdf(await file.arrayBuffer(), {
+    images: true,
+    recognize: recognizeDocument
+  });
+  const html = pdfPagesToHtml(
+    await Promise.all(
+      pages.map(async ({ images, ...page }) => ({
+        ...page,
+        images: await Promise.all(
+          images.map(async ({ top, png, covers }) => ({
+            top,
+            covers,
+            src: await pageImage(new File([png], "pdf-image.png", { type: "image/png" }))
+          }))
+        )
+      }))
+    )
+  );
   const title = metaTitle || titleFromFilename(file.name);
   return { title, type: detectType(title), html };
 }

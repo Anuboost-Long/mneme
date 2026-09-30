@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { Editor } from "@tiptap/react";
 import clsx from "clsx";
 import { useAiAction, type ActionLocation } from "../lib/useAiAction";
@@ -18,13 +19,17 @@ const wideScopes: Partial<Record<ActionScope, string>> = {
 export default function AiActions({ editor, location, onChangeProfile }: Readonly<{ editor: Editor; location: ActionLocation; onChangeProfile: (id: number | null) => Promise<void> }>) {
   const { run, start, stop, discard, insertBelow, addSection, replaceSelection, saveAsPage, undoNotice, undo, dismissUndo } = useAiAction(editor, location);
 
+  // Nothing to offer until an agent is chosen to run actions with.
+  async function availableActions() {
+    const [actions, connection] = await Promise.all([getActions(), getActionConnection()]);
+    return connection ? actions.map((action) => ({ action, connection })) : [];
+  }
+
   useEffect(() => addCommandSource({
     group: "AI actions",
     load: async () => {
-      const [actions, connection] = await Promise.all([getActions(), getActionConnection()]);
-      if (!connection) return [];
       const target = editor.state.selection.empty ? "Whole page" : "Selected text";
-      return actions.map((action) => ({
+      return (await availableActions()).map(({ action, connection }) => ({
         id: `ai-action-${action.id}`,
         label: action.name,
         detail: `${wideScopes[action.scope] ?? target} · ${connection.name}`,
@@ -32,6 +37,37 @@ export default function AiActions({ editor, location, onChangeProfile }: Readonl
       }));
     },
   }), [editor, start]);
+
+  // The same actions in the `/` menu. Typed on an empty line, so a page
+  // action runs on the whole page.
+  useEffect(() => {
+    editor.storage.slashCommands.loadAiItems = async () =>
+      (await availableActions()).map(({ action, connection }) => ({
+        id: `ai-action-${action.id}`,
+        label: action.name,
+        hint: `${wideScopes[action.scope] ?? "Whole page"} · ${connection.name}`,
+        category: "AI" as const,
+        keywords: ["ai", "ask", "agent"],
+        run: () => void start(connection, action),
+      }));
+    return () => {
+      editor.storage.slashCommands.loadAiItems = null;
+    };
+  }, [editor, start]);
+
+  // Home's quick actions open a page with the action to run in the route
+  // state; it's cleared first so going back doesn't run it again.
+  const routeState = useLocation().state as { runActionId?: number } | null;
+  const navigate = useNavigate();
+  useEffect(() => {
+    const id = routeState?.runActionId;
+    if (!id) return;
+    navigate(".", { replace: true, state: null });
+    void availableActions().then((available) => {
+      const found = available.find(({ action }) => action.id === id);
+      if (found) void start(found.connection, found.action);
+    });
+  }, [routeState]);
 
   return (
     <>

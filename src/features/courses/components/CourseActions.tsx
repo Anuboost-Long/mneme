@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom";
 import { useMatch, useNavigate } from "react-router-dom";
 import clsx from "clsx";
-import type { Course } from "../lib/courses";
+import { updateCourse, type Course } from "../lib/courses";
 import CourseForm from "./CourseForm";
 import DeleteCourse from "./DeleteCourse";
 
@@ -47,6 +47,17 @@ export default function CourseActions({ course, onSave, onDelete, children }: Re
     returnFocus.current?.focus();
   }
 
+  function togglePin() {
+    void updateCourse(course.id, { bookmarked: !course.bookmarked }).then(onSave);
+  }
+
+  const items = [
+    { label: "Open", path: "M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v2M3 7v12a2 2 0 0 0 2 2h14l3-11H7L5 21", action: () => navigate(`/courses/${course.id}`) },
+    { label: "Edit", path: "m16 3 5 5M4 20l4-1L21 6a2 2 0 0 0-5-3L3 16l-1 5 5-1", action: () => setDialog("edit") },
+    { label: course.bookmarked ? "Unpin" : "Pin", path: "M9 4h6l-1 6 4 3v2H6v-2l4-3-1-6ZM12 15v6", action: togglePin },
+    { label: "Delete", path: "M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7", action: () => setDialog("delete") },
+  ];
+
   return (
     <div className={clsx("relative")} onContextMenu={(event) => {
       if (event.target instanceof Element && event.target.closest("dialog")) return;
@@ -88,11 +99,7 @@ export default function CourseActions({ course, onSave, onDelete, children }: Re
             }
           }
         }} className={clsx("fixed z-50 m-0 w-52 max-w-11/12 list-none rounded-lg", "bg-surface border border-ink/20 shadow-lg", "p-1 text-sm text-ink")} style={{ left: position.x, top: position.y }}>
-          {([
-            { label: "Open", path: "M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v2M3 7v12a2 2 0 0 0 2 2h14l3-11H7L5 21", action: () => navigate(`/courses/${course.id}`) },
-            { label: "Edit", path: "m16 3 5 5M4 20l4-1L21 6a2 2 0 0 0-5-3L3 16l-1 5 5-1", action: () => setDialog("edit") },
-            { label: "Delete", path: "M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7", action: () => setDialog("delete") },
-          ] as const).map((item) => (
+          {items.map((item) => (
             <li key={item.label} role="none" className={clsx(item.label === "Delete" && "mt-1 border-t border-ink/10 pt-1")}>
               <button type="button" role="menuitem" tabIndex={-1} onClick={() => { closeMenu(); item.action(); }} className={clsx("flex w-full items-center gap-3 rounded-md", "px-3 py-2 text-left", "focus-visible:outline-none", item.label === "Delete" ? "text-danger hover:bg-danger/10 focus-visible:bg-danger/10" : "hover:bg-ink/7 focus-visible:bg-ink/7")}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={item.path} /></svg>

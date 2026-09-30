@@ -1,3 +1,4 @@
+import { toBase64, type ImageData } from "../../../shared/lib/htmlImages";
 import { desktop, type ProcessArg, type ProcessOutputChunk } from "@chain/sdk";
 import type { AgentConnection } from "./connections";
 import type { KnownAgent } from "./presets";
@@ -50,11 +51,6 @@ type Invoker = {
 // An attached image after runTurn has written it to desktop.files.
 type StoredImage = { reference: string; mediaType: string; bytes: Uint8Array };
 
-function toBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
-  return btoa(binary);
-}
 
 // Both Claude and Codex inherit mneme's own process cwd (chain-sdk's
 // processRunner has no cwd override — see CONTRACT.md), which is mneme's
@@ -299,6 +295,9 @@ export async function runTurn(
   sessionId: string | null,
   message: string,
   attachments: ChatAttachment[],
+  // Sent to the agent ahead of the message but not saved with it, e.g.
+  // which page the user has open.
+  context: string | undefined,
   onEvent: (event: TurnEvent) => void,
 ): Promise<{ kill: () => Promise<void> }> {
   const invoker = createInvoker(connection.kind, connection.args);
@@ -310,9 +309,9 @@ export async function runTurn(
   const files = formatAttachments(attachments);
   const viaStdin = files !== "" && acceptsStdin(connection);
   if (files && !viaStdin && files.length > MAX_ARGV_CONTEXT_CHARS) throw new Error("These files are too long for this agent. Attach fewer or smaller files, or chat with Claude or Codex.");
-  let prompt = message;
-  if (viaStdin) prompt = `${message}\n\nThe attached files follow, each in its own <file> element.`;
-  else if (files) prompt = `${message}\n\n${files}`;
+  let prompt = context ? `${context}\n\n${message}` : message;
+  if (viaStdin) prompt = `${prompt}\n\nThe attached files follow, each in its own <file> element.`;
+  else if (files) prompt = `${prompt}\n\n${files}`;
 
   // Written before the message is saved, so the transcript can show them.
   const stored: StoredImage[] = [];
@@ -368,6 +367,10 @@ export async function runTurn(
 // docs/features/21-ai-quick-actions.md.
 export const MAX_ARGV_CONTEXT_CHARS = 200_000;
 
+export function acceptsImages(connection: AgentConnection) {
+  return createInvoker(connection.kind, connection.args).withImages !== undefined;
+}
+
 export function acceptsStdin(connection: Pick<AgentConnection, "kind">): boolean {
   return connection.kind === "claude" || connection.kind === "codex";
 }
@@ -376,6 +379,8 @@ export function acceptsStdin(connection: Pick<AgentConnection, "kind">): boolean
 // no agent-server tools, nothing persisted but usage. Used by quick
 // actions (features/ai-actions), which pass their own `framing`. `stdin`
 // is only for a connection acceptsStdin() allows.
+// `images` go with the message where the CLI can take them (see
+// acceptsImages); they're written as files only for this run.
 export async function runOnce(
   connection: AgentConnection,
   message: string,
@@ -383,10 +388,17 @@ export async function runOnce(
   profile: AiProfile | null,
   onEvent: (event: TurnEvent) => void,
   stdin?: string,
+  images: ImageData[] = [],
 ): Promise<{ kill: () => Promise<void> }> {
   const invoker = createInvoker(connection.kind, connection.args);
   const args = buildArgs(invoker, connection, message, null, null, framing, profile);
-  const { kill, finished } = await invokeAgent(connection, invoker, args, onEvent, stdin);
+  const stored: StoredImage[] = [];
+  if (invoker.withImages)
+    for (const image of images)
+      stored.push({ ...image, reference: await desktop.files.write(image.bytes, { extension: image.mediaType.split("/")[1] }) });
+  const command = stored.length && invoker.withImages ? invoker.withImages(args, stored, stdin) : { args, stdin };
+  const { kill, finished } = await invokeAgent(connection, invoker, command.args, onEvent, command.stdin);
+  void finished.finally(() => Promise.all(stored.map((image) => desktop.files.delete(image.reference).catch(() => undefined))));
 
   finished.then(async (invocation) => {
     try {

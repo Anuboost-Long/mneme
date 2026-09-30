@@ -1,3 +1,5 @@
+import { downloadImage } from "../../../shared/lib/downloadImage";
+import { pageImage } from "./page-image";
 import { desktop, type ChainError } from "@chain/sdk";
 import { detectType, sanitizeChildren, type ParsedImport } from "./import-sanitize";
 
@@ -59,6 +61,21 @@ export async function fetchLmsPage(url: string): Promise<string> {
 // of trying to pattern-match every site's nav markup.
 function contentRoot(doc: Document): Element {
   return doc.querySelector("main, article, [role='main']") ?? doc.body;
+}
+
+// Downloads the page's pictures and stores them like pasted ones, so the
+// page works offline and its pictures can reach an AI agent. A picture
+// that can't be downloaded (a login-walled site) keeps its web address.
+export async function storePageImages(html: string): Promise<string> {
+  const document = new DOMParser().parseFromString(html, "text/html");
+  for (const image of Array.from(document.querySelectorAll("img"))) {
+    const src = image.getAttribute("src");
+    if (!src || !/^https?:/i.test(src)) continue;
+    const file = await downloadImage(src);
+    const stored = file ? await pageImage(file).catch(() => null) : null;
+    if (stored) image.setAttribute("src", stored);
+  }
+  return document.body.innerHTML;
 }
 
 export function parseLmsPage(html: string, sourceUrl: string): ParsedImport {

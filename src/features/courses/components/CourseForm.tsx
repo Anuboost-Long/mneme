@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { createCourse, updateCourse, type Course } from "../lib/courses";
-import { courseImage } from "../lib/course-image";
-import CourseIcon, { courseColors, courseIcons } from "../../../shared/ui/CourseIcon";
+import CoverPicker, { saveWithCover, type CoverChoice } from "./CoverPicker";
+import IconPicker from "./IconPicker";
+import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
 import { BodyText, Typography } from "../../../shared/ui/Typography";
-import { errorMessage } from "../../../shared/lib/errorMessage";
 import { getProfiles, type AiProfile } from "../../ai-profiles/lib/profiles";
 
 export default function CourseForm({ course, onSave, onClose }: Readonly<{
@@ -19,11 +19,17 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
   const [icon, setIcon] = useState(course?.icon ?? "book");
   const [color, setColor] = useState(course?.color ?? courseColors[0].value);
   const [aiProfileId, setAiProfileId] = useState(course?.ai_profile_id ?? null);
+  const [cover, setCover] = useState<CoverChoice>({ reference: course?.cover ?? null, file: null });
+  const [details, setDetails] = useState({
+    code: course?.code ?? "",
+    semester: course?.semester ?? "",
+    school: course?.school ?? "",
+    instructor: course?.instructor ?? ""
+  });
   const [profiles, setProfiles] = useState<AiProfile[]>([]);
   const [rgbDraft, setRgbDraft] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [imageError, setImageError] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -42,8 +48,10 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
     setBusy(true);
     setError("");
     try {
-      const input = { name, description, icon, color, ai_profile_id: aiProfileId };
-      const saved = course ? await updateCourse(course.id, input) : await createCourse(input);
+      const saved = await saveWithCover(cover, (reference) => {
+        const input = { name, description, icon, color, ai_profile_id: aiProfileId, cover: reference, ...details };
+        return course ? updateCourse(course.id, input) : createCourse(input);
+      });
       complete(() => onSave(saved));
     } catch {
       setError("Couldn’t save the course. Your changes are still here. Try again.");
@@ -62,6 +70,17 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
           </div>
           <TextInput label="Course name" autoFocus required name="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Introduction to psychology" />
           <TextArea label="Description" name="description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What will you explore in this course?" />
+          <fieldset>
+            <Typography as="legend" variant="label">Details</Typography>
+            <BodyText tone="muted" className={clsx("mt-1")}>Optional. Shown under the course name.</BodyText>
+            <div className={clsx("mt-3 grid gap-4 sm:grid-cols-2")}>
+              <TextInput label="Course code" name="code" value={details.code} onChange={(event) => setDetails({ ...details, code: event.target.value })} placeholder="e.g. PSY101" />
+              <TextInput label="Semester" name="semester" value={details.semester} onChange={(event) => setDetails({ ...details, semester: event.target.value })} placeholder="e.g. Semester 1, 2026" />
+              <TextInput label="University or school" name="school" value={details.school} onChange={(event) => setDetails({ ...details, school: event.target.value })} placeholder="e.g. University of Melbourne" />
+              <TextInput label="Instructor" name="instructor" value={details.instructor} onChange={(event) => setDetails({ ...details, instructor: event.target.value })} placeholder="e.g. Dr Jane Lee" />
+            </div>
+          </fieldset>
+          <CoverPicker value={cover} onChange={setCover} />
           {profiles.length > 0 && (
             <fieldset>
               <Typography as="legend" variant="label" className={clsx("mb-1")}>AI profile</Typography>
@@ -73,36 +92,7 @@ export default function CourseForm({ course, onSave, onClose }: Readonly<{
               ))}
             </fieldset>
           )}
-          <fieldset>
-            <Typography as="legend" variant="label" className={clsx("mb-2")}>Icon</Typography>
-            <div className={clsx("flex flex-wrap gap-2")}>
-              {courseIcons.map((value) => (
-                <label key={value} className={clsx("relative flex cursor-pointer items-center justify-center rounded-md p-1", "has-checked:ring-2 has-checked:ring-ink has-focus-visible:outline-1 has-focus-visible:outline-offset-4")}>
-                  <input type="radio" name="icon" value={value} checked={icon === value} onChange={() => setIcon(value)} className={clsx("sr-only")} aria-label={value[0].toUpperCase() + value.slice(1)} />
-                  <CourseIcon icon={value} color={color} />
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <div className={clsx("space-y-3")}>
-            <TextInput label="Custom icon" value={icon && !courseIcons.some((value) => value === icon) && !icon.startsWith("data:image/") ? icon : ""} maxLength={8} onChange={(event) => setIcon(event.target.value || "book")} placeholder="Paste an emoji or symbol" />
-            <label className={clsx("relative inline-flex cursor-pointer items-center rounded-md", "border border-ink/20", "px-3 py-2 text-sm", "hover:bg-ink/5 has-focus-visible:outline-1 has-focus-visible:outline-offset-4")}>
-              {uploading ? "Adding picture…" : "Upload picture"}
-              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className={clsx("sr-only")} onChange={async (event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (!file) return;
-                setUploading(true);
-                setImageError("");
-                try { setIcon(await courseImage(file)); }
-                catch (error) { setImageError(errorMessage(error, "Couldn’t add this picture. Try another file.")); }
-                finally { setUploading(false); }
-              }} />
-            </label>
-            {icon?.startsWith("data:image/") && <button type="button" onClick={() => setIcon("book")} className={clsx("ml-3 text-sm underline underline-offset-4")}>Remove picture</button>}
-            <BodyText tone="muted">PNG, JPEG, WebP, GIF or SVG, up to 10 MB.</BodyText>
-            {imageError && <BodyText role="alert" tone="error">{imageError}</BodyText>}
-          </div>
+          <IconPicker value={icon} onChange={(value) => setIcon(value ?? "book")} color={color} onBusyChange={setUploading} />
           <fieldset>
             <Typography as="legend" variant="label" className={clsx("mb-3")}>Colour</Typography>
             <div className={clsx("flex flex-wrap gap-3")}>

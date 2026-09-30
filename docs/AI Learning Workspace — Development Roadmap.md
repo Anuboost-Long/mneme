@@ -75,6 +75,36 @@
 > [AI output to editor](features/24-ai-output-to-editor.md). No chain-sdk
 > change needed. A ⌘P command palette was added alongside
 > ([command palette](features/command-palette.md)).
+>
+> **28 September 2026:** Started the Second Release with its four media
+> phases. Phase 18 (Text-to-Speech) is implemented with no chain-sdk
+> change: see [Text-to-speech](features/18-text-to-speech.md). Phases 15
+> (OCR), 16 (Audio Recording) and 17 (Speech-to-Text) are planned
+> ([15](features/15-ocr.md), [16](features/16-audio-recording.md),
+> [17](features/17-speech-to-text.md)) and blocked on chain-sdk requests
+> `20-image-text-recognition.md`, `18-microphone-capture.md` and
+> `19-speech-transcription.md`, sent to the chain-sdk session.
+>
+> **28 September 2026, later:** request 18 shipped, and Phase 16 (Audio
+> Recording) is implemented: see
+> [Audio recording](features/16-audio-recording.md).
+> Request 20 shipped too, and Phase 15 (OCR) is implemented: see
+> [OCR](features/15-ocr.md). Only request 19 (transcription, for Phase
+> 17) is still pending.
+>
+> **28 September 2026, later still:** request 19 shipped, and Phase 17
+> (Speech-to-Text) is implemented: see
+> [Speech-to-text](features/17-speech-to-text.md). All four Second
+> Release media phases (15–18) are now in. chain-sdk's speech support
+> raised mneme's minimum to macOS 12.
+>
+> **Next: [Extensions](features/extensions.md).** Open-source voices
+> (Kokoro, Piper) and transcription models (Whisper, SenseVoice) become
+> optional downloads that mneme configures itself, instead of shipping in
+> the build. Blocked on chain-sdk request `21-model-extensions.md`
+> (model downloads plus a bundled sherpa-onnx engine).
+> Transcription models are now in (Moonshine, Whisper). Voices wait on a
+> GPL-free TTS route in chain-sdk.
 
 
 ## 1. Project Goal
@@ -125,16 +155,14 @@ Optional later:
 
 ## Goal
 
-Get a clean Electron application running before adding real features.
+Get a clean desktop application (Chain: Tauri + React) running before adding real features.
 
 ## Development Steps
 
-- [ ] Create a new Electron Vite project.
 - [x] Select React.
 - [x] Enable TypeScript.
 - [x] Install Tailwind CSS.
 - [x] Create the basic application folder structure.
-- [ ] Remove default Electron Vite demo content.
 - [x] Create the main application window.
 - [x] Set minimum window dimensions.
 - [x] Add application title and icon placeholders.
@@ -175,11 +203,11 @@ The layout should feel similar to Notion, Obsidian, or modern IDEs.
 - [x] Create the main application shell.
 - [x] Add a left sidebar.
 - [x] Add a main content area.
-- [ ] Add an optional right AI sidebar.
+- [x] Add an optional right AI sidebar. (Agent chat beside any screen, toggled from the top bar.)
 - [x] Add a top navigation/header.
-- [ ] Make the sidebar collapsible.
-- [ ] Make the AI panel collapsible.
-- [ ] Store sidebar state locally.
+- [x] Make the sidebar collapsible.
+- [x] Make the AI panel collapsible. (Open or closed is remembered.)
+- [x] Store sidebar state locally.
 - [x] Add dark mode.
 - [x] Add light mode.
 - [x] Store the selected theme.
@@ -270,22 +298,22 @@ Allow users to create and manage courses manually.
 - [x] Add course name.
 - [x] Add course description.
 - [x] Add course icon.
-- [ ] Add course cover.
+- [x] Add course cover. (Stored as a file; shown as a banner on the course page.)
 - [x] Add course colour.
 - [x] Save the course.
 - [x] Display courses in the sidebar.
 - [x] Open a course.
 - [x] Edit a course.
 - [x] Delete a course.
-- [ ] Reorder courses.
-- [ ] Add favourite/pinned courses.
+- [x] Reorder courses. (Drag, or arrow keys on the grip; same as AI actions.)
+- [x] Add favourite/pinned courses. (Pin from a course's menu; pinned ones list first.)
 
 Later:
 
-- [ ] Add semester.
-- [ ] Add university/school.
-- [ ] Add instructor.
-- [ ] Add course code.
+- [x] Add semester.
+- [x] Add university/school.
+- [x] Add instructor.
+- [x] Add course code.
 
 ---
 
@@ -301,10 +329,10 @@ Allow each course to contain modules.
 - [x] Assign the module to a course.
 - [x] Rename a module.
 - [x] Delete a module.
-- [ ] Reorder modules.
-- [ ] Collapse modules.
-- [ ] Expand modules.
-- [ ] Add module icons.
+- [x] Reorder modules. (Drag in Course order, or arrow keys on the grip.)
+- [x] Collapse modules. (Per module, or Collapse all; remembered per course.)
+- [x] Expand modules. (Shows the module's pages inline on the course page.)
+- [x] Add module icons. (Same picker as courses, plus No icon.)
 - [x] Add module descriptions.
 - [x] Add module status.
 
@@ -347,13 +375,13 @@ Custom
 - [x] Open the page.
 - [x] Rename the page.
 - [x] Delete the page.
-- [ ] Duplicate a page.
-- [ ] Move a page.
-- [ ] Reorder pages.
-- [ ] Add page icons.
-- [ ] Add page covers.
+- [x] Duplicate a page. (Copies content, recordings and cover; lands after the original.)
+- [x] Move a page. (To any module, from the page's menu; recordings and highlights follow.)
+- [x] Reorder pages. (Drag in Page order, or arrow keys on the grip.)
+- [x] Add page icons. (Same picker as modules.)
+- [x] Add page covers. (Banner on the page, like course covers.)
 - [x] Add page type.
-- [ ] Add page status.
+- [x] Add page status. (Not started, In progress, Completed, Revision needed; chip on the page header.)
 
 ---
 
@@ -383,7 +411,7 @@ TipTap
 - [x] Add strike-through.
 - [x] Add bullet lists.
 - [x] Add numbered lists.
-- [ ] Add checklists.
+- [x] Add checklists. (Checklist block; markdown `- [ ]` pastes as one.)
 - [x] Add blockquotes.
 - [x] Add code blocks.
 - [x] Add inline code.
@@ -391,15 +419,15 @@ TipTap
 
 ## Advanced Editor
 
-- [ ] Add tables.
-- [ ] Add images.
-- [ ] Add file attachments.
-- [ ] Add horizontal separators.
-- [ ] Add callouts.
-- [ ] Add collapsible sections.
-- [ ] Add embedded videos.
-- [ ] Add audio blocks.
-- [ ] Add custom AI blocks.
+- [x] Add tables.
+- [x] Add images. (Stored as files; resize and align.)
+- [x] Add file attachments. (/file or drop any file; rename, save a copy, delete. Open in its own app or Show in Finder.)
+- [x] Add horizontal separators. (/divider.)
+- [x] Add callouts. (Note, tip or warning; the icon switches tone.)
+- [x] Add collapsible sections. (Open or closed is saved with the page.)
+- [x] Add embedded videos. (YouTube or Vimeo link, or a video file.)
+- [x] Add audio blocks. (Recording block, Phase 16.)
+- [x] Add custom AI blocks. (A saved prompt; its answer stays inside the block and can be regenerated.)
 
 ---
 
@@ -430,8 +458,8 @@ Example:
 - [x] Select commands using keyboard.
 - [x] Select commands using mouse.
 - [x] Insert selected block.
-- [ ] Create command categories.
-- [ ] Allow AI commands later.
+- [x] Create command categories. (Text, Lists, Insert, AI; keywords like `/h1`, `/todo`, `/audio` also find commands.)
+- [x] Allow AI commands later. (Your AI actions appear under AI; on an empty line they run on the whole page.)
 
 ---
 
@@ -443,13 +471,13 @@ Make organizing courses and notes easy.
 
 ## Development Steps
 
-- [ ] Reorder courses.
-- [ ] Reorder modules.
-- [ ] Reorder pages.
-- [ ] Move pages between modules.
-- [ ] Drag files into pages.
-- [ ] Drag images into pages.
-- [ ] Drag audio into pages.
+- [x] Reorder courses. (Drag, or arrow keys on the grip; same as AI actions.)
+- [x] Reorder modules. (Drag in Course order, or arrow keys on the grip.)
+- [x] Reorder pages. (Drag in Page order, or arrow keys on the grip.)
+- [x] Move pages between modules. (From the page's menu, not by drag.)
+- [x] Drag files into pages. (Become attachments; videos become players.)
+- [x] Drag images into pages.
+- [x] Drag audio into pages. (An attachment with a player.)
 
 ---
 
@@ -621,12 +649,12 @@ Audio
 
 - [x] Add file picker. (via Phase 10's importer, not a page-attachment picker)
 - [x] Add drag-and-drop. (same)
-- [ ] Store attachment metadata.
-- [ ] Store local file location.
-- [ ] Display attachments.
-- [ ] Open attachments.
-- [ ] Remove attachments.
-- [ ] Rename attachments.
+- [x] Store attachment metadata. (Name, type, size.)
+- [x] Store local file location.
+- [x] Display attachments.
+- [x] Open attachments. (In the file's own app, or Show in Finder; files that can run programs only show in Finder.)
+- [x] Remove attachments.
+- [x] Rename attachments. (The extension is kept.)
 
 ---
 
@@ -638,16 +666,16 @@ Allow screenshots, slides, diagrams, and textbook pages to be stored and analyse
 
 ## Development Steps
 
-- [ ] Upload image.
-- [ ] Paste image from clipboard.
-- [ ] Drag image into editor.
-- [ ] Resize images.
+- [x] Upload image. (/image, native file sheet.)
+- [x] Paste image from clipboard.
+- [x] Drag image into editor.
+- [x] Resize images. (Corner handle; width is saved.)
 - [ ] Add image captions.
 - [ ] Open full image.
-- [ ] Add "Extract Text".
+- [x] Add "Extract Text". (Phase 15; plus Extract table.)
 - [ ] Add "Explain Image".
 - [ ] Add "Summarize Image".
-- [ ] Add "Insert Extracted Text".
+- [x] Add "Insert Extracted Text".
 
 ---
 
@@ -669,14 +697,14 @@ Editable Text
 
 ## Development Steps
 
-- [ ] Create OCR service interface.
-- [ ] Send image to OCR.
-- [ ] Receive extracted text.
-- [ ] Show OCR preview.
-- [ ] Allow user corrections.
-- [ ] Insert extracted text below image.
-- [ ] Replace image with extracted text if requested.
-- [ ] Send extracted text to AI.
+- [x] Create OCR service interface.
+- [x] Send image to OCR.
+- [x] Receive extracted text.
+- [x] Show OCR preview.
+- [x] Allow user corrections.
+- [x] Insert extracted text below image.
+- [x] Replace image with extracted text if requested.
+- [x] Send extracted text to AI. (Inserted text is selected for the editor's AI actions; no chat handoff yet.)
 
 ---
 
@@ -688,18 +716,18 @@ Allow users to record lectures, explanations, or personal notes.
 
 ## Development Steps
 
-- [ ] Request microphone permission.
-- [ ] Add Record button.
-- [ ] Add Pause button.
-- [ ] Add Resume button.
-- [ ] Add Stop button.
-- [ ] Show recording duration.
-- [ ] Save recording locally.
-- [ ] Rename recording.
-- [ ] Attach recording to page.
-- [ ] Play recording.
-- [ ] Seek through recording.
-- [ ] Delete recording.
+- [x] Request microphone permission.
+- [x] Add Record button.
+- [x] Add Pause button.
+- [x] Add Resume button.
+- [x] Add Stop button.
+- [x] Show recording duration.
+- [x] Save recording locally.
+- [x] Rename recording.
+- [x] Attach recording to page.
+- [x] Play recording.
+- [x] Seek through recording.
+- [x] Delete recording.
 
 ---
 
@@ -725,15 +753,15 @@ Study Notes
 
 ## Development Steps
 
-- [ ] Create transcription service interface.
-- [ ] Select recording.
-- [ ] Send recording for transcription.
-- [ ] Display progress.
-- [ ] Save raw transcript.
-- [ ] Allow transcript editing.
-- [ ] Insert transcript into page.
-- [ ] Add "Clean Transcript".
-- [ ] Add "Summarize Transcript".
+- [x] Create transcription service interface.
+- [x] Select recording.
+- [x] Send recording for transcription.
+- [x] Display progress.
+- [x] Save raw transcript.
+- [x] Allow transcript editing.
+- [x] Insert transcript into page.
+- [x] Add "Clean Transcript".
+- [x] Add "Summarize Transcript".
 
 ---
 
@@ -745,16 +773,16 @@ Allow students to listen to learning material.
 
 ## Development Steps
 
-- [ ] Select text.
-- [ ] Add "Read Aloud".
-- [ ] Add Play.
-- [ ] Add Pause.
-- [ ] Add Stop.
-- [ ] Add playback speed.
-- [ ] Add voice selection.
-- [ ] Add language selection.
-- [ ] Add "Read Entire Page".
-- [ ] Add "Read Module Summary".
+- [x] Select text.
+- [x] Add "Read Aloud".
+- [x] Add Play.
+- [x] Add Pause.
+- [x] Add Stop.
+- [x] Add playback speed.
+- [x] Add voice selection.
+- [x] Add language selection.
+- [x] Add "Read Entire Page".
+- [x] Add "Read Module Summary". (Reads the module's description; there's no AI-generated summary yet.)
 
 ---
 
@@ -768,18 +796,19 @@ Start simple.
 
 ## Development Steps
 
-- [ ] Create an AI provider interface.
-- [ ] Add API key settings.
-- [ ] Store keys securely.
-- [ ] Test basic AI request.
-- [ ] Add AI sidebar.
-- [ ] Add message input.
-- [ ] Send current page content.
-- [ ] Display AI response.
-- [ ] Add Markdown response rendering.
-- [ ] Add loading state.
-- [ ] Add error handling.
-- [ ] Add cancel generation.
+- [x] Connect installed agent CLIs (Claude Code, Codex, Gemini, custom) instead of an AI provider interface.
+- [x] Test basic AI request.
+- [x] Add the agent chat screen.
+- [x] Add message input.
+- [x] Send current page content. (The side panel tells the agent which page is open; it reads it with Phase 25's `get_page`.)
+- [x] Display AI response.
+- [x] Add Markdown response rendering.
+- [x] Add loading state.
+- [x] Add error handling.
+- [x] Add cancel generation.
+
+API key settings and secure key storage were dropped: mneme drives the
+user's own agent CLI and never holds a key (see the addendum below).
 
 Do not start with agents yet.
 
@@ -1068,31 +1097,43 @@ create_summary
 
 Build tools individually.
 
-### Tool 1 — Read Page
+### Tool 1 — Read Page (`get_page`)
 
-- [ ] Define input schema.
-- [ ] Retrieve page.
-- [ ] Return page content.
-- [ ] Test manually.
-- [ ] Allow AI to call it.
+- [x] Define input schema.
+- [x] Retrieve page.
+- [x] Return page content.
+- [x] Test manually.
+- [x] Allow AI to call it.
 
-### Tool 2 — Search Workspace
+### Tool 2 — Search Workspace (`search_pages`)
 
-- [ ] Define search input.
-- [ ] Search page titles.
-- [ ] Search page content.
-- [ ] Return matching pages.
-- [ ] Allow AI to call it.
+- [x] Define search input.
+- [x] Search page titles.
+- [x] Search page content.
+- [x] Return matching pages.
+- [x] Allow AI to call it.
 
-### Tool 3 — Create Page
+### Tool 3 — Create Page (`create_page`)
 
-- [ ] Define input.
-- [ ] Validate destination.
-- [ ] Create page.
-- [ ] Return page ID.
-- [ ] Allow AI to call it.
+- [x] Define input.
+- [ ] Validate destination. (The module id isn't checked, and foreign keys aren't enforced, so a wrong id creates an orphaned page.)
+- [x] Create page.
+- [x] Return page ID.
+- [x] Allow AI to call it.
 
 Repeat this pattern for every tool.
+
+Also built: `list_courses`, `get_course`, `list_modules`, `get_module`
+(read_module), `list_pages` and `update_page`, with an approval prompt
+for tools that change the workspace.
+
+### Remaining initial tools
+
+- [ ] `insert_blocks` (today `update_page` replaces the whole page).
+- [ ] `move_page`.
+- [x] `inspect_image`. (As `get_page_images`: a page's pictures as real image content, in page order.)
+- [ ] `read_transcript` (recording transcripts aren't exposed yet).
+- [ ] `create_summary`.
 
 ---
 
@@ -1322,11 +1363,12 @@ Open Settings
 
 ## Development Steps
 
-- [ ] Build command palette UI.
-- [ ] Add keyboard shortcut.
-- [ ] Search commands.
-- [ ] Execute commands.
-- [ ] Add recent commands.
+- [x] Build command palette UI.
+- [x] Add keyboard shortcut. (Cmd/Ctrl + P.)
+- [x] Search commands. (Also searches courses, modules and pages.)
+- [x] Execute commands.
+- [x] Add recent commands. (The last five, shown when the search is empty.)
+- [x] Add the remaining commands: New page, Import from LMS, Import PDF or document (on a module), New module (on a course), Start recording (on a page). Ask AI, Summarize Page, Search Workspace and Open Settings were already in.
 
 ---
 
@@ -1395,12 +1437,12 @@ AI Actions
 
 ## Development Steps
 
-- [ ] Create dashboard.
-- [ ] Add recent pages.
-- [ ] Add recent courses.
-- [ ] Add pinned courses.
-- [ ] Add incomplete modules.
-- [ ] Add quick AI actions.
+- [x] Create dashboard. (A customizable widget board: 21 widgets, drag to arrange and resize, your own lists and counts. See features/34-dashboard-widgets.md.)
+- [x] Add recent pages. (By last opened; `page.opened_at`, migration 23.)
+- [x] Add recent courses.
+- [x] Add pinned courses.
+- [x] Add incomplete modules. (With pages done out of total.)
+- [x] Add quick AI actions. (Run on your last page: it opens and the action starts.)
 
 ---
 

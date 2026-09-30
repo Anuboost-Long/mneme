@@ -5,7 +5,7 @@ import { getCoursePageProgress, type PageProgress } from "../features/courses/li
 import { useCourses } from "../layouts/RootLayout";
 
 export default function CoursesRoute() {
-  const { courses, create, save, remove } = useCourses();
+  const { courses, create, save, remove, reorder } = useCourses();
   const [moduleCounts, setModuleCounts] = useState<Map<number, number>>(new Map());
   const [pageProgress, setPageProgress] = useState<Map<number, PageProgress>>(new Map());
 
@@ -16,5 +16,5 @@ export default function CoursesRoute() {
     return () => { active = false; };
   }, []);
 
-  return <CoursesPage courses={courses} moduleCounts={moduleCounts} pageProgress={pageProgress} onCreate={create} onSave={save} onDelete={remove} />;
+  return <CoursesPage courses={courses} moduleCounts={moduleCounts} pageProgress={pageProgress} onCreate={create} onSave={save} onDelete={remove} onReorder={reorder} />;
 }

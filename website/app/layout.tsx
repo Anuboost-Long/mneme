@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mneme — Keep learning connected",
+  title: "Mneme — Your course, made usable",
   description:
-    "Mneme turns course material into a calm, connected learning workspace.",
+    "Mneme is a private desktop workspace for importing, organizing and working through course material."
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>{children}</body>

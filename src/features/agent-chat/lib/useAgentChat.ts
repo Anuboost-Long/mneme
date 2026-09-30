@@ -90,7 +90,7 @@ export function useAgentChat(selectedId: number | null) {
   return {
     connections, conversations, loaded, error, create, rename, remove, runCommand, notice, turn,
     isBusy: (id: number) => turns.get(id)?.busy ?? false,
-    send: (message: string, attachments: ChatAttachment[]) => { setNotice(""); return selectedId === null ? Promise.resolve() : startTurn(selectedId, message, attachments); },
+    send: (message: string, attachments: ChatAttachment[], context?: string) => { setNotice(""); return selectedId === null ? Promise.resolve() : startTurn(selectedId, message, attachments, context); },
     stop: () => selectedId === null ? Promise.resolve() : stopTurn(selectedId),
     messages: turn?.messages ?? (transcript.id === selectedId ? transcript.messages : []),
     messagesLoaded: turn?.messages !== null && turn?.messages !== undefined || transcript.id === selectedId,

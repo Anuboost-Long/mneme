@@ -18,12 +18,16 @@ function morphFrom(dialog: HTMLElement, origin: HTMLElement): Keyframe[] {
   ];
 }
 
-export default function Dialog({ title, children, onClose, busy = false, origin }: Readonly<{
+// How long closing takes before `onClose` runs; matches .app-dialog in App.css.
+const CLOSE_MS = 160;
+
+export default function Dialog({ title, children, onClose, busy = false, origin, wide = false }: Readonly<{
   title: string;
   children: (close: () => void, complete: (callback: () => void) => void) => ReactNode;
   onClose: () => void;
   busy?: boolean;
   origin?: RefObject<HTMLElement | null>;
+  wide?: boolean;
 }>) {
   const ref = useRef<HTMLDialogElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -36,7 +40,7 @@ export default function Dialog({ title, children, onClose, busy = false, origin 
     dialog?.showModal();
     dialog?.getBoundingClientRect();
     if (dialog && origin?.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      dialog.animate(morphFrom(dialog, origin.current), { duration: 320, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+      dialog.animate(morphFrom(dialog, origin.current), { duration: 240, easing: "cubic-bezier(0.2, 0, 0, 1)" });
     }
     const frame = requestAnimationFrame(() => { if (dialog && !completing.current) dialog.dataset.visible = "true"; });
     return () => { cancelAnimationFrame(frame); clearTimeout(timer.current); dialog?.close(); };
@@ -55,14 +59,14 @@ export default function Dialog({ title, children, onClose, busy = false, origin 
     dialog.dataset.visible = "false";
     if (origin) {
       const frames = origin.current ? morphFrom(dialog, origin.current).reverse() : [{ opacity: 1 }, { opacity: 0 }];
-      dialog.animate(frames, { duration: 200, easing: "cubic-bezier(0.3, 0, 1, 1)", fill: "forwards" });
+      dialog.animate(frames, { duration: CLOSE_MS, easing: "cubic-bezier(0.3, 0, 1, 1)", fill: "forwards" });
     }
     setClosing(true);
-    timer.current = setTimeout(callback, 300);
+    timer.current = setTimeout(callback, CLOSE_MS);
   }
 
   return (
-    <dialog ref={ref} aria-labelledby={titleId} inert={closing} data-closing={closing} data-morph={origin ? "true" : undefined} onCancel={(event) => { event.preventDefault(); close(); }} className={clsx("app-dialog fixed inset-0 m-auto max-h-11/12 w-lg max-w-11/12 overflow-y-auto", "rounded-xl border border-ink/15 bg-surface text-ink p-6 sm:p-8", "backdrop:bg-chain-navy/68 backdrop:backdrop-blur-[2px]")}>
+    <dialog ref={ref} aria-labelledby={titleId} inert={closing} data-closing={closing} data-morph={origin ? "true" : undefined} onCancel={(event) => { event.preventDefault(); close(); }} className={clsx("app-dialog fixed inset-0 m-auto max-h-11/12 max-w-11/12 overflow-y-auto", wide ? "w-4xl" : "w-lg", "rounded-xl border border-ink/15 bg-surface text-ink p-6 sm:p-8", "backdrop:bg-chain-navy/72")}>
       <div className={clsx("mb-6 flex items-center justify-between gap-4")}>
         <SectionTitle id={titleId}>{title}</SectionTitle>
         <button type="button" onClick={close} disabled={busy || closing} aria-label="Close dialog" className={clsx("size-8 rounded-md text-xl text-muted", "hover:bg-ink/5")}>×</button>

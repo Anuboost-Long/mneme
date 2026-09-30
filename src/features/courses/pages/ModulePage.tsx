@@ -1,36 +1,82 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import clsx from "clsx";
-import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
-import ModuleForm, { moduleStatusLabels } from "../components/ModuleForm";
-import DeleteModule from "../components/DeleteModule";
-import PageForm, { pageTypeLabels } from "../components/PageForm";
-import LmsImportForm from "../components/LmsImportForm";
-import DeletePage from "../components/DeletePage";
-import DeletePages from "../components/DeletePages";
-import ReadingRow from "../components/ReadingRow";
-import StatusPicker, { statusMarkerStyles } from "../components/StatusPicker";
-import ProgressSummary from "../components/ProgressSummary";
-import ListToolbar from "../../../shared/ui/ListToolbar";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { addCommandSource } from "../../../shared/lib/commandSources";
+import { DATE_GROUP_VALUES, groupByDate, groupItems } from "../../../shared/lib/dateGroups";
+import { errorMessage } from "../../../shared/lib/errorMessage";
 import { useListView, type SortOption } from "../../../shared/lib/useListView";
 import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
-import { DATE_GROUP_VALUES, groupByDate } from "../../../shared/lib/dateGroups";
+import CourseIcon from "../../../shared/ui/CourseIcon";
+import ListToolbar, { DATE_GROUP_OPTIONS } from "../../../shared/ui/ListToolbar";
+import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
+import ReadAloudBar from "../../read-aloud/components/ReadAloudBar";
+import { textChunks } from "../../read-aloud/lib/readableText";
+import { useReadAloud } from "../../read-aloud/lib/useReadAloud";
+import DeleteModule from "../components/DeleteModule";
+import DeletePage from "../components/DeletePage";
+import DeletePages from "../components/DeletePages";
+import LmsImportForm from "../components/LmsImportForm";
+import ModuleForm from "../components/ModuleForm";
+import PageForm, { pageTypeLabels } from "../components/PageForm";
+import ProgressSummary from "../components/ProgressSummary";
+import ReadingRow from "../components/ReadingRow";
+import { StatusChip } from "../components/StatusPicker";
+import { CompletionStatus } from "../lib/completion-status";
 import type { Course } from "../lib/courses";
 import { updateModule, type Module } from "../lib/modules";
-import { CompletionStatus } from "../lib/completion-status";
-import { pageTypes, setPageDone, type Page } from "../lib/pages";
-import { errorMessage } from "../../../shared/lib/errorMessage";
+import { duplicatePage, pageTypes, setPageDone, type Page } from "../lib/pages";
+import MovePageDialog from "../components/MovePageDialog";
+import PageCard from "../components/PageCard";
+import type { PageItemProps } from "../components/pageDisplay";
+import ViewToggle from "../components/ViewToggle";
+import { useDragReorder } from "../../../shared/lib/useDragReorder";
+import DragHandle from "../../../shared/ui/DragHandle";
 
-type PageSortKey = "oldest" | "newest" | "name" | "type";
+const PAGE_VIEWS = ["list", "gallery"] as const;
+
+const PAGE_GROUP_VALUES = [...DATE_GROUP_VALUES, "type"] as const;
+const PAGE_GROUP_OPTIONS = [...DATE_GROUP_OPTIONS, { value: "type" as const, label: "By type" }];
+
+type PageSortKey = "order" | "oldest" | "newest" | "name" | "type";
 
 const PAGE_SORTS: SortOption<Page, PageSortKey>[] = [
-  { value: "oldest", label: "Oldest first", compare: (a, b) => a.created_at.localeCompare(b.created_at) },
-  { value: "newest", label: "Newest first", compare: (a, b) => b.created_at.localeCompare(a.created_at) },
+  {
+    value: "order",
+    label: "Page order",
+    compare: (a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)
+  },
+  {
+    value: "oldest",
+    label: "Oldest first",
+    compare: (a, b) => a.created_at.localeCompare(b.created_at)
+  },
+  {
+    value: "newest",
+    label: "Newest first",
+    compare: (a, b) => b.created_at.localeCompare(a.created_at)
+  },
   { value: "name", label: "Name (A–Z)", compare: (a, b) => a.title.localeCompare(b.title) },
-  { value: "type", label: "Type", compare: (a, b) => pageTypeLabels[a.type].localeCompare(pageTypeLabels[b.type]) },
+  {
+    value: "type",
+    label: "Type",
+    compare: (a, b) => pageTypeLabels[a.type].localeCompare(pageTypeLabels[b.type])
+  }
 ];
 
-export default function ModulePage({ course, module, moduleReady, pages, pagesReady, onSaveModule, onDeleteModule, onSavePage, onDeletePage }: Readonly<{
+export default function ModulePage({
+  course,
+  module,
+  moduleReady,
+  pages,
+  pagesReady,
+  onSaveModule,
+  onDeleteModule,
+  onSavePage,
+  onDeletePage,
+  onReorderPages,
+  onPagesChanged
+}: Readonly<{
   course: Course | undefined;
   module: Module | undefined;
   moduleReady: boolean;
@@ -40,28 +86,106 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
   onDeleteModule: () => void;
   onSavePage: (page: Page) => void;
   onDeletePage: (id: number) => void;
+  onReorderPages: (pages: Page[]) => void;
+  onPagesChanged: () => void;
 }>) {
   const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
-  const [pageDialog, setPageDialog] = useState<{ type: "edit" | "delete"; page: Page } | "create" | "import" | null>(null);
+  const [pageDialog, setPageDialog] = useState<
+    { type: "edit" | "delete" | "move"; page: Page } | "create" | "import" | "import-file" | null
+  >(null);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<number> | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
   const [doneError, setDoneError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [groupBy, setGroupBy] = useStoredChoice("mneme.pages.group", DATE_GROUP_VALUES, "none");
+  const reader = useReadAloud();
+
+  useEffect(() => {
+    if (!module || !pagesReady) return;
+    return addCommandSource({
+      group: "This module",
+      load: async () => [
+        { id: "module-new-page", label: "New page", detail: module.name, run: () => setPageDialog("create") },
+        { id: "module-import-lms", label: "Import from LMS", detail: module.name, run: () => setPageDialog("import") },
+        { id: "module-import-file", label: "Import PDF or document", detail: module.name, run: () => setPageDialog("import-file") }
+      ]
+    });
+  }, [module, pagesReady]);
+
+  const [groupBy, setGroupBy] = useStoredChoice("mneme.pages.group", PAGE_GROUP_VALUES, "none");
 
   const typeFilteredPages = useMemo(
     () => (typeFilter === "all" ? pages : pages.filter((page) => String(page.type) === typeFilter)),
-    [pages, typeFilter],
+    [pages, typeFilter]
   );
   const matchesPageQuery = (page: Page, query: string) => page.title.toLowerCase().includes(query);
-  const { query, setQuery, sortValue, setSortValue, visible: visiblePages } = useListView(typeFilteredPages, matchesPageQuery, PAGE_SORTS, "mneme.pages.sort");
-  const pageGroups = useMemo(() => groupByDate(visiblePages, (page) => page.created_at, groupBy, sortValue === "oldest" ? "oldest" : "newest"), [visiblePages, groupBy, sortValue]);
+  const {
+    query,
+    setQuery,
+    sortValue,
+    setSortValue,
+    visible: visiblePages
+  } = useListView(typeFilteredPages, matchesPageQuery, PAGE_SORTS, "mneme.pages.sort");
+  const pageGroups = useMemo(
+    () =>
+      groupBy === "type"
+        ? groupItems(visiblePages, (page) => page.type, pageTypes, (type) => pageTypeLabels[type])
+        : groupByDate(visiblePages, (page) => page.created_at, groupBy, sortValue === "oldest" ? "oldest" : "newest"),
+    [visiblePages, groupBy, sortValue]
+  );
+
+  const [view, setView] = useStoredChoice("mneme.pages.view", PAGE_VIEWS, "list");
+  // Dragging needs the whole list in page order, not a search, filter or
+  // selection of it. It works the same in both views.
+  const canReorder =
+    sortValue === "order" && groupBy === "none" && !query.trim() && typeFilter === "all" && selectedPageIds === null;
+  const reorderable = useDragReorder(visiblePages, onReorderPages);
+
+  // Dragging only works on the whole list in page order, so this puts the
+  // list there and the grips appear.
+  function showPageOrder() {
+    setSortValue("order");
+    setGroupBy("none");
+    setQuery("");
+    setTypeFilter("all");
+  }
+
+  // Everything a list row and a gallery card share.
+  function pageItemProps(page: Page): PageItemProps {
+    return {
+      page,
+      courseColor: course?.color ?? null,
+      to: `/courses/${course?.id}/modules/${module?.id}/pages/${page.id}`,
+      onToggleDone: () => {
+        setDoneError(null);
+        setPageDone(page.id, page.status !== CompletionStatus.Completed)
+          .then(onSavePage)
+          .catch((error) => setDoneError(errorMessage(error, "Couldn’t update this page. Try again.")));
+      },
+      onEdit: () => setPageDialog({ type: "edit", page }),
+      onDelete: () => setPageDialog({ type: "delete", page }),
+      actions: [
+        { label: "Duplicate", icon: "M8 8h12v12H8zM16 8V4H4v12h4", onSelect: () => duplicate(page) },
+        { label: "Move to…", icon: "M5 12h14m-6-6 6 6-6 6", onSelect: () => setPageDialog({ type: "move", page }) }
+      ],
+      selectable: selectedPageIds !== null,
+      selected: selectedPageIds?.has(page.id) ?? false,
+      onToggleSelect: () => togglePageSelected(page.id)
+    };
+  }
+
+  function duplicate(page: Page) {
+    setDoneError(null);
+    duplicatePage(page.id)
+      .then(onPagesChanged)
+      .catch((error) => setDoneError(errorMessage(error, "Couldn’t duplicate this page. Try again.")));
+  }
 
   function togglePageSelected(id: number) {
     setSelectedPageIds((current) => {
       const next = new Set(current);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -69,113 +193,365 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
   function toggleSelectAllPages() {
     setSelectedPageIds((current) => {
       const next = new Set(current);
-      const allVisibleSelected = visiblePages.length > 0 && visiblePages.every((page) => next.has(page.id));
-      visiblePages.forEach((page) => (allVisibleSelected ? next.delete(page.id) : next.add(page.id)));
+      const allVisibleSelected =
+        visiblePages.length > 0 && visiblePages.every((page) => next.has(page.id));
+      visiblePages.forEach((page) =>
+        allVisibleSelected ? next.delete(page.id) : next.add(page.id)
+      );
       return next;
     });
   }
 
-  if (!course || (moduleReady && !module)) return (
-    <section className={clsx("p-8 sm:p-14")}>
-      <PageTitle>Module not found</PageTitle>
-      <BodyText tone="muted" className={clsx("mt-3")}>This module may have been deleted. Choose another course from the sidebar.</BodyText>
-      <Link to="/courses" className={clsx("mt-6 inline-block text-sm underline underline-offset-4")}>Back to all courses</Link>
-    </section>
-  );
+  if (!course || (moduleReady && !module))
+    return (
+      <section className={clsx("p-8 sm:p-14")}>
+        <PageTitle>Module not found</PageTitle>
+        <BodyText tone="muted" className={clsx("mt-3")}>
+          This module may have been deleted. Choose another course from the sidebar.
+        </BodyText>
+        <Link
+          to="/courses"
+          className={clsx("mt-6 inline-block text-sm underline underline-offset-4")}
+        >
+          Back to all courses
+        </Link>
+      </section>
+    );
 
-  if (!moduleReady || !module) return <BodyText role="status" tone="muted" className={clsx("p-8")}>Opening this module…</BodyText>;
+  if (!moduleReady || !module)
+    return (
+      <BodyText role="status" tone="muted" className={clsx("p-8")}>
+        Opening this module…
+      </BodyText>
+    );
 
   return (
     <div className={clsx("px-4 py-5 sm:px-6")}>
-      <Link to={`/courses/${course.id}`} className={clsx("-ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg>
+      <Link
+        to={`/courses/${course.id}`}
+        className={clsx(
+          "-ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted",
+          "hover:bg-ink/5 hover:text-ink"
+        )}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m12 5-7 7 7 7M5 12h14" />
+        </svg>
         Back to {course.name}
       </Link>
-      <nav aria-label="Breadcrumb" className={clsx("mt-4 flex items-center gap-3 text-xs text-muted")}>
-        <Link to="/courses" className={clsx("shrink-0 hover:text-ink")}>Your courses</Link><span aria-hidden="true">/</span>
-        <Link to={`/courses/${course.id}`} className={clsx("shrink-0 truncate hover:text-ink")}>{course.name}</Link><span aria-hidden="true">/</span>
-        <span className={clsx("truncate")} aria-current="page">{module.name}</span>
+      <nav
+        aria-label="Breadcrumb"
+        className={clsx("mt-4 flex items-center gap-3 text-xs text-muted")}
+      >
+        <Link to="/courses" className={clsx("shrink-0 hover:text-ink")}>
+          Your courses
+        </Link>
+        <span aria-hidden="true">/</span>
+        <Link to={`/courses/${course.id}`} className={clsx("shrink-0 truncate hover:text-ink")}>
+          {course.name}
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span className={clsx("truncate")} aria-current="page">
+          {module.name}
+        </span>
       </nav>
       <div className={clsx("mt-6 flex flex-wrap items-start justify-between gap-4")}>
         <div className={clsx("min-w-0")}>
-          <PageTitle className={clsx("text-4xl wrap-anywhere")}>{module.name}</PageTitle>
-          <StatusPicker status={module.status} itemLabel={module.name} onChange={(status) => { setStatusError(null); updateModule(module.id, { status }).then(onSaveModule).catch((error) => setStatusError(errorMessage(error, "Couldn’t change this module’s status. Try again."))); }} triggerClassName={clsx("-ml-2 mt-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted", "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink")}>
-            <span aria-hidden="true" className={clsx("size-3.5 rounded-full", statusMarkerStyles[module.status])} />
-            {moduleStatusLabels[module.status]}
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
-          </StatusPicker>
-          {statusError && <BodyText role="alert" tone="error" className={clsx("mt-1")}>{statusError}</BodyText>}
+          <div className={clsx("flex items-center gap-4")}>
+            {module.icon && <CourseIcon icon={module.icon} color={course.color} large />}
+            <PageTitle className={clsx("min-w-0 text-4xl wrap-anywhere")}>{module.name}</PageTitle>
+          </div>
+          <StatusChip
+            status={module.status}
+            itemLabel={module.name}
+            onChange={(status) => {
+              setStatusError(null);
+              updateModule(module.id, { status })
+                .then(onSaveModule)
+                .catch((error) =>
+                  setStatusError(
+                    errorMessage(error, "Couldn’t change this module’s status. Try again.")
+                  )
+                );
+            }}
+          />
+          {statusError && (
+            <BodyText role="alert" tone="error" className={clsx("mt-1")}>
+              {statusError}
+            </BodyText>
+          )}
         </div>
         <div className={clsx("flex gap-2")}>
-          <Link to={`/courses/${course.id}/modules/${module.id}/highlights`} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Highlights</Link>
-          <button type="button" onClick={() => setDialog("edit")} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>Edit module</button>
-          <button type="button" onClick={() => setDialog("delete")} className={clsx("rounded-md px-3 py-2 text-sm text-muted", "hover:bg-danger/10 hover:text-danger")}>Delete</button>
+          {reader.supported && module.description && (
+            <button
+              type="button"
+              onClick={() => reader.read([{ text: module.name }, ...textChunks(module.description ?? "")])}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+                "hover:bg-ink/5"
+              )}
+            >
+              Listen
+            </button>
+          )}
+          <Link
+            to={`/courses/${course.id}/modules/${module.id}/highlights`}
+            className={clsx(
+              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+              "hover:bg-ink/5"
+            )}
+          >
+            Highlights
+          </Link>
+          <button
+            type="button"
+            onClick={() => setDialog("edit")}
+            className={clsx(
+              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+              "hover:bg-ink/5"
+            )}
+          >
+            Edit module
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog("delete")}
+            className={clsx(
+              "rounded-md px-3 py-2 text-sm text-muted",
+              "hover:bg-danger/10 hover:text-danger"
+            )}
+          >
+            Delete
+          </button>
         </div>
       </div>
-      {module.description && <BodyText tone="muted" className={clsx("mt-4 max-w-2xl text-base leading-7 whitespace-pre-wrap wrap-anywhere")}>{module.description}</BodyText>}
-      {pages.length > 0 && <ProgressSummary done={pages.filter((page) => page.status === CompletionStatus.Completed).length} total={pages.length} noun="pages" className={clsx("mt-6")} />}
+      {module.description && (
+        <BodyText
+          tone="muted"
+          className={clsx("mt-4 max-w-2xl text-base leading-7 whitespace-pre-wrap wrap-anywhere")}
+        >
+          {module.description}
+        </BodyText>
+      )}
+      {pages.length > 0 && (
+        <ProgressSummary
+          done={pages.filter((page) => page.status === CompletionStatus.Completed).length}
+          total={pages.length}
+          noun="pages"
+          className={clsx("mt-6")}
+        />
+      )}
       <section aria-label="Pages" className={clsx("@container mt-6 border-t border-ink/10 pt-5")}>
         <div className={clsx("flex flex-wrap items-center justify-between gap-3")}>
-          <Typography as="h2" variant="label">Pages</Typography>
+          <Typography as="h2" variant="label">
+            Pages
+          </Typography>
           <div className={clsx("flex flex-wrap items-center gap-2")}>
             {selectedPageIds ? (
               <>
                 <label className={clsx("flex items-center gap-2 pr-1 text-sm text-muted")}>
-                  <input type="checkbox" checked={visiblePages.length > 0 && visiblePages.every((page) => selectedPageIds.has(page.id))} onChange={toggleSelectAllPages} className={clsx("size-4")} />
+                  <input
+                    type="checkbox"
+                    checked={
+                      visiblePages.length > 0 &&
+                      visiblePages.every((page) => selectedPageIds.has(page.id))
+                    }
+                    onChange={toggleSelectAllPages}
+                    className={clsx("size-4")}
+                  />
                   Select all
                 </label>
-                <BodyText tone="muted" className={clsx("text-sm")}>{selectedPageIds.size} selected</BodyText>
-                <button type="button" onClick={() => setBulkDeleteOpen(true)} disabled={selectedPageIds.size === 0} className={clsx("h-9 rounded-md bg-danger/10 px-3 text-sm font-medium text-danger", "hover:bg-danger/15", "disabled:cursor-not-allowed disabled:opacity-50")}>Delete selected</button>
-                <button type="button" onClick={() => setSelectedPageIds(null)} className={clsx("h-9 rounded-md border border-ink/20 bg-surface px-3 text-sm font-medium text-ink", "hover:bg-ink/5")}>Cancel</button>
+                <BodyText tone="muted" className={clsx("text-sm")}>
+                  {selectedPageIds.size} selected
+                </BodyText>
+                <button
+                  type="button"
+                  onClick={() => setBulkDeleteOpen(true)}
+                  disabled={selectedPageIds.size === 0}
+                  className={clsx(
+                    "h-9 rounded-md bg-danger/10 px-3 text-sm font-medium text-danger",
+                    "hover:bg-danger/15",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  Delete selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPageIds(null)}
+                  className={clsx(
+                    "h-9 rounded-md border border-ink/20 bg-surface px-3 text-sm font-medium text-ink",
+                    "hover:bg-ink/5"
+                  )}
+                >
+                  Cancel
+                </button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => setPageDialog("import")} disabled={!pagesReady} className={clsx("inline-flex h-9 items-center gap-2 rounded-md border border-ink/20 bg-surface px-3 text-sm font-medium text-ink", "hover:bg-ink/5")}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" /></svg>
+                <ViewToggle value={view} onChange={setView} />
+                {pages.length > 1 && !canReorder && (
+                  <button
+                    type="button"
+                    onClick={showPageOrder}
+                    className={clsx("h-9 rounded-md px-3 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}
+                  >
+                    Rearrange
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPageDialog("import")}
+                  disabled={!pagesReady}
+                  className={clsx(
+                    "inline-flex h-9 items-center gap-2 rounded-md border border-ink/20 bg-surface px-3 text-sm font-medium text-ink",
+                    "hover:bg-ink/5"
+                  )}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 3v12m0 0-4-4m4 4 4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
+                  </svg>
                   Import
                 </button>
-                <button type="button" onClick={() => setPageDialog("create")} disabled={!pagesReady} className={clsx("inline-flex h-9 items-center gap-2 rounded-md bg-action px-3 text-sm font-medium text-on-action", "hover:opacity-85")}>
-                  <span aria-hidden="true" className={clsx("text-lg leading-none")}>+</span> New page
+                <button
+                  type="button"
+                  onClick={() => setPageDialog("create")}
+                  disabled={!pagesReady}
+                  className={clsx(
+                    "inline-flex h-9 items-center gap-2 rounded-md bg-action px-3 text-sm font-medium text-on-action",
+                    "hover:opacity-85"
+                  )}
+                >
+                  <span aria-hidden="true" className={clsx("text-lg leading-none")}>
+                    +
+                  </span>{" "}
+                  New page
                 </button>
-                <button type="button" onClick={() => setSelectedPageIds(new Set())} disabled={!pagesReady || pages.length === 0} className={clsx("h-9 rounded-md border border-ink/20 bg-surface px-3 text-sm font-medium text-ink", "hover:bg-ink/5", "disabled:cursor-not-allowed disabled:opacity-50")}>Select</button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPageIds(new Set())}
+                  disabled={!pagesReady || pages.length === 0}
+                  className={clsx(
+                    "h-9 rounded-md border border-ink/20 bg-surface px-3 text-sm font-medium text-ink",
+                    "hover:bg-ink/5",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  Select
+                </button>
               </>
             )}
           </div>
         </div>
         {pages.length === 0 ? (
           <div className={clsx("py-16 text-center sm:py-24")}>
-            <svg className={clsx("mx-auto size-10 text-ink/25")} viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="9" y="4" width="22" height="32" rx="2" /><path d="M14 13h12M14 19h12M14 25h8" /></svg>
-            <Typography as="h3" variant="itemTitle" className={clsx("mt-5")}>Nothing here yet</Typography>
-            <BodyText tone="muted" className={clsx("mx-auto mt-2 max-w-xs")}>Lessons, exercises and everything else in this module will live here.</BodyText>
+            <svg
+              className={clsx("mx-auto size-10 text-ink/25")}
+              viewBox="0 0 40 40"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <rect x="9" y="4" width="22" height="32" rx="2" />
+              <path d="M14 13h12M14 19h12M14 25h8" />
+            </svg>
+            <Typography as="h3" variant="itemTitle" className={clsx("mt-5")}>
+              Nothing here yet
+            </Typography>
+            <BodyText tone="muted" className={clsx("mx-auto mt-2 max-w-xs")}>
+              Lessons, exercises and everything else in this module will live here.
+            </BodyText>
           </div>
         ) : (
           <>
             <ListToolbar
-              query={query} onQueryChange={setQuery} searchPlaceholder="Search pages…"
-              filterLabel="Type" filterValue={typeFilter} onFilterChange={setTypeFilter}
-              filterOptions={[{ value: "all", label: "All types" }, ...pageTypes.map((type) => ({ value: String(type), label: pageTypeLabels[type] }))]}
-              sortValue={sortValue} onSortChange={setSortValue} sortOptions={PAGE_SORTS}
-              groupBy={groupBy} onGroupByChange={setGroupBy}
+              query={query}
+              onQueryChange={setQuery}
+              searchPlaceholder="Search pages…"
+              filterLabel="Type"
+              filterValue={typeFilter}
+              onFilterChange={setTypeFilter}
+              filterOptions={[
+                { value: "all", label: "All types" },
+                ...pageTypes.map((type) => ({ value: String(type), label: pageTypeLabels[type] }))
+              ]}
+              sortValue={sortValue}
+              onSortChange={setSortValue}
+              sortOptions={PAGE_SORTS}
+              groupBy={groupBy}
+              onGroupByChange={setGroupBy}
+              groupOptions={PAGE_GROUP_OPTIONS}
               className={clsx("mt-5")}
             />
             {visiblePages.length === 0 ? (
-              <BodyText tone="muted" className={clsx("mt-8 text-center")}>No pages match your search or filter.</BodyText>
+              <BodyText tone="muted" className={clsx("mt-8 text-center")}>
+                No pages match your search or filter.
+              </BodyText>
             ) : (
               <div className={clsx("mt-4 space-y-8")}>
-                {doneError && <BodyText role="alert" tone="error">{doneError}</BodyText>}
+                {doneError && (
+                  <BodyText role="alert" tone="error">
+                    {doneError}
+                  </BodyText>
+                )}
                 {pageGroups.map((group) => (
                   <section key={group.key} aria-label={group.label || "Pages"}>
-                    {group.label && <Typography as="p" variant="caption" tone="muted" className={clsx("mb-3 font-medium")}>{group.label}</Typography>}
-                    <ul className={clsx("-mx-3 min-w-0")}>
-                      {group.items.map((page) => (
-                        <ReadingRow
-                          key={page.id} page={page} to={`/courses/${course.id}/modules/${module.id}/pages/${page.id}`}
-                          onToggleDone={() => { setDoneError(null); setPageDone(page.id, page.status !== CompletionStatus.Completed).then(onSavePage).catch((error) => setDoneError(errorMessage(error, "Couldn’t update this page. Try again."))); }}
-                          onEdit={() => setPageDialog({ type: "edit", page })} onDelete={() => setPageDialog({ type: "delete", page })}
-                          selectable={selectedPageIds !== null} selected={selectedPageIds?.has(page.id) ?? false} onToggleSelect={() => togglePageSelected(page.id)}
-                        />
-                      ))}
-                    </ul>
+                    {group.label && (
+                      <Typography
+                        as="p"
+                        variant="caption"
+                        tone="muted"
+                        className={clsx("mb-3 font-medium")}
+                      >
+                        {group.label}
+                      </Typography>
+                    )}
+                    {view === "gallery" ? (
+                      <ul className={clsx("grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3")}>
+                        {(canReorder ? reorderable.items : group.items).map((page, index) => (
+                          <PageCard
+                            key={page.id}
+                            ref={canReorder ? reorderable.itemRef(page.id) : undefined}
+                            handle={canReorder ? <DragHandle name={page.title} {...reorderable.handleProps(page.id, index)} /> : undefined}
+                            dragging={reorderable.draggingId === page.id}
+                            {...pageItemProps(page)}
+                          />
+                        ))}
+                      </ul>
+                    ) : (
+                      <ul className={clsx("-mx-3 min-w-0")}>
+                        {(canReorder ? reorderable.items : group.items).map((page, index) => (
+                          <ReadingRow
+                            key={page.id}
+                            ref={canReorder ? reorderable.itemRef(page.id) : undefined}
+                            handle={canReorder ? <DragHandle name={page.title} {...reorderable.handleProps(page.id, index)} /> : undefined}
+                            dragging={reorderable.draggingId === page.id}
+                            {...pageItemProps(page)}
+                          />
+                        ))}
+                      </ul>
+                    )}
                   </section>
                 ))}
               </div>
@@ -183,17 +559,87 @@ export default function ModulePage({ course, module, moduleReady, pages, pagesRe
           </>
         )}
       </section>
-      {dialog === "edit" && <ModuleForm key={module.id} courseId={course.id} module={module} onClose={() => setDialog(null)} onSave={(updated) => { onSaveModule(updated); setDialog(null); }} />}
-      {dialog === "delete" && <DeleteModule module={module} onClose={() => setDialog(null)} onDelete={onDeleteModule} />}
-      {pageDialog === "create" && <PageForm moduleId={module.id} onClose={() => setPageDialog(null)} onSave={(page) => { onSavePage(page); setPageDialog(null); }} />}
-      {pageDialog === "import" && <LmsImportForm moduleId={module.id} onClose={() => setPageDialog(null)} onImported={(pages) => { pages.forEach(onSavePage); setPageDialog(null); }} />}
-      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "edit" && <PageForm key={pageDialog.page.id} moduleId={module.id} page={pageDialog.page} onClose={() => setPageDialog(null)} onSave={(page) => { onSavePage(page); setPageDialog(null); }} />}
-      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "delete" && <DeletePage page={pageDialog.page} onClose={() => setPageDialog(null)} onDelete={() => { onDeletePage(pageDialog.page.id); setPageDialog(null); }} />}
+      <ReadAloudBar reader={reader} />
+      {dialog === "edit" && (
+        <ModuleForm
+          key={module.id}
+          courseId={course.id}
+          courseColor={course.color}
+          module={module}
+          onClose={() => setDialog(null)}
+          onSave={(updated) => {
+            onSaveModule(updated);
+            setDialog(null);
+          }}
+        />
+      )}
+      {dialog === "delete" && (
+        <DeleteModule module={module} onClose={() => setDialog(null)} onDelete={onDeleteModule} />
+      )}
+      {pageDialog === "create" && (
+        <PageForm
+          courseColor={course.color}
+          moduleId={module.id}
+          onClose={() => setPageDialog(null)}
+          onSave={(page) => {
+            onSavePage(page);
+            setPageDialog(null);
+          }}
+        />
+      )}
+      {(pageDialog === "import" || pageDialog === "import-file") && (
+        <LmsImportForm
+          moduleId={module.id}
+          initialSource={pageDialog === "import-file" ? "file" : "url"}
+          onClose={() => setPageDialog(null)}
+          onImported={(pages) => {
+            pages.forEach(onSavePage);
+            setPageDialog(null);
+          }}
+        />
+      )}
+      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "edit" && (
+        <PageForm
+          courseColor={course.color}
+          key={pageDialog.page.id}
+          moduleId={module.id}
+          page={pageDialog.page}
+          onClose={() => setPageDialog(null)}
+          onSave={(page) => {
+            onSavePage(page);
+            setPageDialog(null);
+          }}
+        />
+      )}
+      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "move" && (
+        <MovePageDialog
+          page={pageDialog.page}
+          onClose={() => setPageDialog(null)}
+          onMoved={(moved) => {
+            onDeletePage(moved.id);
+            setPageDialog(null);
+          }}
+        />
+      )}
+      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "delete" && (
+        <DeletePage
+          page={pageDialog.page}
+          onClose={() => setPageDialog(null)}
+          onDelete={() => {
+            onDeletePage(pageDialog.page.id);
+            setPageDialog(null);
+          }}
+        />
+      )}
       {bulkDeleteOpen && selectedPageIds && (
         <DeletePages
           pageIds={[...selectedPageIds]}
           onClose={() => setBulkDeleteOpen(false)}
-          onDelete={() => { selectedPageIds.forEach(onDeletePage); setBulkDeleteOpen(false); setSelectedPageIds(null); }}
+          onDelete={() => {
+            selectedPageIds.forEach(onDeletePage);
+            setBulkDeleteOpen(false);
+            setSelectedPageIds(null);
+          }}
         />
       )}
     </div>

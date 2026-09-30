@@ -1,0 +1,1094 @@
+{
+  "tables": [
+    {
+      "name": "agent_connection",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notNull": true,
+          "check": "length(trim(name)) > 0"
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "notNull": true,
+          "check": "kind IN ('claude', 'codex', 'gemini', 'copilot', 'cursor', 'custom')"
+        },
+        {
+          "name": "command",
+          "type": "TEXT",
+          "notNull": true,
+          "check": "length(trim(command)) > 0"
+        },
+        {
+          "name": "args",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "model",
+          "type": "TEXT",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": [
+        {
+          "name": "agent_connection_delete",
+          "sql": "CREATE TRIGGER agent_connection_delete BEFORE DELETE ON agent_connection BEGIN\n      SELECT RAISE(ABORT, 'Delete this connection’s conversations first.')\n        WHERE EXISTS (SELECT 1 FROM agent_conversation WHERE agent_connection_id = OLD.id);\n      DELETE FROM agent_usage WHERE agent_connection_id = OLD.id;\n    END"
+        },
+        {
+          "name": "agent_connection_identity",
+          "sql": "CREATE TRIGGER agent_connection_identity BEFORE UPDATE OF kind, command, args ON agent_connection\n    WHEN (NEW.kind != OLD.kind OR NEW.command != OLD.command OR coalesce(NEW.args, '[]') != coalesce(OLD.args, '[]'))\n      AND EXISTS (SELECT 1 FROM agent_conversation WHERE agent_connection_id = OLD.id)\n    BEGIN\n      SELECT RAISE(ABORT, 'This connection has conversations. Add another connection to use a different command.');\n    END"
+        }
+      ]
+    },
+    {
+      "name": "agent_conversation",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "agent_connection_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "external_session_id",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "agent_connection_id"
+          ],
+          "table": "agent_connection",
+          "references": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "agent_conversation_connection",
+          "columns": [
+            "agent_connection_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "agent_conversation_updated",
+          "columns": [
+            "updated_at"
+          ],
+          "unique": false
+        }
+      ],
+      "uniques": [],
+      "checks": [],
+      "triggers": [
+        {
+          "name": "agent_conversation_delete",
+          "sql": "CREATE TRIGGER agent_conversation_delete BEFORE DELETE ON agent_conversation BEGIN\n      DELETE FROM agent_message WHERE conversation_id = OLD.id;\n      UPDATE agent_usage SET conversation_id = NULL WHERE conversation_id = OLD.id;\n    END"
+        },
+        {
+          "name": "agent_conversation_identity",
+          "sql": "CREATE TRIGGER agent_conversation_identity BEFORE UPDATE OF agent_connection_id ON agent_conversation\n    WHEN NEW.agent_connection_id != OLD.agent_connection_id BEGIN\n      SELECT RAISE(ABORT, 'A conversation cannot switch agents.');\n    END"
+        },
+        {
+          "name": "agent_conversation_insert",
+          "sql": "CREATE TRIGGER agent_conversation_insert BEFORE INSERT ON agent_conversation BEGIN\n      SELECT RAISE(ABORT, 'This agent connection no longer exists.')\n        WHERE NOT EXISTS (SELECT 1 FROM agent_connection WHERE id = NEW.agent_connection_id);\n    END"
+        }
+      ]
+    },
+    {
+      "name": "agent_message",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "conversation_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "role",
+          "type": "TEXT",
+          "notNull": true,
+          "check": "role IN ('user', 'assistant', 'tool', 'error')"
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "attachments",
+          "type": "TEXT",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "conversation_id"
+          ],
+          "table": "agent_conversation",
+          "references": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "agent_message_conversation",
+          "columns": [
+            "conversation_id",
+            "id"
+          ],
+          "unique": false
+        }
+      ],
+      "uniques": [],
+      "checks": [],
+      "triggers": [
+        {
+          "name": "agent_message_insert",
+          "sql": "CREATE TRIGGER agent_message_insert BEFORE INSERT ON agent_message BEGIN\n      SELECT RAISE(ABORT, 'This conversation no longer exists.')\n        WHERE NOT EXISTS (SELECT 1 FROM agent_conversation WHERE id = NEW.conversation_id);\n    END"
+        },
+        {
+          "name": "agent_message_touch",
+          "sql": "CREATE TRIGGER agent_message_touch AFTER INSERT ON agent_message BEGIN\n      UPDATE agent_conversation SET updated_at = datetime('now'),\n        title = CASE WHEN NEW.role = 'user' AND title IS NULL THEN substr(NEW.content, 1, 80) ELSE title END\n        WHERE id = NEW.conversation_id;\n    END"
+        }
+      ]
+    },
+    {
+      "name": "agent_usage",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "agent_connection_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "conversation_id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "invoked_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "duration_ms",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "input_tokens",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "output_tokens",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "cost_usd",
+          "type": "REAL",
+          "notNull": false
+        },
+        {
+          "name": "exit_code",
+          "type": "INTEGER",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "agent_connection_id"
+          ],
+          "table": "agent_connection",
+          "references": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        },
+        {
+          "columns": [
+            "conversation_id"
+          ],
+          "table": "agent_conversation",
+          "references": [
+            "id"
+          ],
+          "onDelete": "SET NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "agent_usage_connection",
+          "columns": [
+            "agent_connection_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "agent_usage_conversation",
+          "columns": [
+            "conversation_id"
+          ],
+          "unique": false
+        }
+      ],
+      "uniques": [],
+      "checks": [],
+      "triggers": [
+        {
+          "name": "agent_usage_insert",
+          "sql": "CREATE TRIGGER agent_usage_insert BEFORE INSERT ON agent_usage BEGIN\n      SELECT RAISE(ABORT, 'This agent connection no longer exists.')\n        WHERE NOT EXISTS (SELECT 1 FROM agent_connection WHERE id = NEW.agent_connection_id);\n      SELECT RAISE(ABORT, 'Usage must belong to the conversation''s agent connection.')\n        WHERE NEW.conversation_id IS NOT NULL AND NOT EXISTS (\n          SELECT 1 FROM agent_conversation WHERE id = NEW.conversation_id\n            AND agent_connection_id = NEW.agent_connection_id\n        );\n    END"
+        }
+      ]
+    },
+    {
+      "name": "ai_action",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "prompt",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "position",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "icon",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "scope",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "output",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "page_types",
+          "type": "TEXT",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "ai_profile",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "language",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "explanation_level",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "tone",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "answer_length",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "keep_terms",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "use_examples",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "hints_for_assessed",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "attachment",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "page_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "file_name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "file_path",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "mime_type",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "course",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "icon",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "color",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "status",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "progress",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "bookmarked",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "ai_profile_id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "cover",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "position",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "code",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "semester",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "school",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "instructor",
+          "type": "TEXT",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "ai_profile_id"
+          ],
+          "table": "ai_profile",
+          "references": [
+            "id"
+          ],
+          "onDelete": "SET NULL"
+        }
+      ],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "highlight",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "page_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "module_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "ref",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "html",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "position",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "orphaned_at",
+          "type": "TEXT",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "page_id"
+          ],
+          "table": "page",
+          "references": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "highlight_module",
+          "columns": [
+            "module_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "highlight_page",
+          "columns": [
+            "page_id"
+          ],
+          "unique": false
+        }
+      ],
+      "uniques": [
+        [
+          "page_id",
+          "ref"
+        ]
+      ],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "module",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "course_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "progress",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "bookmarked",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "status",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "icon",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "position",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "page",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "module_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "status",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "progress",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "bookmarked",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        },
+        {
+          "name": "type",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "1"
+        },
+        {
+          "name": "icon",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "cover",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "position",
+          "type": "INTEGER",
+          "notNull": true,
+          "default": "0"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": [
+        {
+          "name": "highlight_page_delete",
+          "sql": "CREATE TRIGGER highlight_page_delete BEFORE DELETE ON page BEGIN\n      DELETE FROM highlight WHERE page_id = OLD.id;\n    END"
+        }
+      ]
+    },
+    {
+      "name": "page_audio",
+      "columns": [
+        {
+          "name": "page_id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "file_reference",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "duration_ms",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "voice_id",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "voice_name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "speed",
+          "type": "REAL",
+          "notNull": true
+        },
+        {
+          "name": "sentences",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "page_id"
+        ],
+        "autoIncrement": false
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "page_id"
+          ],
+          "table": "page",
+          "references": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "recording",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false
+        },
+        {
+          "name": "page_id",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "file_reference",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "mime_type",
+          "type": "TEXT",
+          "notNull": true
+        },
+        {
+          "name": "duration_ms",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "segments",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notNull": true,
+          "default": "datetime('now')"
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "id"
+        ],
+        "autoIncrement": true
+      },
+      "foreignKeys": [
+        {
+          "columns": [
+            "page_id"
+          ],
+          "table": "page",
+          "references": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "recording_page",
+          "columns": [
+            "page_id"
+          ],
+          "unique": false
+        }
+      ],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    },
+    {
+      "name": "settings",
+      "columns": [
+        {
+          "name": "key",
+          "type": "TEXT",
+          "notNull": false
+        },
+        {
+          "name": "value",
+          "type": "TEXT",
+          "notNull": false
+        }
+      ],
+      "primaryKey": {
+        "columns": [
+          "key"
+        ],
+        "autoIncrement": false
+      },
+      "foreignKeys": [],
+      "indexes": [],
+      "uniques": [],
+      "checks": [],
+      "triggers": []
+    }
+  ]
+}

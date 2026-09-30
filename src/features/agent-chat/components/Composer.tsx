@@ -22,7 +22,6 @@ export default function Composer({ files, busy, stopping, supported, ready, cust
   const [message, setMessage] = useState("");
   const [highlight, setHighlight] = useState(0);
   const input = useRef<HTMLTextAreaElement>(null);
-  const filePicker = useRef<HTMLInputElement>(null);
   const disabled = busy || !supported || !ready;
   const hintId = useId();
   const menuId = useId();
@@ -106,8 +105,7 @@ export default function Composer({ files, busy, stopping, supported, ready, cust
           </li>)}
         </ul>}
         <div className={clsx("flex items-end gap-2")}>
-        <input ref={filePicker} type="file" multiple hidden onChange={(event) => { attach(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
-        <button type="button" aria-label="Attach files" title="Attach files" disabled={disabled} onClick={() => void files.pick().then((shown) => { if (!shown) filePicker.current?.click(); })}
+        <button type="button" aria-label="Attach files" title="Attach files" disabled={disabled} onClick={() => void files.pick()}
           className={clsx("flex size-10 shrink-0 items-center justify-center rounded-full text-muted", "hover:enabled:bg-ink/6 hover:enabled:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40")}>
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={clsx("size-5")}><path d="m15.5 9.5-5.8 5.8a3.5 3.5 0 0 1-5-5l6.2-6.1a2.3 2.3 0 0 1 3.3 3.2l-6.2 6.2a1.2 1.2 0 0 1-1.6-1.7l5.7-5.7" /></svg>
         </button>

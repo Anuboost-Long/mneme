@@ -52,15 +52,6 @@ function downloadBackup(fileName: string, json: string) {
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-// The native picker only offers .json files — the webview's own
-// <input type="file"> ignores `accept` (wry's open panel sets no file
-// types). Resolves null on cancel. Rejects UNSUPPORTED outside the desktop
-// runtime, where the caller falls back to that input.
-export async function pickBackupFile(): Promise<File | null> {
-  const [picked] = await desktop.files.pick({ extensions: ["json"] });
-  return picked ? new File([new Uint8Array(picked.bytes)], picked.name) : null;
-}
-
 export function readBackupFile(file: File): Promise<Backup> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -97,11 +88,12 @@ export async function restoreBackup(backup: Backup) {
   for (const course of backup.courses) {
     await desktop.storage.execute(
       `INSERT OR IGNORE INTO course
-        (id, name, description, icon, color, status, progress, bookmarked, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, name, description, icon, color, status, progress, bookmarked, position, code, semester, school, instructor, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         course.id, course.name, course.description, course.icon, course.color,
         normalize(course.status, legacyStatus, 1), course.progress ?? 0, course.bookmarked ?? 0,
+        course.position ?? 0, course.code ?? null, course.semester ?? null, course.school ?? null, course.instructor ?? null,
         course.created_at, course.updated_at,
       ],
     );
@@ -109,11 +101,12 @@ export async function restoreBackup(backup: Backup) {
   for (const module of backup.modules) {
     await desktop.storage.execute(
       `INSERT OR IGNORE INTO module
-        (id, course_id, name, description, status, progress, bookmarked, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, course_id, name, description, status, progress, bookmarked, icon, position, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         module.id, module.course_id, module.name, module.description,
         normalize(module.status, legacyStatus, 1), module.progress ?? 0, module.bookmarked ?? 0,
+        module.icon ?? null, module.position ?? 0,
         module.created_at, module.updated_at,
       ],
     );
@@ -121,11 +114,12 @@ export async function restoreBackup(backup: Backup) {
   for (const page of backup.pages) {
     await desktop.storage.execute(
       `INSERT OR IGNORE INTO page
-        (id, module_id, title, type, content, status, progress, bookmarked, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, module_id, title, type, content, status, progress, bookmarked, icon, position, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         page.id, page.module_id, page.title, normalize(page.type, legacyPageType, 1), page.content,
         normalize(page.status, legacyStatus, 1), page.progress ?? 0, page.bookmarked ?? 0,
+        page.icon ?? null, page.position ?? 0,
         page.created_at, page.updated_at,
       ],
     );

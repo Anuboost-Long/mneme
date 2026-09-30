@@ -1,8 +1,17 @@
+import { extractImages, toBase64 } from "../../../shared/lib/htmlImages";
 import { getCourse, getCourses } from "../../courses/lib/courses";
 import { getModule, getModules } from "../../courses/lib/modules";
 import { createPage, getPage, getPages, searchPages, updatePage, type Page } from "../../courses/lib/pages";
 import { completionStatusLabels } from "../../courses/lib/completion-status";
 import { pageTypeLabels } from "../../courses/components/PageForm";
+
+// A result that's already MCP content, e.g. images the agent should see,
+// rather than data to send as JSON text.
+export type ToolContent = { content: ({ type: "text"; text: string } | { type: "image"; data: string; mimeType: string })[] };
+
+export function isToolContent(result: unknown): result is ToolContent {
+  return typeof result === "object" && result !== null && Array.isArray((result as ToolContent).content);
+}
 
 export type Tool = {
   name: string;
@@ -117,12 +126,29 @@ export const tools: Tool[] = [
   },
   {
     name: "get_page",
-    description: "Get one page by id, including its full HTML content.",
+    description: "Get one page by id, including its full HTML content. Its pictures show as <img> tags you can't open; call get_page_images to see them.",
     inputSchema: { type: "object", properties: { id: { type: "number", description: "Page id." } }, required: ["id"] },
     execute: async (args) => {
       const page = await getPage(requireNumber(args, "id"));
       if (!page) throw new Error(`No page with id ${args.id}.`);
       return page;
+    },
+  },
+  {
+    name: "get_page_images",
+    description: "See the pictures on a page (photos, diagrams, figures) as images, in the order they appear in its content, up to 8. Use this when a page's <img> tags matter to the question.",
+    inputSchema: { type: "object", properties: { id: { type: "number", description: "Page id." } }, required: ["id"] },
+    execute: async (args): Promise<ToolContent> => {
+      const page = await getPage(requireNumber(args, "id"));
+      if (!page) throw new Error(`No page with id ${args.id}.`);
+      const { images } = await extractImages(page.content ?? "");
+      const summary = images.length === 0 ? `"${page.title}" has no pictures.` : `${images.length} picture(s) from "${page.title}", in page order.`;
+      return {
+        content: [
+          { type: "text", text: summary },
+          ...images.map((image) => ({ type: "image" as const, data: toBase64(image.bytes), mimeType: image.mediaType }))
+        ]
+      };
     },
   },
   {

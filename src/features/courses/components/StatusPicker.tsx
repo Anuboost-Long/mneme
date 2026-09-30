@@ -49,3 +49,29 @@ export default function StatusPicker({ status, itemLabel, onChange, triggerClass
     </>
   );
 }
+
+// The current status as a small muted chip that opens the picker, for a
+// page or module header.
+export function StatusChip({ status, itemLabel, onChange }: Readonly<{
+  status: CompletionStatus;
+  itemLabel: string;
+  onChange: (status: CompletionStatus) => void;
+}>) {
+  return (
+    <StatusPicker
+      status={status}
+      itemLabel={itemLabel}
+      onChange={onChange}
+      triggerClassName={clsx(
+        "-ml-2 mt-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted",
+        "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+      )}
+    >
+      <span aria-hidden="true" className={clsx("size-3.5 rounded-full", statusMarkerStyles[status])} />
+      {completionStatusLabels[status]}
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m4 6 4 4 4-4" />
+      </svg>
+    </StatusPicker>
+  );
+}
