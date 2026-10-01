@@ -13,9 +13,9 @@ export type Backup = {
 
 export async function createBackup(): Promise<Backup> {
   const [courses, modules, pages] = await Promise.all([
-    desktop.storage.query<CourseRow>("SELECT * FROM course ORDER BY id"),
-    desktop.storage.query<ModuleRow>("SELECT * FROM module ORDER BY id"),
-    desktop.storage.query<PageRow>("SELECT * FROM page ORDER BY id"),
+    desktop.storage.query<CourseRow>("SELECT * FROM course WHERE deleted_at IS NULL ORDER BY id"),
+    desktop.storage.query<ModuleRow>("SELECT * FROM module WHERE deleted_at IS NULL ORDER BY id"),
+    desktop.storage.query<PageRow>("SELECT * FROM page WHERE deleted_at IS NULL ORDER BY id"),
   ]);
   return { version: 1, exportedAt: new Date().toISOString(), courses, modules, pages };
 }

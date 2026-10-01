@@ -36,6 +36,7 @@ export function getAllRecordings() {
        module.course_id, course.name AS course_name, course.color AS course_color
      FROM recording JOIN page ON page.id = recording.page_id JOIN module ON module.id = page.module_id
      JOIN course ON course.id = module.course_id
+     WHERE page.deleted_at IS NULL
      ORDER BY recording.created_at DESC, recording.id DESC`
   );
 }

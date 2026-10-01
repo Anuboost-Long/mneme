@@ -30,7 +30,7 @@ export default function DeletePages({ pageIds, onClose, onDelete }: Readonly<{
   return (
     <Dialog title={`Delete ${count} ${noun}?`} busy={busy} onClose={onClose}>
       {(close, complete) => <>
-      <BodyText tone="muted" className={clsx("wrap-anywhere")}>{count} {noun} will be permanently deleted. This can’t be undone.</BodyText>
+      <BodyText tone="muted" className={clsx("wrap-anywhere")}>{count} {noun} {count === 1 ? "moves" : "move"} to Recently deleted. You can restore {count === 1 ? "it" : "them"} from there for 30 days.</BodyText>
       {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
       <div className={clsx("mt-8 flex justify-end gap-3")}>
         <button type="button" autoFocus disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}>Cancel</button>

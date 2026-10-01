@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import HomePage from "../features/home/pages/HomePage";
 import { addWidget, getWidgets, removeWidget, reorderWidgets, replaceWidgets, restoreWidget, updateWidget, type NewWidget, type Widget } from "../features/home/lib/widgets";
 import { defaultWidgets, layoutPresets } from "../features/home/widgets/catalog";
-import { useCourses } from "../layouts/RootLayout";
+import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function HomeRoute() {
   const { courses, create } = useCourses();

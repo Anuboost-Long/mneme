@@ -126,7 +126,7 @@ function reconcileHighlightsSafely(
 }
 
 export async function getPages(moduleId: number, filter: PageFilter = {}) {
-  const conditions = ["module_id = ?"];
+  const conditions = ["module_id = ?", "deleted_at IS NULL"];
   const params: (string | number)[] = [moduleId];
   if (filter.type !== undefined) {
     conditions.push("type = ?");
@@ -164,7 +164,7 @@ export function percentDone(progress: PageProgress | undefined) {
 async function queryPageProgress(key: "id" | "course_id", where: string, params: number[]) {
   const rows = await desktop.storage.query<{ key: number; total: number; done: number }>(
     `SELECT module.${key} AS key, COUNT(*) AS total, SUM(page.status = ?) AS done
-     FROM page JOIN module ON module.id = page.module_id ${where} GROUP BY module.${key}`,
+     FROM page JOIN module ON module.id = page.module_id WHERE page.deleted_at IS NULL ${where} GROUP BY module.${key}`,
     [CompletionStatus.Completed, ...params]
   );
   return new Map(
@@ -173,7 +173,7 @@ async function queryPageProgress(key: "id" | "course_id", where: string, params:
 }
 
 export function getModulePageProgress(courseId: number) {
-  return queryPageProgress("id", "WHERE module.course_id = ?", [courseId]);
+  return queryPageProgress("id", "AND module.course_id = ?", [courseId]);
 }
 
 export function getCoursePageProgress() {
@@ -185,7 +185,7 @@ export async function searchPages(query: string) {
   if (!trimmed) return [];
   const like = `%${trimmed}%`;
   const rows = await desktop.storage.query<PageRow>(
-    "SELECT * FROM page WHERE title LIKE ? OR content LIKE ? ORDER BY created_at, id",
+    "SELECT * FROM page WHERE deleted_at IS NULL AND (title LIKE ? OR content LIKE ?) ORDER BY created_at, id",
     [like, like]
   );
   return rows.map(toPage);
@@ -207,14 +207,14 @@ export function searchPageLinks(query: string, limit: number) {
     `SELECT page.id, page.title, page.module_id, module.name AS module_name, module.course_id,
        page.title LIKE ? ESCAPE '\\' AS in_title
      FROM page JOIN module ON module.id = page.module_id
-     WHERE page.title LIKE ? ESCAPE '\\' OR page.content LIKE ? ESCAPE '\\'
+     WHERE page.deleted_at IS NULL AND (page.title LIKE ? ESCAPE '\\' OR page.content LIKE ? ESCAPE '\\')
      ORDER BY in_title DESC, page.title LIKE ? ESCAPE '\\' DESC, page.title COLLATE NOCASE LIMIT ?`,
     [like, like, like, `${trimmed}%`, limit]
   );
 }
 
 export async function getPage(id: number) {
-  const [row] = await desktop.storage.query<PageRow>("SELECT * FROM page WHERE id = ?", [id]);
+  const [row] = await desktop.storage.query<PageRow>("SELECT * FROM page WHERE id = ? AND deleted_at IS NULL", [id]);
   return row ? toPage(row) : undefined;
 }
 
@@ -383,26 +383,31 @@ export function setPageDone(id: number, done: boolean) {
   );
 }
 
-// Page, module and course deletes call this first, like deleteRecordings.
-export async function deletePageCovers(filter: string, params: unknown[]) {
-  const rows = await desktop.storage.query<{ cover: string | null }>(`SELECT cover FROM page WHERE ${filter}`, params);
-  for (const { cover } of rows) if (cover) await deleteImage(cover);
+let lastDeletion = 0;
+
+export function deletionTime() {
+  lastDeletion = Math.max(Date.now(), lastDeletion + 1);
+  return new Date(lastDeletion).toISOString().replace("T", " ").slice(0, 23);
 }
 
-export async function deletePage(id: number) {
-  await deletePageCovers("id = ?", [id]);
-  await deleteRecordings("page_id = ?", [id]);
-  await deleteAttachments("page_id = ?", [id]);
-  await deletePageAudios("page_id = ?", [id]);
-  await desktop.storage.execute("DELETE FROM page WHERE id = ?", [id]);
+export function deletePage(id: number) {
+  return deletePages([id]);
 }
 
 export async function deletePages(ids: number[]) {
   if (ids.length === 0) return;
-  const placeholders = ids.map(() => "?").join(", ");
-  await deletePageCovers(`id IN (${placeholders})`, ids);
-  await deleteRecordings(`page_id IN (${placeholders})`, ids);
-  await deleteAttachments(`page_id IN (${placeholders})`, ids);
-  await deletePageAudios(`page_id IN (${placeholders})`, ids);
-  await desktop.storage.execute(`DELETE FROM page WHERE id IN (${placeholders})`, ids);
+  await desktop.storage.execute(
+    `UPDATE page SET deleted_at = ? WHERE deleted_at IS NULL AND id IN (${ids.map(() => "?").join(", ")})`,
+    [deletionTime(), ...ids]
+  );
+}
+
+export async function erasePages(filter: string, params: unknown[]) {
+  const ofPages = `page_id IN (SELECT id FROM page WHERE ${filter})`;
+  const covers = await desktop.storage.query<{ cover: string | null }>(`SELECT cover FROM page WHERE ${filter}`, params);
+  for (const { cover } of covers) if (cover) await deleteImage(cover);
+  await deleteRecordings(ofPages, params);
+  await deleteAttachments(ofPages, params);
+  await deletePageAudios(ofPages, params);
+  await desktop.storage.execute(`DELETE FROM page WHERE ${filter}`, params);
 }

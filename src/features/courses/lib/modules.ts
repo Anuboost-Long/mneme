@@ -1,11 +1,9 @@
-import { desktop } from "@chain/sdk";
+import { desktop, sql, type Values } from "@chain/sdk";
 
 import type { ModuleRow } from "../../../shared/lib/db/schema/module";
+import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus, completionStatuses, completionStatusLabels } from "./completion-status";
-import { deletePageAudios } from "../../audiobook/lib/pageAudio";
-import { deletePageCovers } from "./pages";
-import { deleteAttachments } from "./attachments";
-import { deleteRecordings } from "./recordings";
+import { deletionTime, erasePages } from "./pages";
 
 export { CompletionStatus as ModuleStatus };
 export const moduleStatuses = completionStatuses;
@@ -50,39 +48,28 @@ function clampProgress(progress: number) {
   return Math.min(100, Math.max(0, Math.round(progress)));
 }
 
+const moduleTable = () => desktop.storage.table<ModuleRow>("module");
+
 function toModule(row: ModuleRow): Module {
   return { ...row, status: row.status as CompletionStatus, bookmarked: Boolean(row.bookmarked) };
 }
 
 export async function getModules(courseId: number, filter: ModuleFilter = {}) {
-  const conditions = ["course_id = ?"];
-  const params: (string | number)[] = [courseId];
-  if (filter.status !== undefined) {
-    conditions.push("status = ?");
-    params.push(filter.status);
-  }
-  if (filter.bookmarked !== undefined) {
-    conditions.push("bookmarked = ?");
-    params.push(filter.bookmarked ? 1 : 0);
-  }
-  if (filter.createdFrom !== undefined) {
-    conditions.push("date(created_at) >= date(?)");
-    params.push(filter.createdFrom);
-  }
-  if (filter.createdTo !== undefined) {
-    conditions.push("date(created_at) <= date(?)");
-    params.push(filter.createdTo);
-  }
-  const rows = await desktop.storage.query<ModuleRow>(
-    `SELECT * FROM module WHERE ${conditions.join(" AND ")} ORDER BY position, created_at, id`,
-    params
-  );
+  let query = moduleTable().where({
+    course_id: courseId,
+    deleted_at: null,
+    status: filter.status,
+    bookmarked: filter.bookmarked === undefined ? undefined : Number(filter.bookmarked)
+  });
+  if (filter.createdFrom !== undefined) query = query.where(sql`date(created_at) >= date(${filter.createdFrom})`);
+  if (filter.createdTo !== undefined) query = query.where(sql`date(created_at) <= date(${filter.createdTo})`);
+  const rows = await query.orderBy("position", "created_at", "id").all();
   return rows.map(toModule);
 }
 
 export async function getModuleCounts() {
   const rows = await desktop.storage.query<{ course_id: number; count: number }>(
-    "SELECT course_id, COUNT(*) AS count FROM module GROUP BY course_id"
+    "SELECT course_id, COUNT(*) AS count FROM module WHERE deleted_at IS NULL GROUP BY course_id"
   );
   return new Map(rows.map((row) => [row.course_id, row.count]));
 }
@@ -94,6 +81,7 @@ export function getModuleDestinations() {
   return desktop.storage.query<ModuleLink>(
     `SELECT module.id, module.name, module.course_id, course.name AS course_name
      FROM module JOIN course ON course.id = module.course_id
+     WHERE module.deleted_at IS NULL
      ORDER BY course.position, course.created_at, module.position, module.created_at`,
     []
   );
@@ -104,85 +92,61 @@ export function searchModuleLinks(query: string, limit: number) {
   return desktop.storage.query<ModuleLink>(
     `SELECT module.id, module.name, module.course_id, course.name AS course_name
      FROM module JOIN course ON course.id = module.course_id
-     WHERE module.name LIKE ? ESCAPE '\\'
+     WHERE module.deleted_at IS NULL AND module.name LIKE ? ESCAPE '\\'
      ORDER BY module.name LIKE ? ESCAPE '\\' DESC, module.name COLLATE NOCASE LIMIT ?`,
     [`%${trimmed}%`, `${trimmed}%`, limit]
   );
 }
 
 export async function getModule(id: number) {
-  const [row] = await desktop.storage.query<ModuleRow>("SELECT * FROM module WHERE id = ?", [id]);
+  const row = await moduleTable().where({ id, deleted_at: null }).first();
   return row ? toModule(row) : undefined;
 }
 
 // New modules go to the end of their course.
 export async function createModule(courseId: number, input: ModuleInput) {
-  const result = await desktop.storage.execute(
-    `INSERT INTO module (course_id, name, description, icon, status, progress, bookmarked, position)
-      VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM module WHERE course_id = ?))`,
-    [
-      courseId,
-      moduleName(input.name),
-      input.description?.trim() || null,
-      input.icon || null,
-      input.status ?? CompletionStatus.NotStarted,
-      clampProgress(input.progress ?? 0),
-      input.bookmarked ? 1 : 0,
-      courseId
-    ]
-  );
-  const module = await getModule(result.lastInsertId);
-  if (!module) throw new Error("The saved module could not be found.");
-  return module;
+  const row = await moduleTable().insert({
+    course_id: courseId,
+    name: moduleName(input.name),
+    description: input.description?.trim() || null,
+    icon: input.icon || null,
+    status: input.status ?? CompletionStatus.NotStarted,
+    progress: clampProgress(input.progress ?? 0),
+    bookmarked: input.bookmarked ? 1 : 0,
+    position: sql`SELECT COALESCE(MAX(position), 0) + 1 FROM module WHERE course_id = ${courseId}`
+  });
+  return toModule(row);
 }
 
 export async function updateModule(id: number, input: Partial<ModuleInput>) {
-  const fields: string[] = [];
-  const values: (string | number | null)[] = [];
-  if (input.name !== undefined) {
-    fields.push("name = ?");
-    values.push(moduleName(input.name));
-  }
-  for (const key of ["description", "icon"] as const) {
-    if (input[key] !== undefined) {
-      fields.push(`${key} = ?`);
-      values.push(input[key]?.trim() || null);
-    }
-  }
-  if (input.status !== undefined) {
-    fields.push("status = ?");
-    values.push(input.status);
-  }
-  if (input.progress !== undefined) {
-    fields.push("progress = ?");
-    values.push(clampProgress(input.progress));
-  }
-  if (input.bookmarked !== undefined) {
-    fields.push("bookmarked = ?");
-    values.push(input.bookmarked ? 1 : 0);
-  }
-  if (fields.length) {
-    await desktop.storage.execute(
-      `UPDATE module SET ${fields.join(", ")}, updated_at = datetime('now') WHERE id = ?`,
-      [...values, id]
-    );
-  }
-  const module = await getModule(id);
-  if (!module) throw new Error("This module no longer exists.");
-  return module;
+  const changes: Values<ModuleRow> = {
+    name: input.name === undefined ? undefined : moduleName(input.name),
+    description: input.description === undefined ? undefined : input.description?.trim() || null,
+    icon: input.icon === undefined ? undefined : input.icon?.trim() || null,
+    status: input.status,
+    progress: input.progress === undefined ? undefined : clampProgress(input.progress),
+    bookmarked: input.bookmarked === undefined ? undefined : Number(input.bookmarked)
+  };
+  const edited = Object.values(changes).some((value) => value !== undefined);
+  const [row] = await moduleTable().update({ id, deleted_at: null }, edited ? { ...changes, updated_at: sql`datetime('now')` } : {});
+  if (!row) throw new Error("This module no longer exists.");
+  return toModule(row);
 }
 
 // `ids` in their new order within one course.
 export async function reorderModules(ids: number[]) {
-  for (const [position, id] of ids.entries())
-    await desktop.storage.execute("UPDATE module SET position = ? WHERE id = ?", [position + 1, id]);
+  for (const [position, id] of ids.entries()) await moduleTable().update(id, { position: position + 1 });
 }
 
 export async function deleteModule(id: number) {
-  await deletePageCovers("module_id = ?", [id]);
-  await deleteRecordings("page_id IN (SELECT id FROM page WHERE module_id = ?)", [id]);
-  await deleteAttachments("page_id IN (SELECT id FROM page WHERE module_id = ?)", [id]);
-  await deletePageAudios("page_id IN (SELECT id FROM page WHERE module_id = ?)", [id]);
-  await desktop.storage.execute("DELETE FROM page WHERE module_id = ?", [id]);
-  await desktop.storage.execute("DELETE FROM module WHERE id = ?", [id]);
+  const deletedAt = deletionTime();
+  await desktop.storage.transaction(async (tx) => {
+    await tx.table<PageRow>("page").update({ module_id: id, deleted_at: null }, { deleted_at: deletedAt });
+    await tx.table<ModuleRow>("module").update({ id, deleted_at: null }, { deleted_at: deletedAt });
+  });
+}
+
+export async function eraseModules(filter: string, params: unknown[]) {
+  await erasePages(`module_id IN (SELECT id FROM module WHERE ${filter})`, params);
+  await desktop.storage.execute(`DELETE FROM module WHERE ${filter}`, params);
 }

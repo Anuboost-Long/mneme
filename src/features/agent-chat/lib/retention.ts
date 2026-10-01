@@ -12,7 +12,7 @@ export async function getRetentionDays(): Promise<number | null> {
 
 export async function setRetentionDays(days: number | null) {
   if (days !== null && (!Number.isSafeInteger(days) || days <= 0)) throw new Error("Enter a positive number of days.");
-  await desktop.storage.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [key, days === null ? "never" : String(days)]);
+  await desktop.storage.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')", [key, days === null ? "never" : String(days)]);
 }
 
 export async function cleanUpConversations() {

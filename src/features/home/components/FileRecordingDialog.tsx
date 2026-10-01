@@ -9,7 +9,7 @@ import { TextInput } from "../../../shared/ui/Input";
 import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
 import { escapeHtml } from "../../ai-actions/lib/editorHtml";
 import { getModuleDestinations } from "../../courses/lib/modules";
-import { appendToPage, createPage, deletePage, PageType, searchPageLinks } from "../../courses/lib/pages";
+import { appendToPage, createPage, erasePages, PageType, searchPageLinks } from "../../courses/lib/pages";
 import Select from "../../../shared/ui/Select";
 import { createRecording, renameRecording } from "../../courses/lib/recordings";
 import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
@@ -100,7 +100,7 @@ export default function FileRecordingDialog({ take, onFiled, onClose }: Readonly
         return;
       }
       // Nothing was saved; a page made just for this recording goes too.
-      if (page && destination === "new") await deletePage(page.id).catch(() => undefined);
+      if (page && destination === "new") await erasePages("id = ?", [page.id]).catch(() => undefined);
       setStage({ name: "choosing" });
       setError(errorMessage(error_, "Couldn’t save the recording. Try again."));
     }

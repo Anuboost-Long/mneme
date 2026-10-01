@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import CoursePage from "../features/courses/pages/CoursePage";
 import { getModules, reorderModules, type Module } from "../features/courses/lib/modules";
 import { getModulePageProgress, type PageProgress } from "../features/courses/lib/pages";
-import { useCourses } from "../layouts/RootLayout";
+import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function CourseRoute() {
   const { courseId } = useParams();

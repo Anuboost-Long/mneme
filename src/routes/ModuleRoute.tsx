@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import ModulePage from "../features/courses/pages/ModulePage";
 import { getModule, type Module as ModuleRecord } from "../features/courses/lib/modules";
 import { getPages, reorderPages, type Page as PageRecord } from "../features/courses/lib/pages";
-import { useCourses } from "../layouts/RootLayout";
+import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function ModuleRoute() {
   const { courseId, moduleId } = useParams();

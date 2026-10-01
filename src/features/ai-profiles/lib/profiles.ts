@@ -75,7 +75,7 @@ export async function setDefaultProfileId(id: number | null) {
     await desktop.storage.execute("DELETE FROM settings WHERE key = ?", [defaultKey]);
     return;
   }
-  await desktop.storage.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [defaultKey, String(id)]);
+  await desktop.storage.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')", [defaultKey, String(id)]);
 }
 
 export async function getActiveProfile(courseId?: number): Promise<AiProfile | null> {

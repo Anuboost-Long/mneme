@@ -32,6 +32,10 @@ export class Module {
   // Order within its course; ties fall back to creation order.
   @Column({ default: 0 })
   position!: number;
+
+  // When it moved to Recently deleted. Everything deleted along with it gets
+  // the same value, which is how a restore finds what to bring back.
+  deleted_at!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

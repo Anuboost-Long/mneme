@@ -9,6 +9,7 @@ import HomeRoute from "./routes/HomeRoute";
 import ModuleHighlightsRoute from "./routes/ModuleHighlightsRoute";
 import ModuleRoute from "./routes/ModuleRoute";
 import PageRoute from "./routes/PageRoute";
+import RecentlyDeletedRoute from "./routes/RecentlyDeletedRoute";
 import RecordingsRoute from "./routes/RecordingsRoute";
 import SettingsRoute from "./routes/SettingsRoute";
 
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
       { path: "settings/:section", element: <SettingsRoute /> },
       { path: "agent-chat", element: <AgentChatRoute /> },
       { path: "recordings", element: <RecordingsRoute /> },
+      { path: "recently-deleted", element: <RecentlyDeletedRoute /> },
       { path: "about", element: <AboutRoute /> }
     ]
   }

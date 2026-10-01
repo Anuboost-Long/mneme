@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import CoursesPage from "../features/courses/pages/CoursesPage";
 import { getModuleCounts } from "../features/courses/lib/modules";
 import { getCoursePageProgress, type PageProgress } from "../features/courses/lib/pages";
-import { useCourses } from "../layouts/RootLayout";
+import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function CoursesRoute() {
   const { courses, create, save, remove, reorder } = useCourses();

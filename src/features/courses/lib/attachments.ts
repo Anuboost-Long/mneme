@@ -25,7 +25,7 @@ export async function renameAttachment(attachment: Attachment, name: string) {
   let fileName = name.trim();
   if (!fileName) throw new Error("Enter a file name.");
   if (extension && fileExtension(fileName) !== extension) fileName = `${fileName}.${extension}`;
-  await desktop.storage.execute("UPDATE attachment SET file_name = ? WHERE id = ?", [fileName, attachment.id]);
+  await desktop.storage.execute("UPDATE attachment SET file_name = ?, updated_at = datetime('now') WHERE id = ?", [fileName, attachment.id]);
   return fileName;
 }
 

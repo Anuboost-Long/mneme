@@ -4,6 +4,7 @@ import type { HighlightRow } from "../../../shared/lib/db/schema/highlight";
 export type Highlight = HighlightRow;
 
 const REF_ATTR = "data-highlight-ref";
+const UPSERT_BATCH = 200;
 
 // The single place both syncPageHighlights and stripHighlight agree on
 // what counts as a highlight in a page's own saved HTML.
@@ -141,18 +142,19 @@ export async function syncPageHighlights(pageId: number, moduleId: number, pageH
       [pageId],
     );
   }
-  for (const [position, mark] of marks.entries()) {
+  for (let start = 0; start < marks.length; start += UPSERT_BATCH) {
+    const batch = marks.slice(start, start + UPSERT_BATCH);
     await desktop.storage.execute(
-      `INSERT INTO highlight (page_id, module_id, ref, html, position) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO highlight (page_id, module_id, ref, html, position) VALUES ${batch.map(() => "(?, ?, ?, ?, ?)").join(", ")}
        ON CONFLICT(page_id, ref) DO UPDATE SET html = excluded.html, position = excluded.position, module_id = excluded.module_id, orphaned_at = NULL`,
-      [pageId, moduleId, mark.ref, mark.html, position],
+      batch.flatMap((mark, index) => [pageId, moduleId, mark.ref, mark.html, start + index]),
     );
   }
 }
 
 export async function getModuleHighlights(moduleId: number): Promise<Highlight[]> {
   return desktop.storage.query<Highlight>(
-    "SELECT * FROM highlight WHERE module_id = ? ORDER BY page_id, position",
+    "SELECT * FROM highlight WHERE module_id = ? AND page_id IN (SELECT id FROM page WHERE deleted_at IS NULL) ORDER BY page_id, position",
     [moduleId],
   );
 }

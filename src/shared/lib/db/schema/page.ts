@@ -45,6 +45,10 @@ export class Page {
   // Last time the page was opened; separate from updated_at so reading a
   // page doesn't count as editing it.
   opened_at!: string | null;
+
+  // When it moved to Recently deleted. Everything deleted along with it gets
+  // the same value, which is how a restore finds what to bring back.
+  deleted_at!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

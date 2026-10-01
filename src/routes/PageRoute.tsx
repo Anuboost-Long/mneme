@@ -5,7 +5,7 @@ import PageDetailPage from "../features/courses/pages/PageDetailPage";
 import { getModule } from "../features/courses/lib/modules";
 import { getPage, markPageOpened, type Page as PageRecord } from "../features/courses/lib/pages";
 import { updateCourse } from "../features/courses/lib/courses";
-import { useCourses } from "../layouts/RootLayout";
+import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function PageRoute() {
   const { courseId, pageId } = useParams();

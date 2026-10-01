@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useMatch, useNavigate, useOutletContext } from "react-router-dom";
+import { useAtom, useSetAtom } from "jotai";
+import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
 
 import CommandPalette from "../app/CommandPalette";
 import NavBar from "../app/NavBar";
@@ -9,28 +10,19 @@ import AgentChatPanel from "../features/agent-chat/components/AgentChatPanel";
 import { cleanUpConversations } from "../features/agent-chat/lib/retention";
 import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import CourseForm from "../features/courses/components/CourseForm";
-import { getCourses, reorderCourses, type Course } from "../features/courses/lib/courses";
+import { getCourses } from "../features/courses/lib/courses";
+import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
+import { purgeExpiredItems } from "../features/recently-deleted/lib/recentlyDeleted";
 import { initDb } from "../shared/lib/db";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
 import { BodyText, PageTitle } from "../shared/ui/Typography";
 
-type CoursesContext = {
-  courses: Course[];
-  create: () => void;
-  save: (course: Course) => void;
-  remove: (id: number) => void;
-  reorder: (courses: Course[]) => void;
-};
-
-export function useCourses() {
-  return useOutletContext<CoursesContext>();
-}
-
 export default function RootLayout() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const { courses, save, remove, reorder } = useCourses();
+  const setCourses = useSetAtom(coursesAtom);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useAtom(creatingCourseAtom);
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
     try {
       return localStorage.getItem("mneme.sidebar.collapsed") !== "true";
@@ -94,6 +86,7 @@ export default function RootLayout() {
     let active = true;
     initDb()
       .then(cleanUpConversations)
+      .then(purgeExpiredItems)
       .then(() => getCourses())
       .then((loaded) => {
         if (active) {
@@ -108,25 +101,6 @@ export default function RootLayout() {
       active = false;
     };
   }, [attempt]);
-
-  function save(course: Course) {
-    setCourses((current) =>
-      current.some((item) => item.id === course.id)
-        ? current.map((item) => (item.id === course.id ? course : item))
-        : [...current, course]
-    );
-  }
-
-  function remove(id: number) {
-    setCourses((current) => current.filter((course) => course.id !== id));
-  }
-
-  // Shows the new order right away and puts the old one back if saving fails.
-  function reorder(next: Course[]) {
-    const previous = courses;
-    setCourses(next);
-    reorderCourses(next.map((course) => course.id)).catch(() => setCourses(previous));
-  }
 
   function toggleSidebar() {
     setSidebarExpanded(!sidebarExpanded);
@@ -203,11 +177,7 @@ export default function RootLayout() {
             </section>
           )}
           {(status === "ready" || settingsRoute) && (
-            <Outlet
-              context={
-                { courses, create: () => setCreating(true), save, remove, reorder } satisfies CoursesContext
-              }
-            />
+            <Outlet />
           )}
         </main>
         {!chatRoute && (

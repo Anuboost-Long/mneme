@@ -85,5 +85,5 @@ export async function getActionConnection() {
 }
 
 export async function setActionConnectionId(id: number) {
-  await desktop.storage.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [connectionKey, String(id)]);
+  await desktop.storage.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')", [connectionKey, String(id)]);
 }

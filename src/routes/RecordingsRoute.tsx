@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAllRecordings, type RecordingListItem } from "../features/courses/lib/recordings";
 import RecordingsPage from "../features/recordings/pages/RecordingsPage";
-import { useCourses } from "../layouts/RootLayout";
+import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function RecordingsRoute() {
   const { courses } = useCourses();

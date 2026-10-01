@@ -239,7 +239,7 @@ Store the student's workspace locally.
 ## Development Steps
 
 - [x] Add SQLite.
-- [ ] Add the ORM.
+- [x] Add the ORM. (chain-sdk's `@Table` classes and migrations, plus `desktop.storage.table()` and `transaction()` from request 26. Transactions are in use for deleting and restoring; lib files move from raw SQL to `table()` as they're touched.)
 - [x] Create database initialization.
 - [x] Create database migrations.
 - [x] Create a Course table.
@@ -248,12 +248,12 @@ Store the student's workspace locally.
 - [x] Create an Attachment table.
 - [x] Create an AI Action table.
 - [x] Create a Settings table.
-- [x] Create timestamps for records.
-- [ ] Add soft delete support if needed.
-- [ ] Test creating records.
-- [ ] Test updating records.
-- [ ] Test deleting records.
-- [ ] Test retrieving records after restarting the app.
+- [x] Create timestamps for records. (Every Phase 3 table has `created_at`/`updated_at`; attachment and settings got theirs in migration 0025.)
+- [x] Add soft delete support if needed. (Courses, modules and pages go to Recently deleted for 30 days, where they can be previewed, restored or deleted permanently. See features/recently-deleted.md.)
+- [x] Test creating records. (`npm test`, and in the running app.)
+- [x] Test updating records.
+- [x] Test deleting records.
+- [x] Test retrieving records after restarting the app. (`tests/persistence.test.mjs` reopens the database file; also checked by restarting the app.)
 
 Basic relationship:
 
@@ -1437,7 +1437,7 @@ AI Actions
 
 ## Development Steps
 
-- [x] Create dashboard. (A customizable widget board: 21 widgets, drag to arrange and resize, your own lists and counts. See features/34-dashboard-widgets.md.)
+- [x] Create dashboard. (A customizable widget board: 21 widgets, drag to arrange and resize, your own lists and counts. See features/widgets/34-dashboard-widgets.md.)
 - [x] Add recent pages. (By last opened; `page.opened_at`, migration 23.)
 - [x] Add recent courses.
 - [x] Add pinned courses.

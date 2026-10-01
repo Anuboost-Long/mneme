@@ -48,7 +48,7 @@ const orderBy: Record<PageSort, string> = {
 };
 
 function pageWhere({ courseId, type, status }: PageFilter) {
-  const conditions: string[] = [];
+  const conditions = ["page.deleted_at IS NULL"];
   const params: number[] = [];
   if (courseId) {
     conditions.push("module.course_id = ?");
@@ -94,7 +94,7 @@ export function getModuleProgress({ courseId, includeDone = false, limit }: { co
     `SELECT module.id, module.name, module.icon, module.course_id, course.name AS course_name, course.color AS course_color,
        COUNT(page.id) AS total, COALESCE(SUM(page.status = ?), 0) AS done
      FROM module JOIN course ON course.id = module.course_id JOIN page ON page.module_id = module.id
-     ${courseId ? "WHERE module.course_id = ?" : ""}
+     WHERE page.deleted_at IS NULL ${courseId ? "AND module.course_id = ?" : ""}
      GROUP BY module.id
      ${includeDone ? "" : "HAVING done < total"}
      ORDER BY ${order} LIMIT ?`,
@@ -106,7 +106,7 @@ export function getModuleProgress({ courseId, includeDone = false, limit }: { co
 export async function getCourseActivity() {
   const rows = await desktop.storage.query<{ course_id: number; seen_at: string }>(
     `SELECT module.course_id, MAX(${seenAt}) AS seen_at
-     FROM page JOIN module ON module.id = page.module_id GROUP BY module.course_id`
+     FROM page JOIN module ON module.id = page.module_id WHERE page.deleted_at IS NULL GROUP BY module.course_id`
   );
   return new Map(rows.map((row) => [row.course_id, row.seen_at]));
 }
@@ -115,7 +115,7 @@ export async function getCourseActivity() {
 export async function countPagesBy(column: "status" | "type", courseId?: number) {
   const rows = await desktop.storage.query<{ key: number; count: number }>(
     `SELECT page.${column} AS key, COUNT(*) AS count FROM page JOIN module ON module.id = page.module_id
-     ${courseId ? "WHERE module.course_id = ?" : ""} GROUP BY page.${column}`,
+     WHERE page.deleted_at IS NULL ${courseId ? "AND module.course_id = ?" : ""} GROUP BY page.${column}`,
     courseId ? [courseId] : []
   );
   return new Map(rows.map((row) => [row.key, row.count]));
@@ -165,8 +165,10 @@ function longestRun(days: string[]) {
 
 export async function getLibraryCounts() {
   const [row] = await desktop.storage.query<{ courses: number; modules: number; pages: number; recordings: number; attachments: number }>(
-    `SELECT (SELECT COUNT(*) FROM course) AS courses, (SELECT COUNT(*) FROM module) AS modules, (SELECT COUNT(*) FROM page) AS pages,
-       (SELECT COUNT(*) FROM recording) AS recordings, (SELECT COUNT(*) FROM attachment) AS attachments`
+    `SELECT (SELECT COUNT(*) FROM course WHERE deleted_at IS NULL) AS courses, (SELECT COUNT(*) FROM module WHERE deleted_at IS NULL) AS modules,
+       (SELECT COUNT(*) FROM page WHERE deleted_at IS NULL) AS pages,
+       (SELECT COUNT(*) FROM recording JOIN page ON page.id = recording.page_id WHERE page.deleted_at IS NULL) AS recordings,
+       (SELECT COUNT(*) FROM attachment JOIN page ON page.id = attachment.page_id WHERE page.deleted_at IS NULL) AS attachments`
   );
   return row;
 }
@@ -178,7 +180,7 @@ export function getRecentRecordings(limit: number) {
     `SELECT recording.id, recording.name, recording.duration_ms, recording.created_at, page.id AS page_id, page.title AS page_title,
        page.module_id, module.course_id
      FROM recording JOIN page ON page.id = recording.page_id JOIN module ON module.id = page.module_id
-     ORDER BY recording.created_at DESC LIMIT ?`,
+     WHERE page.deleted_at IS NULL ORDER BY recording.created_at DESC LIMIT ?`,
     [limit]
   );
 }
@@ -189,7 +191,7 @@ export function getRecentHighlights(limit: number) {
   return desktop.storage.query<RecentHighlight>(
     `SELECT highlight.id, highlight.html, highlight.created_at, page.id AS page_id, page.title AS page_title, page.module_id, module.course_id
      FROM highlight JOIN page ON page.id = highlight.page_id JOIN module ON module.id = page.module_id
-     WHERE highlight.orphaned_at IS NULL ORDER BY highlight.created_at DESC LIMIT ?`,
+     WHERE highlight.orphaned_at IS NULL AND page.deleted_at IS NULL ORDER BY highlight.created_at DESC LIMIT ?`,
     [limit]
   );
 }
@@ -210,7 +212,7 @@ export function getPagesByIds(ids: number[]) {
        module.name AS module_name, module.course_id, course.name AS course_name, course.color AS course_color,
        ${seenAt} AS seen_at
      FROM page JOIN module ON module.id = page.module_id JOIN course ON course.id = module.course_id
-     WHERE page.id IN (${ids.map(() => "?").join(", ")})`,
+     WHERE page.deleted_at IS NULL AND page.id IN (${ids.map(() => "?").join(", ")})`,
     ids
   );
 }
@@ -221,8 +223,9 @@ export type ShelfCourse = { id: number; name: string; color: string | null; page
 export function getCourseShelf() {
   return desktop.storage.query<ShelfCourse>(
     `SELECT course.id, course.name, course.color, COUNT(page.id) AS pages, COALESCE(SUM(page.status = ?), 0) AS done
-     FROM course LEFT JOIN module ON module.course_id = course.id LEFT JOIN page ON page.module_id = module.id
-     GROUP BY course.id ORDER BY course.position, course.id`,
+     FROM course LEFT JOIN module ON module.course_id = course.id AND module.deleted_at IS NULL
+       LEFT JOIN page ON page.module_id = module.id AND page.deleted_at IS NULL
+     WHERE course.deleted_at IS NULL GROUP BY course.id ORDER BY course.position, course.id`,
     [CompletionStatus.Completed]
   );
 }

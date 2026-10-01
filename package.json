@@ -12,7 +12,9 @@
     "tauri": "tauri",
     "dev:web": "vite",
     "dev:website": "npm --prefix website run dev",
-    "build:web": "tsc && vite build"
+    "build:web": "tsc && vite build",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "bench": "node tests/perf/bench.mjs"
   },
   "dependencies": {
     "@chain/sdk": "file:../chain-sdk/packages/sdk",
@@ -31,6 +33,7 @@
     "@tiptap/starter-kit": "^3.31.3",
     "@tiptap/suggestion": "^3.31.3",
     "clsx": "^2",
+    "jotai": "^2.20.3",
     "mammoth": "^1.12.3",
     "marked": "^18.0.13",
     "pdfjs-dist": "^6.3.289",
@@ -46,6 +49,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
+    "linkedom": "^0.18.13",
     "tailwindcss": "^4",
     "typescript": "~6.0.3",
     "vite": "^8.0.16"

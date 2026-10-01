@@ -87,7 +87,11 @@ function SidebarLinks({ courses, ready, onCreate, ...handlers }: Readonly<Course
       <button type="button" onClick={onCreate} disabled={!ready} className={clsx("mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm text-muted", "hover:bg-ink/5")}>
         <span aria-hidden="true" className={clsx("text-xl leading-none")}>+</span> New course
       </button>
-      <NavLink to="/settings" className={({ isActive }) => clsx("mt-4 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm", isActive ? "bg-ink/7 font-medium" : "text-muted hover:bg-ink/5")}>
+      <NavLink to="/recently-deleted" className={({ isActive }) => clsx("mt-4 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm", isActive ? "bg-ink/7 font-medium" : "text-muted hover:bg-ink/5")}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+        Recently deleted
+      </NavLink>
+      <NavLink to="/settings" className={({ isActive }) => clsx("flex items-center gap-3 rounded-md px-3 py-2.5 text-sm", isActive ? "bg-ink/7 font-medium" : "text-muted hover:bg-ink/5")}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" fill="var(--sidebar)" /><circle cx="15" cy="17" r="3" fill="var(--sidebar)" /></svg>
         Settings
       </NavLink>
