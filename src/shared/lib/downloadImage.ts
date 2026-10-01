@@ -1,4 +1,4 @@
-import { desktop } from "@chain/sdk";
+import { apiGet } from "./api";
 
 export const MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -8,9 +8,9 @@ export const MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 // a sign-in page, which is ignored.
 export async function downloadImage(url: string): Promise<File | null> {
   try {
-    const response = await desktop.http.get<Uint8Array>(url, { responseType: "bytes", maxBytes: MAX_DOWNLOAD_BYTES });
+    const response = await apiGet<Uint8Array>(url, { responseType: "bytes", maxBytes: MAX_DOWNLOAD_BYTES });
     const type = response.headers["content-type"]?.split(";")[0].trim() ?? "";
-    if (!response.ok || !type.startsWith("image/")) return null;
+    if (!type.startsWith("image/")) return null;
     const name = new URL(url).pathname.split("/").pop() || "image";
     return new File([new Uint8Array(response.data)], name, { type });
   } catch {

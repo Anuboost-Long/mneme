@@ -42,8 +42,8 @@ This is the scaffold produced by `chain init`:
     routes genuinely share layout beyond `RootLayout`.
   - `src/routes/` — one husk per route (`HomeRoute.tsx`, `CourseRoute.tsx`,
     ...). A route component owns the wiring only: `useParams`, data
-    fetching, and the `useCourses()` outlet context, passed down as plain
-    props. It renders nothing but its feature's page component.
+    fetching, and app-wide state such as `useCourses()`, passed down as
+    plain props. It renders nothing but its feature's page component.
   - `src/features/<feature>/pages/` — the actual UI (`HomePage.tsx`,
     `CoursePage.tsx`, ...), receiving data/callbacks as props from its
     route. A feature can own several nested pages (e.g. `courses` spans
@@ -53,10 +53,22 @@ This is the scaffold produced by `chain init`:
   - `src/shared/ui/`, `src/shared/lib/`, `src/shared/providers/` — pieces
     used across more than one feature (`Typography`, `db/`,
     `ThemeProvider`, ...).
+  - `src/shared/lib/api.ts` — the only caller of `desktop.http`. Features
+    use `apiGet`/`apiRequest`, which reject with an `ApiError` (readable
+    `message`, plus `code` and `status`). App-wide request defaults, such
+    as headers, belong there.
   - `src/app/` — the app shell's own pieces (`NavBar`, `Sidebar`), used
     only by `src/layouts/RootLayout.tsx`.
-  - `src/layouts/RootLayout.tsx` — shared chrome (`NavBar` + `<Outlet/>`)
-    and the `useCourses()` outlet-context hook routes pull course data from.
+  - `src/layouts/RootLayout.tsx` — shared chrome (`NavBar` + `<Outlet/>`).
+    It opens the database, loads the course list into its atom, and shows
+    the loading/error screen.
+  - App-wide state uses Jotai atoms, kept in the owning feature's
+    `lib/<feature>State.ts` with a hook in front of them (e.g.
+    `features/courses/lib/coursesState.ts` → `useCourses()`). Use an atom
+    only for state that more than one screen reads or changes; state that
+    belongs to one component stays local, and the database stays the source
+    of truth. After changing data behind a screen's back, reload the atom
+    (`refresh()`) rather than patching it by hand.
   - `src/App.tsx` just renders `<RouterProvider router={router} />`;
     `src/main.tsx` is untouched from `create-tauri-app`'s default.
     This is standard in-window SPA routing, not Tauri's multi-window API —
