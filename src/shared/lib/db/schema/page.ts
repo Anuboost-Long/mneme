@@ -1,4 +1,4 @@
-import { Column, PrimaryKey, Table, Trigger } from "@chain/sdk/schema";
+import { Column, Index, PrimaryKey, Table, Trigger } from "@chain/sdk/schema";
 
 @Table()
 @Trigger("highlight_page_delete", `CREATE TRIGGER highlight_page_delete BEFORE DELETE ON page BEGIN
@@ -8,6 +8,7 @@ export class Page {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
 
+  @Index({ name: "page_module" })
   module_id!: number;
 
   title!: string;

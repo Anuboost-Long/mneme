@@ -1,10 +1,11 @@
-import { Column, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Column, Index, PrimaryKey, Table } from "@chain/sdk/schema";
 
 @Table()
 export class Attachment {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
 
+  @Index({ name: "attachment_page" })
   page_id!: number;
 
   file_name!: string;

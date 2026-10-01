@@ -1,10 +1,11 @@
-import { Column, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Column, Index, PrimaryKey, Table } from "@chain/sdk/schema";
 
 @Table()
 export class Module {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
 
+  @Index({ name: "module_course" })
   course_id!: number;
 
   name!: string;
