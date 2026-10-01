@@ -1,7 +1,9 @@
 import { register } from 'node:module';
 import { DatabaseSync } from 'node:sqlite';
+import { DOMParser } from 'linkedom';
 
 register('./hooks.mjs', import.meta.url);
+globalThis.DOMParser = DOMParser;
 const { Table } = await import('../../node_modules/@chain/sdk/src/storage-table.ts');
 
 export function useTestDesktop(path = ':memory:') {
