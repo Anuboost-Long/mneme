@@ -1,60 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
-import ts from 'typescript';
+import { useTestDesktop } from './support/desktop.mjs';
 
-const database = new DatabaseSync(':memory:');
-globalThis.moduleTestStorage = {
-  migrate: async (migrations) => {
-    for (const migration of migrations) database.exec(migration.sql);
-  },
-  query: async (sql, params = []) => database.prepare(sql).all(...params),
-  execute: async (sql, params = []) => {
-    const result = database.prepare(sql).run(...params);
-    return { rowsAffected: Number(result.changes), lastInsertId: Number(result.lastInsertRowid) };
-  },
-};
-
-// Each lib file under test is transpiled and imported standalone from a
-// `data:` URL, so its own relative imports (no base path to resolve
-// against) are resolved here by recursively doing the same to whichever
-// of these known dependencies it references.
-const knownDeps = {
-  'from "./migrations"': '../src/shared/lib/db/migrations/index.ts',
-  'from "./0001-initial.ts"': '../src/shared/lib/db/migrations/0001-initial.ts',
-  'from "./0002-completion-tracking.ts"': '../src/shared/lib/db/migrations/0002-completion-tracking.ts',
-  'from "./0003-numeric-enums.ts"': '../src/shared/lib/db/migrations/0003-numeric-enums.ts',
-  'from "./0004-agent-chat.ts"': '../src/shared/lib/db/migrations/0004-agent-chat.ts',
-  'from "./completion-status"': '../src/features/courses/lib/completion-status.ts',
-};
-
-async function moduleUrl(path, replace) {
-  let source = await readFile(new URL(path, import.meta.url), 'utf8');
-  if (replace) source = source.replace(replace[0], replace[1]);
-  let { outputText } = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
-  for (const [marker, depPath] of Object.entries(knownDeps)) {
-    if (outputText.includes(marker)) outputText = outputText.replace(marker, `from "${await moduleUrl(depPath)}"`);
-  }
-  return `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`;
-}
-
-async function load(path, replace) {
-  return import(await moduleUrl(path, replace));
-}
-
-const { initDb } = await load(
-  '../src/shared/lib/db/index.ts',
-  ['import { desktop } from "@chain/sdk";', 'const desktop = { storage: globalThis.moduleTestStorage };'],
-);
-const { createCourse } = await load(
-  '../src/features/courses/lib/courses.ts',
-  ['import { desktop } from "@chain/sdk";', 'const desktop = { storage: globalThis.moduleTestStorage };'],
-);
-const { createModule, getModules, getModule, updateModule, deleteModule, ModuleStatus } = await load(
-  '../src/features/courses/lib/modules.ts',
-  ['import { desktop } from "@chain/sdk";', 'const desktop = { storage: globalThis.moduleTestStorage };'],
-);
+const { database } = useTestDesktop();
+const { initDb } = await import('../src/shared/lib/db/index.ts');
+const { createCourse } = await import('../src/features/courses/lib/courses.ts');
+const { createModule, getModules, getModule, updateModule, deleteModule, ModuleStatus } = await import('../src/features/courses/lib/modules.ts');
 await initDb();
 
 async function course() {
@@ -98,10 +49,7 @@ test('modules only list under their own course', async () => {
 });
 
 test('deleting a course deletes its modules', async () => {
-  const { deleteCourse } = await load(
-    '../src/features/courses/lib/courses.ts',
-    ['import { desktop } from "@chain/sdk";', 'const desktop = { storage: globalThis.moduleTestStorage };'],
-  );
+  const { deleteCourse } = await import('../src/features/courses/lib/courses.ts');
   const { id: courseId } = await course();
   const module = await createModule(courseId, { name: 'Revision' });
   await deleteCourse(courseId);

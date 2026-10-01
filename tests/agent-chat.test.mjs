@@ -1,42 +1,21 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
-import ts from 'typescript';
+import { useTestDesktop } from './support/desktop.mjs';
 
-const database = new DatabaseSync(':memory:');
-globalThis.agentChatStorage = {
-  query: async (sql, params = []) => database.prepare(sql).all(...params),
-  execute: async (sql, params = []) => {
-    const result = database.prepare(sql).run(...params);
-    return { rowsAffected: Number(result.changes), lastInsertId: Number(result.lastInsertRowid) };
-  },
-};
-
-async function moduleUrl(url) {
-  const source = await readFile(url, 'utf8');
-  let { outputText } = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
-  outputText = outputText.replace('import { desktop } from "@chain/sdk";', 'const desktop = { storage: globalThis.agentChatStorage, processRunner: { run: (...args) => globalThis.agentChatRun(...args) } };');
-  outputText = outputText.replace('import { getAgentServerSnapshot, startAgentServer } from "../../agent-server/lib/agentServerState";', 'const getAgentServerSnapshot = () => ({status: "running", port: 7890}); const startAgentServer = async () => {};');
-  outputText = outputText.replace('import { errorMessage } from "../../../shared/lib/errorMessage";', 'const errorMessage = (error, fallback) => error instanceof Error ? error.message : fallback;');
-  outputText = outputText.replace('from "marked"', `from "${import.meta.resolve('marked')}"`);
-  for (const [marker, path] of outputText.matchAll(/from "(\.\/[^"]+)"/g)) {
-    outputText = outputText.replace(marker, `from "${await moduleUrl(new URL(path.endsWith('.ts') ? path : `${path}.ts`, url))}"`);
-  }
-  return `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`;
-}
-
-const load = async (path) => import(await moduleUrl(new URL(`../src/${path}.ts`, import.meta.url)));
-for (const name of ['0001-initial', '0002-completion-tracking', '0003-numeric-enums', '0004-agent-chat', '0015-agent-message-attachments']) {
-  database.exec(Object.values(await load(`shared/lib/db/migrations/${name}`))[0].sql);
-}
-const connections = await load('features/agent-chat/lib/connections');
-const conversations = await load('features/agent-chat/lib/conversations');
-const messages = await load('features/agent-chat/lib/messages');
-const usage = await load('features/agent-chat/lib/usage');
-const retention = await load('features/agent-chat/lib/retention');
-const { parseArgs } = await load('features/agent-chat/lib/presets');
-const { runTurn } = await load('features/agent-chat/lib/runTurn');
+const { database } = useTestDesktop();
+Object.assign(globalThis.chainDesktop, {
+  processRunner: { run: (...args) => globalThis.agentChatRun(...args) },
+  agentServer: { start: async () => ({ port: 7890 }), stop: async () => {} },
+});
+const { initDb } = await import('../src/shared/lib/db/index.ts');
+const connections = await import('../src/features/agent-chat/lib/connections.ts');
+const conversations = await import('../src/features/agent-chat/lib/conversations.ts');
+const messages = await import('../src/features/agent-chat/lib/messages.ts');
+const usage = await import('../src/features/agent-chat/lib/usage.ts');
+const retention = await import('../src/features/agent-chat/lib/retention.ts');
+const { parseArgs } = await import('../src/features/agent-chat/lib/presets.ts');
+const { runTurn } = await import('../src/features/agent-chat/lib/runTurn.ts');
+await initDb();
 
 for (const foreignKeys of ['OFF', 'ON']) {
   test(`chat lifecycle, identity, cleanup and usage with foreign_keys ${foreignKeys}`, async () => {
@@ -120,9 +99,9 @@ test('invalid settings and argument shapes cannot change saved data', async () =
   assert.deepEqual(await conversations.getConversations(), []);
 });
 
-const { startTurn, stopTurn, getTurns, forgetTurn } = await load('features/agent-chat/lib/turns');
-const { renderMarkdown } = await load('features/agent-chat/lib/markdown');
-const { detectAgents } = await load('features/agent-chat/lib/detectAgents');
+const { startTurn, stopTurn, getTurns, forgetTurn } = await import('../src/features/agent-chat/lib/turns.ts');
+const { renderMarkdown } = await import('../src/features/agent-chat/lib/markdown.ts');
+const { detectAgents } = await import('../src/features/agent-chat/lib/detectAgents.ts');
 
 async function fixture(kind = 'claude') {
   await connections.createConnection({ name: `Test ${kind}`, kind, command: kind === 'custom' ? 'echo' : kind, args: kind === 'custom' ? ['two words'] : [] });
@@ -147,7 +126,7 @@ async function invoke(connection, id, session = null, message = 'hello') {
   const events = [];
   let resolve;
   const done = new Promise((finish) => { resolve = finish; });
-  const handle = await runTurn(connection, id, session, message, [], (event) => {
+  const handle = await runTurn(connection, id, session, message, [], undefined, (event) => {
     events.push(event);
     if (event.type === 'done' || event.type === 'error') resolve(event);
   });
@@ -168,7 +147,7 @@ test('Claude parses split lines, tool arguments/results, trailing result, usage 
   const turn = await invoke(connection, id, 'old-session');
   const process = processes[0];
   assert.equal(process.args[process.args.indexOf('--resume') + 1], 'old-session');
-  assert.deepEqual(JSON.parse(process.args[process.args.indexOf('--mcp-config') + 1]), { mcpServers: { mneme: { type: 'http', url: 'http://127.0.0.1:7890/mcp' } } });
+  assert.deepEqual(JSON.parse(process.args[process.args.indexOf('--mcp-config') + 1]), { mcpServers: { mneme: { type: 'http', url: `http://127.0.0.1:7890/mcp?conversation=${id}` } } });
   const lines = [
     { type: 'system', session_id: 'new-session' },
     { type: 'stream_event', event: { type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'internal', name: 'ToolSearch', input: {} } } },
@@ -292,7 +271,7 @@ test('Codex gets Mneme MCP tools without approval prompts', async () => {
   assert.ok(process.args.includes('--dangerously-bypass-approvals-and-sandbox'));
   assert.ok(process.args.includes('--ignore-user-config'));
   assert.equal(process.args[process.args.indexOf('mcp_servers.mneme.type="http"')], 'mcp_servers.mneme.type="http"');
-  assert.equal(process.args[process.args.indexOf('mcp_servers.mneme.url="http://127.0.0.1:7890/mcp"')], 'mcp_servers.mneme.url="http://127.0.0.1:7890/mcp"');
+  assert.ok(process.args.includes(`mcp_servers.mneme.url="http://127.0.0.1:7890/mcp?conversation=${id}"`));
   process.output({ stream: 'stdout', data: JSON.stringify({ type: 'thread.started', thread_id: 'codex-thread' }) + '\n' });
   process.output({ stream: 'stdout', data: JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: 'Your courses are ready.' } }) + '\n' });
   process.output({ stream: 'stdout', data: JSON.stringify({ type: 'turn.completed' }) + '\n' });
@@ -303,7 +282,7 @@ test('Codex gets Mneme MCP tools without approval prompts', async () => {
   const resumedProcess = processes[1];
   assert.ok(resumedProcess.args.includes('resume'));
   assert.ok(resumedProcess.args.includes('--dangerously-bypass-approvals-and-sandbox'));
-  assert.ok(resumedProcess.args.includes('mcp_servers.mneme.url="http://127.0.0.1:7890/mcp"'));
+  assert.ok(resumedProcess.args.includes(`mcp_servers.mneme.url="http://127.0.0.1:7890/mcp?conversation=${id}"`));
   resumedProcess.output({ stream: 'stdout', data: JSON.stringify({ type: 'turn.completed' }) + '\n' });
   resumedProcess.exit({ code: 0, killed: false });
   assert.deepEqual(await resumed.done, { type: 'done', text: '' });
