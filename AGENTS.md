@@ -56,7 +56,8 @@ This is the scaffold produced by `chain init`:
   - `src/shared/lib/api.ts` — the only caller of `desktop.http`. Features
     use `apiGet`/`apiRequest`, which reject with an `ApiError` (readable
     `message`, plus `code` and `status`). App-wide request defaults, such
-    as headers, belong there.
+    as headers, belong there. `tests/conventions.test.mjs` fails if any
+    other file calls `desktop.http`.
   - `src/app/` — the app shell's own pieces (`NavBar`, `Sidebar`), used
     only by `src/layouts/RootLayout.tsx`.
   - `src/layouts/RootLayout.tsx` — shared chrome (`NavBar` + `<Outlet/>`).
