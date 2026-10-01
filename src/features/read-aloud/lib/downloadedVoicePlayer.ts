@@ -313,7 +313,13 @@ export class DownloadedVoicePlayer {
 }
 
 // Loads the model in the background so the first Listen doesn't wait for
-// it; desktop.tts keeps one model loaded between calls.
+// it; desktop.tts keeps it loaded until it has sat unused for VOICE_IDLE_MS.
 export function warmUp(voice: DownloadedVoice) {
   void desktop.tts.voices(voice.model.manifest.id, voice.model.config).catch(() => undefined);
+}
+
+const VOICE_IDLE_MS = 60_000;
+
+export function unloadVoiceWhenIdle() {
+  void desktop.tts.setIdleUnload(VOICE_IDLE_MS).catch(() => undefined);
 }

@@ -12,6 +12,7 @@ import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import CourseForm from "../features/courses/components/CourseForm";
 import { getCourses } from "../features/courses/lib/courses";
 import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
+import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "../features/recently-deleted/lib/recentlyDeleted";
 import { initDb } from "../shared/lib/db";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
@@ -81,6 +82,8 @@ export default function RootLayout() {
     });
     return () => animation?.cancel();
   }, [pathname]);
+
+  useEffect(unloadVoiceWhenIdle, []);
 
   useEffect(() => {
     let active = true;
