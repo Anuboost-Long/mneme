@@ -155,7 +155,7 @@ export const tools: Tool[] = [
     name: "search_pages",
     description: "Search every page's title and content for a substring, across all courses and modules. Results omit content, like list_pages.",
     inputSchema: { type: "object", properties: { query: { type: "string", description: "Text to search for." } }, required: ["query"] },
-    execute: async (args) => (await searchPages(requireString(args, "query"))).map(pageSummary),
+    execute: (args) => searchPages(requireString(args, "query")),
   },
   {
     name: "create_page",

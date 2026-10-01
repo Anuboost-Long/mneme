@@ -185,11 +185,15 @@ export async function searchPages(query: string) {
   const trimmed = query.trim();
   if (!trimmed) return [];
   const like = `%${trimmed}%`;
-  const rows = await desktop.storage.query<PageRow>(
-    "SELECT * FROM page WHERE deleted_at IS NULL AND (title LIKE ? OR content LIKE ?) ORDER BY created_at, id",
+  const rows = await desktop.storage.query<Omit<PageRow, "content">>(
+    `SELECT id, module_id, title, type, status, progress, bookmarked, icon, cover, position, created_at, updated_at, opened_at, deleted_at
+     FROM page WHERE deleted_at IS NULL AND (title LIKE ? OR content LIKE ?) ORDER BY created_at, id`,
     [like, like]
   );
-  return rows.map(toPage);
+  return rows.map((row) => {
+    const { content: _content, ...summary } = toPage({ ...row, content: null });
+    return summary;
+  });
 }
 
 export type PageLink = {
