@@ -1,17 +1,22 @@
 import { desktop, type RecognizedDocument } from "@chain/sdk";
 
+import { downloadImage } from "./downloadImage";
 import { errorMessage } from "./errorMessage";
 
 export const LOW_CONFIDENCE = 0.5;
 
 export type ExtractedText = { text: string; uncertainLines: number };
 
+// Stored pictures load through the webview; one still on the web (an
+// older import) is downloaded natively instead.
 async function imageBytes(imageSrc: string) {
   try {
     const response = await fetch(imageSrc);
     if (!response.ok) throw new Error(`Image request failed with ${response.status}.`);
     return new Uint8Array(await response.arrayBuffer());
   } catch {
+    const file = /^https?:/i.test(imageSrc) ? await downloadImage(imageSrc) : null;
+    if (file) return new Uint8Array(await file.arrayBuffer());
     throw new Error("Couldn’t read this image. Try pasting it into the page again.");
   }
 }
