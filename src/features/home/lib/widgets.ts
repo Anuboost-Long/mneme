@@ -1,6 +1,7 @@
 import { desktop } from "@chain/sdk";
 
 import type { HomeWidgetRow } from "../../../shared/lib/db";
+import { savePositions } from "../../../shared/lib/db/positions";
 
 export const widgetSizes = ["small", "medium", "wide", "large"] as const;
 
@@ -70,9 +71,7 @@ export async function restoreWidget(widget: Widget, order: number[]) {
 }
 
 export async function reorderWidgets(ids: number[]) {
-  for (const [position, id] of ids.entries()) {
-    await desktop.storage.execute("UPDATE home_widget SET position = ? WHERE id = ?", [position, id]);
-  }
+  await savePositions("home_widget", ids, 0);
 }
 
 // Swaps the whole layout, for Beautify and its Undo. Ids are new; kinds,

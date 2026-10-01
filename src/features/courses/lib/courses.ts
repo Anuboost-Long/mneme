@@ -1,5 +1,6 @@
 import { desktop, sql, type Values } from "@chain/sdk";
 
+import { savePositions } from "../../../shared/lib/db/positions";
 import type { CourseRow } from "../../../shared/lib/db/schema/course";
 import type { ModuleRow } from "../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
@@ -141,7 +142,7 @@ export function withGroupOrder(courses: Course[], group: Course[]) {
 
 // `ids` in their new order; every course not listed keeps its position.
 export async function reorderCourses(ids: number[]) {
-  for (const [position, id] of ids.entries()) await courseTable().update(id, { position: position + 1 });
+  await savePositions("course", ids);
 }
 
 export async function deleteCourse(id: number) {

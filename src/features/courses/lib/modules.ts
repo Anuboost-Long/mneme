@@ -1,5 +1,6 @@
 import { desktop, sql, type Values } from "@chain/sdk";
 
+import { savePositions } from "../../../shared/lib/db/positions";
 import type { ModuleRow } from "../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus, completionStatuses, completionStatusLabels } from "./completion-status";
@@ -135,7 +136,7 @@ export async function updateModule(id: number, input: Partial<ModuleInput>) {
 
 // `ids` in their new order within one course.
 export async function reorderModules(ids: number[]) {
-  for (const [position, id] of ids.entries()) await moduleTable().update(id, { position: position + 1 });
+  await savePositions("module", ids);
 }
 
 export async function deleteModule(id: number) {

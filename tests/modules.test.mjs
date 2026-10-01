@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { useTestDesktop } from './support/desktop.mjs';
 
-const { database } = useTestDesktop();
+const { database, calls } = useTestDesktop();
 const { initDb } = await import('../src/shared/lib/db/index.ts');
 const { createCourse } = await import('../src/features/courses/lib/courses.ts');
-const { createModule, getModules, getModule, updateModule, deleteModule, ModuleStatus } = await import('../src/features/courses/lib/modules.ts');
+const { createModule, getModules, getModule, updateModule, deleteModule, reorderModules, ModuleStatus } = await import('../src/features/courses/lib/modules.ts');
 await initDb();
 
 async function course() {
@@ -70,4 +70,16 @@ test('a new module defaults to 0% progress and unbookmarked, and both are filter
 
   await deleteModule(plain.id);
   await deleteModule(starred.id);
+});
+
+test('reordering modules saves the new order in one call and leaves others alone', async () => {
+  const { id: courseId } = await course();
+  const [a, b, c] = [await createModule(courseId, { name: 'A' }), await createModule(courseId, { name: 'B' }), await createModule(courseId, { name: 'C' })];
+  const other = await createModule((await course()).id, { name: 'Elsewhere' });
+  const before = calls.length;
+  await reorderModules([c.id, a.id, b.id]);
+  assert.equal(calls.length - before, 1);
+  assert.deepEqual((await getModules(courseId)).map((module) => [module.name, module.position]), [['C', 1], ['A', 2], ['B', 3]]);
+  assert.equal((await getModule(other.id)).position, other.position);
+  await reorderModules([]);
 });

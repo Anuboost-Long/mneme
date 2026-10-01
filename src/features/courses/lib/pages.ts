@@ -1,5 +1,6 @@
 import { desktop } from "@chain/sdk";
 
+import { savePositions } from "../../../shared/lib/db/positions";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
 import { reconcileHighlights, syncPageHighlights } from "./highlights";
@@ -338,8 +339,7 @@ export async function markPageOpened(id: number) {
 
 // `ids` in their new order within one module.
 export async function reorderPages(ids: number[]) {
-  for (const [position, id] of ids.entries())
-    await desktop.storage.execute("UPDATE page SET position = ? WHERE id = ?", [position + 1, id]);
+  await savePositions("page", ids);
 }
 
 // Moves a page to the end of another module, highlights included.
