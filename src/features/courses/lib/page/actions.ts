@@ -23,11 +23,6 @@ function clampProgress(progress: number) {
   return Math.min(100, Math.max(0, Math.round(progress)));
 }
 
-// The highlight table is a derived index of a page's own content, not the
-// content itself — a page's content is what the user was actually trying
-// to save, so a sync failure here (a stale schema mid-migration, a
-// transient storage error) must not make that save look like it failed
-// too. The next successful save of this page re-syncs from scratch anyway.
 async function syncHighlightsSafely(pageId: number, moduleId: number, content: string | null) {
   try {
     await syncPageHighlights(pageId, moduleId, content);
@@ -36,9 +31,6 @@ async function syncHighlightsSafely(pageId: number, moduleId: number, content: s
   }
 }
 
-// Same reasoning as syncHighlightsSafely — reconciling highlights before
-// a save is a best-effort improvement to what gets written, not a
-// requirement of the save succeeding.
 function reconcileHighlightsSafely(
   previousContent: string | null,
   nextContent: string | null
@@ -56,9 +48,6 @@ async function pageContent(content: string | null | undefined) {
   return trimmed ? storeInlineImages(trimmed) : null;
 }
 
-// For pages saved before pictures were always stored as files. Writes only
-// if the content hasn't changed meanwhile, so an edit made in the editor
-// during the pass isn't overwritten.
 export async function storeInlinePageImages() {
   const pages = await pageTable().where(sql`content LIKE '%src="data:image/%'`).all();
   for (const { id, content } of pages) {
@@ -70,8 +59,6 @@ export async function storeInlinePageImages() {
 
 const nextPosition = (moduleId: number) => sql`SELECT COALESCE(MAX(position), 0) + 1 FROM page WHERE module_id = ${moduleId}`;
 
-// New pages go to the end of their module. Read back after inserting so
-// opened_at, which page_opened_on_insert sets, is in the result.
 export async function createPage(moduleId: number, input: PageInput) {
   const row = await pageTable().insert({
     module_id: moduleId,
@@ -91,11 +78,6 @@ export async function createPage(moduleId: number, input: PageInput) {
   return page;
 }
 
-// `skipHighlightReconciliation` is for the one caller that already knows
-// exactly which highlight it's removing (ModuleHighlightsPage's stripHighlight
-// call): reconcileHighlights can't tell that apart from an unrelated edit
-// leaving the same text untouched, and would otherwise re-wrap the very
-// mark the user just asked to remove — see highlights.ts's reconcileHighlights.
 export async function updatePage(
   id: number,
   input: Partial<PageInput>,
@@ -131,17 +113,12 @@ export async function updatePage(
   return page;
 }
 
-// Adds `html` after the page's last block, for things filed from outside
-// the editor (Home's recorder).
 export async function appendToPage(id: number, html: string) {
   const page = await getPage(id);
   if (!page) throw new Error("This page no longer exists.");
   return updatePage(id, { content: `${page.content ?? ""}${html}` });
 }
 
-// Deletes a recording from outside its page (the Recordings screen): its
-// audio and row, and its block in the page, so the page doesn't keep an
-// empty "recording missing" block.
 export async function deleteRecordingFromPage(recordingId: number, pageId: number) {
   await deleteRecordings("id = ?", [recordingId]);
   const page = await getPage(pageId);
@@ -149,18 +126,15 @@ export async function deleteRecordingFromPage(recordingId: number, pageId: numbe
   if (page && content !== page.content) await updatePage(pageId, { content: content ?? null });
 }
 
-// For Home's recent pages. Leaves updated_at alone: opening isn't editing.
 export async function markPageOpened(id: number) {
   await pageTable().update({ id }, { opened_at: sql`datetime('now')` });
   await recordStudy("opened");
 }
 
-// `ids` in their new order within one module.
 export async function reorderPages(ids: number[]) {
   await savePositions("page", ids);
 }
 
-// Moves a page to the end of another module, highlights included.
 export async function movePage(id: number, moduleId: number) {
   const [row] = await pageTable().update(
     { id, deleted_at: null },
@@ -171,9 +145,6 @@ export async function movePage(id: number, moduleId: number) {
   return toPage(row);
 }
 
-// A copy right after the original, starting over as not started. It gets
-// its own cover and icon files, recordings and attachments, so deleting either page leaves the
-// other whole. Downloaded page audio isn't copied; it can be made again.
 export async function duplicatePage(id: number) {
   const original = await getPage(id);
   if (!original) throw new Error("This page no longer exists.");

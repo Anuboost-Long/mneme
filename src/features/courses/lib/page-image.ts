@@ -57,14 +57,8 @@ export function hasInlineImages(html: string) {
   return /src="data:image\//i.test(html);
 }
 
-// Keyed by a hash of the image data, so content that still carries the
-// same inline picture on its next save reuses the file instead of writing
-// another one.
 const storedInlineImages = new Map<string, Promise<string>>();
 
-// Writes each base64 picture in `html` to a file and points its src at that
-// file, so a page's content holds only the path. A picture of a type the
-// app doesn't store stays inline.
 export async function storeInlineImages(html: string) {
   const urls = new Map<string, string>();
   for (const [, type, base64] of html.matchAll(INLINE_IMAGE)) {

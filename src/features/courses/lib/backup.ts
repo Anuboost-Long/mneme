@@ -7,10 +7,6 @@ import type { ModuleRow } from "../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import type { RecordingRow } from "../../../shared/lib/db/schema/recording";
 
-// Version 1 is a plain JSON file of courses, modules and pages. Version 2 is
-// a zip: the rows as backup.json, plus every file they refer to (covers,
-// picture icons, images and videos in pages, attachments, recordings)
-// under files/.
 export type Backup = {
   version: 1 | 2;
   exportedAt: string;
@@ -50,7 +46,6 @@ export async function createBackup(): Promise<Backup> {
   return { version: 2, exportedAt: new Date().toISOString(), courses, modules, pages, attachments, recordings, files };
 }
 
-// The file behind an image's src, when it's one of the app's own files.
 function fileOfSrc(src: string) {
   if (!/^(asset:|https?:\/\/asset\.localhost\/)/.test(src)) return null;
   let name: string;
@@ -209,7 +204,6 @@ export async function restoreBackup(backup: Backup) {
   }
 }
 
-// Writes each backed-up file once, under a new reference.
 class RestoredFiles {
   private readonly written = new Map<string, Promise<string>>();
 
@@ -229,18 +223,12 @@ class RestoredFiles {
     return written;
   }
 
-  // A cover or icon column: a backed-up file gets its new reference, one
-  // missing from the backup is dropped, and anything else (a preset, an
-  // emoji) stays as it is.
   async column(value: string | null) {
     if (!value || !isFileReference(value)) return value;
     return this.has(value) ? this.restore(value) : null;
   }
 }
 
-// Points the page's images and videos at their restored files, and
-// recreates its attachments and recordings under new ids. Anything not in
-// the backup is left as it was.
 async function restoredContent(html: string, pageId: number, backup: Backup, files: RestoredFiles) {
   let content = await replaceEach(html, /src="([^"]+)"/g, async (src) => {
     const reference = fileOfSrc(src);
@@ -269,9 +257,6 @@ async function restoredContent(html: string, pageId: number, backup: Backup, fil
   });
 }
 
-// Replaces each match's captured value with what `replacement` returns for
-// it (once per distinct value), all in one pass, so a new value can't be
-// mistaken for an old one still waiting to be replaced. Null keeps it.
 async function replaceEach(text: string, pattern: RegExp, replacement: (value: string) => Promise<string | null>) {
   const replaced = new Map<string, string | null>();
   for (const [, value] of text.matchAll(pattern)) {

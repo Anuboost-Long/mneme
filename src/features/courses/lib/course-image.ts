@@ -30,9 +30,6 @@ export async function courseImage(file: File): Promise<string> {
   }
 }
 
-// An uploaded picture (a data URL from `courseImage`) becomes a file, and
-// the icon column keeps its reference. Presets, emoji and references pass
-// through.
 export async function storeIcon(icon: string | null | undefined) {
   const trimmed = icon?.trim() || null;
   const base64 = trimmed && /^data:image\/png;base64,(.+)$/.exec(trimmed)?.[1];
@@ -51,7 +48,6 @@ export async function copyIcon(icon: string | null) {
   return icon && isFileReference(icon) ? copyImage(icon) : icon;
 }
 
-// For icons uploaded before pictures were stored as files.
 export async function storeInlineIcons() {
   for (const name of ["course", "module", "page"]) {
     const table = desktop.storage.table<{ id: number; icon: string | null }>(name);

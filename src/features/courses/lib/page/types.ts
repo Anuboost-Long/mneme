@@ -1,6 +1,5 @@
 import type { CompletionStatus } from "../completion-status";
 
-// Numeric, not string, values — see completion-status.ts for why.
 export enum PageType {
   Lesson = 1,
   Lecture = 2,
@@ -13,9 +12,6 @@ export enum PageType {
   Custom = 9
 }
 
-// A numeric enum's `Object.values()` also reverse-maps names to numbers,
-// so callers that need every type as a plain list (a `<select>`'s
-// options, for example) use this instead of `Object.values`.
 export const pageTypes: PageType[] = [
   PageType.Lesson,
   PageType.Lecture,
