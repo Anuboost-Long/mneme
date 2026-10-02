@@ -9,7 +9,7 @@ export enum PageType {
   Notes = 6,
   Reading = 7,
   Revision = 8,
-  Custom = 9
+  Custom = 9,
 }
 
 export const pageTypes: PageType[] = [
@@ -21,7 +21,7 @@ export const pageTypes: PageType[] = [
   PageType.Notes,
   PageType.Reading,
   PageType.Revision,
-  PageType.Custom
+  PageType.Custom,
 ];
 
 export type Page = {
@@ -78,5 +78,7 @@ export function pageContentPreview(html: string | null) {
 }
 
 export function percentDone(progress: PageProgress | undefined) {
-  return progress?.total ? Math.round((progress.done / progress.total) * 100) : 0;
+  return progress?.total
+    ? Math.round((progress.done / progress.total) * 100)
+    : 0;
 }

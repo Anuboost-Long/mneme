@@ -103,13 +103,22 @@ This is the scaffold produced by `chain init`:
     is the reference):
     - `types.ts` — the app-facing types and enums, plus pure helpers that
       only read those shapes (`percentDone`, `pageContentPreview`).
-    - `table.ts` — reading the table: the typed `<entity>Table()`, the
-      mapping from the raw `Row` onto the app-facing type (e.g.
-      `bookmarked` 0/1 -> `boolean`, numeric enum columns -> their TS
-      enum), and the read queries.
-    - `actions.ts` — everything that changes it: create, update, delete,
-      with their validation and side effects (files, other tables).
-    Import from the file that holds the name; there's no `index.ts`.
+    - `table.ts` — every database operation on the table, reads and
+      writes: the typed `<entity>Table()`, the mapping from the raw `Row`
+      onto the app-facing type (e.g. `bookmarked` 0/1 -> `boolean`,
+      numeric enum columns -> their TS enum), and each query or
+      statement. Nothing else: no files, validation or other features.
+    - `actions.ts` — the bridge the rest of the app calls: validation and
+      side effects (files, highlights, study days) around `table.ts`
+      operations, and plain reads passed straight through
+      (`export { getPage } from "./table"`). It holds no `<entity>Table()`
+      or SQL.
+    Only `actions.ts` imports `table.ts`; everything outside the folder
+    imports `actions.ts` or `types.ts` (`tests/conventions.test.mjs`
+    fails otherwise). Once `table.ts` passes 500 lines it becomes a
+    `table/` folder: `table/index.ts` creates the table connection
+    (`<entity>Table()` and the row mapping), and each operation gets its
+    own file.
     Flat `lib/*.ts` files that predate this move into a folder when a
     change touches them. See `features/courses/lib/completion-status.ts`
     for why status/type columns are numeric enums (smaller storage)

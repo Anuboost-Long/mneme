@@ -6,9 +6,8 @@ import { errorMessage } from "../../../shared/lib/errorMessage";
 import type { Course } from "../lib/courses";
 import type { Module } from "../lib/modules";
 import type { Page } from "../lib/page/types";
-import { getPage } from "../lib/page/table";
-import { updatePage } from "../lib/page/actions";
 import { deleteHighlight, keepOrphanedHighlight, stripHighlight, type Highlight } from "../lib/highlights";
+import { getPage, updatePage } from "../lib/page/actions";
 
 export default function ModuleHighlightsPage({ course, module, moduleReady, pages, highlights, highlightsReady, onRemoveHighlight, onKeepHighlight }: Readonly<{
   course: Course | undefined;

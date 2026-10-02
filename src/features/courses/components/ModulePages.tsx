@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { Caption } from "../../../shared/ui/Typography";
 import { completionStatusLabels } from "../lib/completion-status";
 import type { Page } from "../lib/page/types";
-import { getPages } from "../lib/page/table";
+import { getPages } from "../lib/page/actions";
 import { pageTypeLabels } from "./PageForm";
 import { statusMarkerStyles } from "./StatusPicker";
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import CoursesPage from "../features/courses/pages/CoursesPage";
 import { getModuleCounts } from "../features/courses/lib/modules";
 import type { PageProgress } from "../features/courses/lib/page/types";
-import { getCoursePageProgress } from "../features/courses/lib/page/table";
+import { getCoursePageProgress } from "../features/courses/lib/page/actions";
 import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function CoursesRoute() {

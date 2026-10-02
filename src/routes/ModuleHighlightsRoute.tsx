@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import ModuleHighlightsPage from "../features/courses/pages/ModuleHighlightsPage";
 import { getModule, type Module as ModuleRecord } from "../features/courses/lib/modules";
 import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import { getPages } from "../features/courses/lib/page/table";
+import { getPages } from "../features/courses/lib/page/actions";
 import { getModuleHighlights, type Highlight } from "../features/courses/lib/highlights";
 import { useCourses } from "../features/courses/lib/coursesState";
 

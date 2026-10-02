@@ -8,7 +8,7 @@ import { Caption, Typography } from "../../../shared/ui/Typography";
 import CourseIcon from "../../../shared/ui/CourseIcon";
 import { getActions } from "../../ai-actions/lib/actions";
 import type { Course } from "../../courses/lib/courses";
-import { searchPageLinks } from "../../courses/lib/page/table";
+import { searchPageLinks } from "../../courses/lib/page/actions";
 import { getPagesByIds } from "../lib/dashboard";
 import { useWidgetData } from "../lib/useWidgetData";
 import type { Widget, WidgetConfig } from "../lib/widgets";

@@ -1,6 +1,6 @@
 import { getModules } from "../../courses/lib/modules";
 import { PageType, type Page } from "../../courses/lib/page/types";
-import { getPages } from "../../courses/lib/page/table";
+import { getPages } from "../../courses/lib/page/actions";
 import { ActionScope, type AiAction } from "./actions";
 import { escapeHtml } from "./editorHtml";
 

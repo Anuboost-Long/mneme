@@ -6,7 +6,7 @@ import { loadCommandGroups, type PaletteCommand } from "../shared/lib/commandSou
 import type { Course } from "../features/courses/lib/courses";
 import { searchModuleLinks, type ModuleLink } from "../features/courses/lib/modules";
 import type { PageLink } from "../features/courses/lib/page/types";
-import { searchPageLinks } from "../features/courses/lib/page/table";
+import { searchPageLinks } from "../features/courses/lib/page/actions";
 
 // `path` marks a navigation item, so it can be reopened from Recent after
 // the search that found it is gone.

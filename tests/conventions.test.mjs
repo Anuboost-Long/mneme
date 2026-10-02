@@ -13,3 +13,15 @@ test('only shared/lib/api.ts calls desktop.http', async () => {
   }
   assert.deepEqual(callers, ['shared/lib/api.ts']);
 });
+
+test("a data folder's table is imported only from inside that folder", async () => {
+  const outsiders = [];
+  for (const path of files) {
+    const source = await readFile(new URL(path, src), 'utf8');
+    for (const [, specifier] of source.matchAll(/from\s+["']([^"']*\/([\w-]+)\/table(?:\/[\w-]+)?)["']/g)) {
+      const folder = new URL(specifier.replace(/\/table(\/[\w-]+)?$/, '/'), new URL(path, src)).href;
+      if (!new URL(path, src).href.startsWith(folder)) outsiders.push(`${path} -> ${specifier}`);
+    }
+  }
+  assert.deepEqual(outsiders, []);
+});

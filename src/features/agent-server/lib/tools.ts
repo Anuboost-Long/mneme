@@ -2,10 +2,9 @@ import { extractImages, toBase64 } from "../../../shared/lib/htmlImages";
 import { getCourse, getCourses } from "../../courses/lib/courses";
 import { getModule, getModules } from "../../courses/lib/modules";
 import type { Page } from "../../courses/lib/page/types";
-import { getPage, getPages, searchPages } from "../../courses/lib/page/table";
-import { createPage, updatePage } from "../../courses/lib/page/actions";
 import { completionStatusLabels } from "../../courses/lib/completion-status";
 import { pageTypeLabels } from "../../courses/components/PageForm";
+import { getPage, getPages, searchPages, createPage, updatePage } from "../../courses/lib/page/actions";
 
 // A result that's already MCP content, e.g. images the agent should see,
 // rather than data to send as JSON text.

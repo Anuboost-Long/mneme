@@ -10,14 +10,13 @@ import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
 import { escapeHtml } from "../../ai-actions/lib/editorHtml";
 import { getModuleDestinations } from "../../courses/lib/modules";
 import { PageType } from "../../courses/lib/page/types";
-import { searchPageLinks } from "../../courses/lib/page/table";
-import { appendToPage, createPage, erasePages } from "../../courses/lib/page/actions";
 import Select from "../../../shared/ui/Select";
 import { createRecording, renameRecording } from "../../courses/lib/recordings";
 import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
 import { getPages } from "../lib/dashboard";
 import { useWidgetData } from "../lib/useWidgetData";
 import { pageLink } from "../widgets/parts";
+import { searchPageLinks, appendToPage, createPage, erasePages } from "../../courses/lib/page/actions";
 
 export type Take = { audio: Blob; durationMs: number };
 

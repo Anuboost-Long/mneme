@@ -4,10 +4,9 @@ import { getPageAudio, type PageAudio } from "../features/audiobook/lib/pageAudi
 import PageDetailPage from "../features/courses/pages/PageDetailPage";
 import { getModule } from "../features/courses/lib/modules";
 import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import { getPage } from "../features/courses/lib/page/table";
-import { markPageOpened } from "../features/courses/lib/page/actions";
 import { updateCourse } from "../features/courses/lib/courses";
 import { useCourses } from "../features/courses/lib/coursesState";
+import { getPage, markPageOpened } from "../features/courses/lib/page/actions";
 
 export default function PageRoute() {
   const { courseId, pageId } = useParams();

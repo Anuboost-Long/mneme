@@ -9,7 +9,7 @@ import { pageTypeLabels } from "../../courses/components/PageForm";
 import { typeGlyphs } from "../../courses/components/pageDisplay";
 import type { Course } from "../../courses/lib/courses";
 import { pageTypes, percentDone } from "../../courses/lib/page/types";
-import { getCoursePageProgress } from "../../courses/lib/page/table";
+import { getCoursePageProgress } from "../../courses/lib/page/actions";
 import { countPagesBy, getAiUsage, getCourseActivity, getPages } from "../lib/dashboard";
 import { useWidgetData } from "../lib/useWidgetData";
 import { pageLink, RowLink, Rows, rowLink, rowsFor, Stat, WidgetNote } from "./parts";
