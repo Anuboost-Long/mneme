@@ -10,6 +10,7 @@ export function useTestDesktop(path = ':memory:') {
   const database = new DatabaseSync(path);
   const calls = [];
   const deletedFiles = [];
+  const writtenFiles = new Map();
   const storage = {
     migrate: async (migrations) => {
       database.exec('CREATE TABLE IF NOT EXISTS test_applied_migration (version INTEGER PRIMARY KEY)');
@@ -50,10 +51,21 @@ export function useTestDesktop(path = ':memory:') {
   globalThis.chainDesktop = {
     storage,
     files: {
+      write: async (bytes, { extension } = {}) => {
+        const id = (writtenFiles.size + 1).toString(16).padStart(16, '0');
+        const reference = extension ? `${id}.${extension}` : id;
+        writtenFiles.set(reference, bytes);
+        return reference;
+      },
+      read: async (reference) => {
+        if (!writtenFiles.has(reference)) throw new Error(`No such file: ${reference}`);
+        return writtenFiles.get(reference);
+      },
+      url: async (reference) => `asset://localhost/${reference}`,
       delete: async (reference) => {
         deletedFiles.push(reference);
       },
     },
   };
-  return { database, calls, deletedFiles };
+  return { database, calls, deletedFiles, writtenFiles };
 }

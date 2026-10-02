@@ -24,7 +24,7 @@ import { markdownToEditorHtml } from "../../../ai-actions/lib/editorHtml";
 import type { ActionLocation } from "../../../ai-actions/lib/useAiAction";
 import { createAttachment } from "../../lib/attachments";
 import { storePageFile } from "../../lib/page-files";
-import { pageImage } from "../../lib/page-image";
+import { hasInlineImages, pageImage, storeInlineImages } from "../../lib/page-image";
 import { updatePage } from "../../lib/pages";
 import AiBlock from "./AiBlock";
 import AlignableImage from "./AlignableImage";
@@ -120,6 +120,13 @@ export default function PageEditor({
           // tables instead of "#" and "-" characters; not inside a code block.
           const text = event.clipboardData?.getData("text/plain") ?? "";
           const html = event.clipboardData?.getData("text/html") ?? "";
+          if (!view.state.selection.$from.parent.type.spec.code && hasInlineImages(html)) {
+            event.preventDefault();
+            void storeInlineImages(html)
+              .catch(() => html)
+              .then((stored) => view.pasteHTML(stored));
+            return true;
+          }
           if (view.state.selection.$from.parent.type.spec.code || hasStructuredHtml(html) || !looksLikeMarkdown(text))
             return false;
           event.preventDefault();

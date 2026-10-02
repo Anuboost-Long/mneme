@@ -1,3 +1,8 @@
+import { desktop } from "@chain/sdk";
+
+import { isFileReference } from "../../../shared/lib/fileReference";
+import { base64Bytes, copyImage, deleteImage } from "./page-image";
+
 export async function courseImage(file: File): Promise<string> {
   if (!["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"].includes(file.type)) {
     throw new Error("Choose a PNG, JPEG, WebP, GIF or SVG image.");
@@ -22,5 +27,40 @@ export async function courseImage(file: File): Promise<string> {
     throw new Error("Couldn’t read this image. Choose another file.");
   } finally {
     URL.revokeObjectURL(url);
+  }
+}
+
+// An uploaded picture (a data URL from `courseImage`) becomes a file, and
+// the icon column keeps its reference. Presets, emoji and references pass
+// through.
+export async function storeIcon(icon: string | null | undefined) {
+  const trimmed = icon?.trim() || null;
+  const base64 = trimmed && /^data:image\/png;base64,(.+)$/.exec(trimmed)?.[1];
+  return base64 ? desktop.files.write(base64Bytes(base64), { extension: "png" }) : trimmed;
+}
+
+export async function deleteReplacedIcon(previous: string | null | undefined, next: string | null) {
+  if (previous && isFileReference(previous) && previous !== next) await deleteImage(previous);
+}
+
+export async function deleteIcon(icon: string | null | undefined) {
+  if (icon && isFileReference(icon)) await deleteImage(icon);
+}
+
+export async function copyIcon(icon: string | null) {
+  return icon && isFileReference(icon) ? copyImage(icon) : icon;
+}
+
+// For icons uploaded before pictures were stored as files.
+export async function storeInlineIcons() {
+  for (const table of ["course", "module", "page"]) {
+    const rows = await desktop.storage.query<{ id: number; icon: string }>(
+      `SELECT id, icon FROM ${table} WHERE icon LIKE 'data:image/%'`
+    );
+    for (const { id, icon } of rows) {
+      const reference = await storeIcon(icon);
+      const { rowsAffected } = await desktop.storage.execute(`UPDATE ${table} SET icon = ? WHERE id = ? AND icon = ?`, [reference, id, icon]);
+      if (rowsAffected === 0) await deleteIcon(reference);
+    }
   }
 }

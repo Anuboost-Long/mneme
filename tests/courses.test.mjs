@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { useTestDesktop } from './support/desktop.mjs';
 
-const { database, calls } = useTestDesktop();
+const { database, calls, writtenFiles, deletedFiles } = useTestDesktop();
 const { initDb } = await import('../src/shared/lib/db/index.ts');
 const { createCourse, getCourses, getCourse, updateCourse, deleteCourse } = await import('../src/features/courses/lib/courses.ts');
 await initDb();
@@ -39,12 +39,16 @@ test('course lifecycle uses SQLite IDs, stable creation order, partial edits and
 test('custom colours and uploaded icons survive reads and partial edits', async () => {
   const icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=';
   const course = await createCourse({ name: 'Custom subject', icon, color: '#7b2d43' });
-  assert.equal((await getCourse(course.id)).icon, icon);
-  const edited = await updateCourse(course.id, { name: 'Renamed subject' });
-  assert.equal(edited.icon, icon);
+  const reference = (await getCourse(course.id)).icon;
+  assert.match(reference, /^[0-9a-f]{16}\.png$/, 'an uploaded icon is stored as a file');
+  assert.deepEqual(Buffer.from(writtenFiles.get(reference)), Buffer.from(icon.split(',')[1], 'base64'));
+  const edited = await updateCourse(course.id, { name: 'Renamed subject', icon: reference });
+  assert.equal(edited.icon, reference);
   assert.equal(edited.color, '#7b2d43');
+  assert.ok(!deletedFiles.includes(reference), 'saving the same icon keeps its file');
   await updateCourse(course.id, { icon: '🧠', color: '#ffffff' });
   assert.equal((await getCourse(course.id)).icon, '🧠');
+  assert.ok(deletedFiles.includes(reference), 'replacing a picture icon deletes its file');
   await deleteCourse(course.id);
 });
 

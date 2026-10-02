@@ -1,6 +1,9 @@
 import clsx from "clsx";
 import type { CSSProperties } from "react";
 
+import { isFileReference } from "../lib/fileReference";
+import { useFileUrl } from "../lib/useFileUrl";
+
 export const courseColors = [
   { name: "Navy", value: "#171b24" },
   { name: "Fern", value: "#52745b" },
@@ -34,16 +37,26 @@ export default function CourseIcon({ icon, color, large = false, small = false }
   small?: boolean;
 }>) {
   const size = (large && "large") || (small && "small") || "base";
+  const fileUrl = useFileUrl(isFileReference(icon) ? icon : null);
+  const picture = isFileReference(icon) ? fileUrl : icon?.startsWith("data:image/png;base64,") && icon;
+
+  function glyph() {
+    if (picture) return <img src={picture} alt="" className={clsx("size-full rounded-md object-contain")} />;
+    if (isFileReference(icon)) return null;
+    if (icon && !paths[icon]) return <span className={clsx("truncate", sizes[size].text)}>{icon}</span>;
+    return (
+      <svg className={clsx(sizes[size].glyph)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={paths[icon || "book"]} />
+      </svg>
+    );
+  }
+
   return (
     <span
       className={clsx("course-icon inline-flex shrink-0 items-center justify-center rounded-md", sizes[size].box)}
       style={{ "--course-color": color?.match(/^#[0-9a-f]{6}$/i) ? color : courseColors[0].value } as CSSProperties}
     >
-      {icon?.startsWith("data:image/png;base64,") ? <img src={icon} alt="" className={clsx("size-full rounded-md object-contain")} /> : icon && !paths[icon] ? <span className={clsx("truncate", sizes[size].text)}>{icon}</span> : (
-        <svg className={clsx(sizes[size].glyph)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d={paths[icon || "book"]} />
-        </svg>
-      )}
+      {glyph()}
     </span>
   );
 }

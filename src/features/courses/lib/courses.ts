@@ -5,6 +5,7 @@ import type { CourseRow } from "../../../shared/lib/db/schema/course";
 import type { ModuleRow } from "../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
+import { deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
 import { deleteImage } from "./page-image";
 import { deletionTime } from "./pages";
 import { eraseModules } from "./modules";
@@ -92,6 +93,7 @@ export async function createCourse(input: CourseInput) {
   const row = await courseTable().insert({
     name: courseName(input.name),
     ...Object.fromEntries(TEXT_FIELDS.map((key) => [key, input[key]?.trim() || null])),
+    icon: await storeIcon(input.icon),
     status: input.status ?? CompletionStatus.NotStarted,
     progress: clampProgress(input.progress ?? 0),
     bookmarked: input.bookmarked ? 1 : 0,
@@ -106,6 +108,7 @@ export async function updateCourse(id: number, input: Partial<CourseInput>) {
   const changes: Values<CourseRow> = {
     name: input.name === undefined ? undefined : courseName(input.name),
     ...Object.fromEntries(TEXT_FIELDS.map((key) => [key, input[key] === undefined ? undefined : input[key]?.trim() || null])),
+    icon: input.icon === undefined ? undefined : await storeIcon(input.icon),
     status: input.status,
     progress: input.progress === undefined ? undefined : clampProgress(input.progress),
     bookmarked: input.bookmarked === undefined ? undefined : Number(input.bookmarked),
@@ -113,9 +116,11 @@ export async function updateCourse(id: number, input: Partial<CourseInput>) {
     cover: input.cover
   };
   const edited = Object.values(changes).some((value) => value !== undefined);
-  const replacedCover = input.cover === undefined ? null : (await getCourse(id))?.cover;
+  const previous = input.cover === undefined && input.icon === undefined ? undefined : await getCourse(id);
+  const replacedCover = input.cover === undefined ? null : previous?.cover;
   const [row] = await courseTable().update({ id, deleted_at: null }, edited ? { ...changes, updated_at: sql`datetime('now')` } : {});
   if (replacedCover && replacedCover !== input.cover) await deleteImage(replacedCover);
+  if (row && changes.icon !== undefined) await deleteReplacedIcon(previous?.icon, row.icon);
   if (!row) throw new Error("This course no longer exists.");
   return toCourse(row);
 }
@@ -162,4 +167,5 @@ export async function eraseCourse(id: number) {
   await eraseModules("course_id = ?", [id]);
   await courseTable().delete(id);
   if (row?.cover) await deleteImage(row.cover);
+  await deleteIcon(row?.icon);
 }

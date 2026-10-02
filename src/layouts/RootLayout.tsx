@@ -10,7 +10,9 @@ import AgentChatPanel from "../features/agent-chat/components/AgentChatPanel";
 import { cleanUpConversations } from "../features/agent-chat/lib/retention";
 import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import CourseForm from "../features/courses/components/CourseForm";
+import { storeInlineIcons } from "../features/courses/lib/course-image";
 import { getCourses } from "../features/courses/lib/courses";
+import { storeInlinePageImages } from "../features/courses/lib/pages";
 import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
 import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "../features/recently-deleted/lib/recentlyDeleted";
@@ -90,7 +92,11 @@ export default function RootLayout() {
     initDb()
       .then(cleanUpConversations)
       .then(purgeExpiredItems)
-      .then(() => getCourses())
+      .then(() => {
+        void storeInlinePageImages().catch(() => undefined);
+        void storeInlineIcons().catch(() => undefined);
+        return getCourses();
+      })
       .then((loaded) => {
         if (active) {
           setCourses(loaded);

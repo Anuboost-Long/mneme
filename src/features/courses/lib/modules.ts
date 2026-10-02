@@ -4,6 +4,7 @@ import { savePositions } from "../../../shared/lib/db/positions";
 import type { ModuleRow } from "../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus, completionStatuses, completionStatusLabels } from "./completion-status";
+import { deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
 import { deletionTime, erasePages } from "./pages";
 
 export { CompletionStatus as ModuleStatus };
@@ -110,7 +111,7 @@ export async function createModule(courseId: number, input: ModuleInput) {
     course_id: courseId,
     name: moduleName(input.name),
     description: input.description?.trim() || null,
-    icon: input.icon || null,
+    icon: await storeIcon(input.icon),
     status: input.status ?? CompletionStatus.NotStarted,
     progress: clampProgress(input.progress ?? 0),
     bookmarked: input.bookmarked ? 1 : 0,
@@ -123,14 +124,16 @@ export async function updateModule(id: number, input: Partial<ModuleInput>) {
   const changes: Values<ModuleRow> = {
     name: input.name === undefined ? undefined : moduleName(input.name),
     description: input.description === undefined ? undefined : input.description?.trim() || null,
-    icon: input.icon === undefined ? undefined : input.icon?.trim() || null,
+    icon: input.icon === undefined ? undefined : await storeIcon(input.icon),
     status: input.status,
     progress: input.progress === undefined ? undefined : clampProgress(input.progress),
     bookmarked: input.bookmarked === undefined ? undefined : Number(input.bookmarked)
   };
   const edited = Object.values(changes).some((value) => value !== undefined);
+  const previousIcon = changes.icon === undefined ? null : (await getModule(id))?.icon;
   const [row] = await moduleTable().update({ id, deleted_at: null }, edited ? { ...changes, updated_at: sql`datetime('now')` } : {});
   if (!row) throw new Error("This module no longer exists.");
+  if (changes.icon !== undefined) await deleteReplacedIcon(previousIcon, row.icon);
   return toModule(row);
 }
 
@@ -149,5 +152,7 @@ export async function deleteModule(id: number) {
 
 export async function eraseModules(filter: string, params: unknown[]) {
   await erasePages(`module_id IN (SELECT id FROM module WHERE ${filter})`, params);
+  const icons = await desktop.storage.query<{ icon: string | null }>(`SELECT icon FROM module WHERE ${filter}`, params);
+  for (const { icon } of icons) await deleteIcon(icon);
   await desktop.storage.execute(`DELETE FROM module WHERE ${filter}`, params);
 }

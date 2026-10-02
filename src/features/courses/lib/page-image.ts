@@ -32,7 +32,7 @@ export async function storeImage(file: File): Promise<string> {
     canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
     canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
     const context = canvas.getContext("2d");
-    if (!context) throw new Error();
+    if (!context) throw new Error("No 2D canvas context.");
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const resizedType = file.type === "image/png" || file.type === "image/svg+xml" ? "image/png" : "image/jpeg";
     const blob = await canvasToBlob(canvas, resizedType, 0.9);
@@ -49,6 +49,48 @@ export async function storeImage(file: File): Promise<string> {
 // inflation shuttled through IPC on every read of that row.
 async function writeImage(blob: Blob, extension: string): Promise<string> {
   return desktop.files.write(new Uint8Array(await blob.arrayBuffer()), { extension });
+}
+
+const INLINE_IMAGE = /src="data:(image\/[a-z0-9.+-]+);base64,([^"]+)"/gi;
+
+export function hasInlineImages(html: string) {
+  return /src="data:image\//i.test(html);
+}
+
+// Keyed by a hash of the image data, so content that still carries the
+// same inline picture on its next save reuses the file instead of writing
+// another one.
+const storedInlineImages = new Map<string, Promise<string>>();
+
+// Writes each base64 picture in `html` to a file and points its src at that
+// file, so a page's content holds only the path. A picture of a type the
+// app doesn't store stays inline.
+export async function storeInlineImages(html: string) {
+  const urls = new Map<string, string>();
+  for (const [, type, base64] of html.matchAll(INLINE_IMAGE)) {
+    if (urls.has(base64) || !(type in EXTENSIONS)) continue;
+    urls.set(base64, await storeInlineImage(type, base64));
+  }
+  return html.replace(INLINE_IMAGE, (match, _type, base64) => {
+    const url = urls.get(base64);
+    return url ? `src="${url}"` : match;
+  });
+}
+
+async function storeInlineImage(type: string, base64: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(base64));
+  const key = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  let stored = storedInlineImages.get(key);
+  if (!stored) {
+    stored = desktop.files.write(base64Bytes(base64), { extension: EXTENSIONS[type] }).then((reference) => desktop.files.url(reference));
+    stored.catch(() => storedInlineImages.delete(key));
+    storedInlineImages.set(key, stored);
+  }
+  return stored;
+}
+
+export function base64Bytes(base64: string) {
+  return Uint8Array.from(atob(base64.replace(/\s/g, "")), (char) => char.codePointAt(0) ?? 0);
 }
 
 // Best effort: a missing file is already gone.
@@ -69,7 +111,7 @@ export async function pageImage(file: File): Promise<string> {
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error())), type, quality);
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Couldn’t encode the image."))), type, quality);
   });
 }
 

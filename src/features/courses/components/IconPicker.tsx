@@ -2,13 +2,14 @@ import clsx from "clsx";
 import { useState } from "react";
 
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { isFileReference } from "../../../shared/lib/fileReference";
 import { IMAGE_EXTENSIONS, pickFiles } from "../../../shared/lib/pickFiles";
 import CourseIcon, { courseIcons } from "../../../shared/ui/CourseIcon";
 import { TextInput } from "../../../shared/ui/Input";
 import { BodyText, Typography } from "../../../shared/ui/Typography";
 import { courseImage } from "../lib/course-image";
 
-const isPicture = (icon: string | null) => icon?.startsWith("data:image/") ?? false;
+const isPicture = (icon: string | null) => (icon?.startsWith("data:image/") ?? false) || isFileReference(icon);
 const isPreset = (icon: string | null) => (courseIcons as readonly (string | null)[]).includes(icon);
 
 // A preset, an emoji or symbol, or an uploaded picture. With `allowNone`

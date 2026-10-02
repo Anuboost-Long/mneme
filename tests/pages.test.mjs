@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { useTestDesktop } from './support/desktop.mjs';
 
-const { database } = useTestDesktop();
+const { database, writtenFiles } = useTestDesktop();
 const { initDb } = await import('../src/shared/lib/db/index.ts');
 const { createCourse, deleteCourse } = await import('../src/features/courses/lib/courses.ts');
 const { createModule, deleteModule } = await import('../src/features/courses/lib/modules.ts');
-const { createPage, getPages, getPage, updatePage, deletePage, PageType } = await import('../src/features/courses/lib/pages.ts');
+const { createPage, getPages, getPage, updatePage, deletePage, storeInlinePageImages, PageType } = await import('../src/features/courses/lib/pages.ts');
 await initDb();
 
 async function module() {
@@ -69,22 +69,36 @@ test('deleting a course deletes pages under all of its modules', async () => {
   assert.equal(await getPage(pageB.id), undefined);
 });
 
-test('an embedded image survives a save/reload round-trip byte-for-byte, at a realistic size', async () => {
+test('an inline image is saved as a file and the page keeps only its URL', async () => {
   const { id: moduleId } = await module();
-  // Base64 alone can run several hundred KB for a real (post-resize)
-  // photo/screenshot; a short string here wouldn't catch a truncation or
-  // parameter-binding issue that only shows up at real size.
-  const base64 = Buffer.alloc(400_000).fill('A').toString('base64');
-  const html = `<h2>Figure 1-1</h2><p>Some text before.</p><img src="data:image/png;base64,${base64}" data-align="center"><p>Some text after.</p>`;
+  const bytes = Buffer.alloc(300_000, 7);
+  const html = `<p>Before.</p><img src="data:image/png;base64,${bytes.toString('base64')}" data-align="center"><p>After.</p>`;
   const page = await createPage(moduleId, { title: 'Diagram page' });
   const saved = await updatePage(page.id, { content: html });
-  assert.equal(saved.content, html);
-  // Simulates a reload: forget everything in memory, re-fetch from
-  // scratch — this is the actual "app memory" (SQLite) read path, the
-  // same one PageEditor.tsx uses to populate the editor on mount.
-  const reloaded = await getPage(page.id);
-  assert.equal(reloaded.content, html);
-  assert.ok(reloaded.content.includes(`data:image/png;base64,${base64}`), 'image data URL must survive intact, not truncated or mangled');
+  const [reference] = [...writtenFiles].find(([, written]) => Buffer.from(written).equals(bytes));
+  assert.equal(saved.content, `<p>Before.</p><img src="asset://localhost/${reference}" data-align="center"><p>After.</p>`);
+  assert.equal((await getPage(page.id)).content, saved.content);
+  const filesBefore = writtenFiles.size;
+  await updatePage(page.id, { content: html.replace('After.', 'After, edited.') });
+  assert.equal(writtenFiles.size, filesBefore, 'saving the same inline image again reuses its file');
+  await deletePage(page.id);
+});
+
+test('an inline image of a type the app does not store stays inline', async () => {
+  const { id: moduleId } = await module();
+  const html = '<img src="data:image/bmp;base64,Qk0=">';
+  const page = await createPage(moduleId, { title: 'Bitmap', content: html });
+  assert.equal(page.content, html);
+  await deletePage(page.id);
+});
+
+test('pages saved with inline images are moved to files once', async () => {
+  const { id: moduleId } = await module();
+  const page = await createPage(moduleId, { title: 'Old page' });
+  const base64 = Buffer.from('old picture').toString('base64');
+  database.prepare('UPDATE page SET content = ? WHERE id = ?').run(`<img src="data:image/jpeg;base64,${base64}">`, page.id);
+  await storeInlinePageImages();
+  assert.match((await getPage(page.id)).content, /^<img src="asset:\/\/localhost\/[0-9a-f]{16}\.jpg">$/);
   await deletePage(page.id);
 });
 

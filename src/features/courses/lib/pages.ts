@@ -3,9 +3,10 @@ import { desktop } from "@chain/sdk";
 import { savePositions } from "../../../shared/lib/db/positions";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
+import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
 import { reconcileHighlights, syncPageHighlights } from "./highlights";
 import { deletePageAudios } from "../../audiobook/lib/pageAudio";
-import { copyImage, deleteImage } from "./page-image";
+import { copyImage, deleteImage, storeInlineImages } from "./page-image";
 import { recordStudy } from "../../../shared/lib/studyDays";
 import { copyAttachments, deleteAttachments } from "./attachments";
 import { copyRecordings, deleteRecordings } from "./recordings";
@@ -223,6 +224,25 @@ export async function getPage(id: number) {
   return row ? toPage(row) : undefined;
 }
 
+async function pageContent(content: string | null | undefined) {
+  const trimmed = content?.trim();
+  return trimmed ? storeInlineImages(trimmed) : null;
+}
+
+// For pages saved before pictures were always stored as files. Writes only
+// if the content hasn't changed meanwhile, so an edit made in the editor
+// during the pass isn't overwritten.
+export async function storeInlinePageImages() {
+  const pages = await desktop.storage.query<{ id: number; content: string }>(
+    `SELECT id, content FROM page WHERE content LIKE '%src="data:image/%'`
+  );
+  for (const { id, content } of pages) {
+    const stored = await storeInlineImages(content);
+    if (stored !== content)
+      await desktop.storage.execute("UPDATE page SET content = ? WHERE id = ? AND content = ?", [stored, id, content]);
+  }
+}
+
 const nextPosition = "(SELECT COALESCE(MAX(position), 0) + 1 FROM page WHERE module_id = ?)";
 
 // New pages go to the end of their module.
@@ -234,11 +254,11 @@ export async function createPage(moduleId: number, input: PageInput) {
       moduleId,
       pageTitle(input.title),
       input.type ?? PageType.Lesson,
-      input.content?.trim() || null,
+      await pageContent(input.content),
       input.status ?? CompletionStatus.NotStarted,
       clampProgress(input.progress ?? 0),
       input.bookmarked ? 1 : 0,
-      input.icon || null,
+      await storeIcon(input.icon),
       input.cover ?? null,
       moduleId
     ]
@@ -271,8 +291,9 @@ export async function updatePage(
   }
   if (input.icon !== undefined) {
     fields.push("icon = ?");
-    values.push(input.icon?.trim() || null);
+    values.push(await storeIcon(input.icon));
   }
+  const previousIcon = input.icon === undefined ? null : (await getPage(id))?.icon;
   const replacedCover = input.cover === undefined ? null : (await getPage(id))?.cover;
   const finishing = input.status === CompletionStatus.Completed && (await getPage(id))?.status !== CompletionStatus.Completed;
   if (input.cover !== undefined) {
@@ -281,7 +302,7 @@ export async function updatePage(
   }
   let content: string | null | undefined;
   if (input.content !== undefined) {
-    const trimmed = input.content?.trim() || null;
+    const trimmed = await pageContent(input.content);
     if (options.skipHighlightReconciliation) {
       content = trimmed;
     } else {
@@ -313,6 +334,7 @@ export async function updatePage(
   if (replacedCover && replacedCover !== input.cover) await deleteImage(replacedCover);
   const page = await getPage(id);
   if (!page) throw new Error("This page no longer exists.");
+  if (input.icon !== undefined) await deleteReplacedIcon(previousIcon, page.icon);
   if (content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
   return page;
 }
@@ -359,7 +381,7 @@ export async function movePage(id: number, moduleId: number) {
 }
 
 // A copy right after the original, starting over as not started. It gets
-// its own cover file, recordings and attachments, so deleting either page leaves the
+// its own cover and icon files, recordings and attachments, so deleting either page leaves the
 // other whole. Downloaded page audio isn't copied; it can be made again.
 export async function duplicatePage(id: number) {
   const original = await getPage(id);
@@ -367,7 +389,7 @@ export async function duplicatePage(id: number) {
   const copy = await createPage(original.module_id, {
     title: `${original.title} (copy)`,
     type: original.type,
-    icon: original.icon,
+    icon: await copyIcon(original.icon),
     cover: original.cover ? await copyImage(original.cover) : null
   });
   const siblings = await getPages(original.module_id);
@@ -408,8 +430,11 @@ export async function deletePages(ids: number[]) {
 
 export async function erasePages(filter: string, params: unknown[]) {
   const ofPages = `page_id IN (SELECT id FROM page WHERE ${filter})`;
-  const covers = await desktop.storage.query<{ cover: string | null }>(`SELECT cover FROM page WHERE ${filter}`, params);
-  for (const { cover } of covers) if (cover) await deleteImage(cover);
+  const pictures = await desktop.storage.query<{ cover: string | null; icon: string | null }>(`SELECT cover, icon FROM page WHERE ${filter}`, params);
+  for (const { cover, icon } of pictures) {
+    if (cover) await deleteImage(cover);
+    await deleteIcon(icon);
+  }
   await deleteRecordings(ofPages, params);
   await deleteAttachments(ofPages, params);
   await deletePageAudios(ofPages, params);
