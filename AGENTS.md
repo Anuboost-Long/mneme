@@ -104,6 +104,15 @@ This is the scaffold produced by `chain init`:
     `features/courses/lib/courses.ts` for the pattern, and
     `features/courses/lib/completion-status.ts` for why status/type
     columns are numeric enums (smaller storage) rather than TEXT.
+  - Typed queries are the default: `desktop.storage.table()` for reads
+    and writes, `desktop.storage.transaction()` for multi-step writes
+    (`courses.ts` and `modules.ts` show both). When a change touches a
+    `lib/*.ts` file that still uses raw `desktop.storage.query`/`execute`,
+    move that whole file to `table()` in the same change, not just the
+    query you came to edit. Raw SQL stays only where `table()` can't say
+    it: joins, aggregates and `GROUP BY`, `LIKE` search, and SQL-computed
+    values such as `COALESCE(MAX(position), 0) + 1` (pass those to
+    `table()` as a `sql` fragment where it accepts one).
 - Chain's placeholder branding: `asset/app-icon.svg` (used in the nav
   bar) and `asset/icons/` (the full desktop icon set), also copied into
   `.chain/native/icons/` where Tauri's bundler actually reads them from

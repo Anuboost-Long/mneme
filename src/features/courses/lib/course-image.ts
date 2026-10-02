@@ -1,4 +1,4 @@
-import { desktop } from "@chain/sdk";
+import { desktop, sql } from "@chain/sdk";
 
 import { isFileReference } from "../../../shared/lib/fileReference";
 import { base64Bytes, copyImage, deleteImage } from "./page-image";
@@ -53,14 +53,12 @@ export async function copyIcon(icon: string | null) {
 
 // For icons uploaded before pictures were stored as files.
 export async function storeInlineIcons() {
-  for (const table of ["course", "module", "page"]) {
-    const rows = await desktop.storage.query<{ id: number; icon: string }>(
-      `SELECT id, icon FROM ${table} WHERE icon LIKE 'data:image/%'`
-    );
-    for (const { id, icon } of rows) {
+  for (const name of ["course", "module", "page"]) {
+    const table = desktop.storage.table<{ id: number; icon: string | null }>(name);
+    for (const { id, icon } of await table.where(sql`icon LIKE 'data:image/%'`).all()) {
       const reference = await storeIcon(icon);
-      const { rowsAffected } = await desktop.storage.execute(`UPDATE ${table} SET icon = ? WHERE id = ? AND icon = ?`, [reference, id, icon]);
-      if (rowsAffected === 0) await deleteIcon(reference);
+      const updated = await table.update({ id, icon }, { icon: reference });
+      if (updated.length === 0) await deleteIcon(reference);
     }
   }
 }

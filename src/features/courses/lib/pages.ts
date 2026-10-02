@@ -1,6 +1,7 @@
-import { desktop } from "@chain/sdk";
+import { desktop, sql, type Values } from "@chain/sdk";
 
 import { savePositions } from "../../../shared/lib/db/positions";
+import type { HighlightRow } from "../../../shared/lib/db/schema/highlight";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
 import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
@@ -90,6 +91,8 @@ export function pageContentPreview(html: string | null) {
     .trim();
 }
 
+const pageTable = () => desktop.storage.table<PageRow>("page");
+
 function toPage(row: PageRow): Page {
   return {
     ...row,
@@ -128,32 +131,16 @@ function reconcileHighlightsSafely(
 }
 
 export async function getPages(moduleId: number, filter: PageFilter = {}) {
-  const conditions = ["module_id = ?", "deleted_at IS NULL"];
-  const params: (string | number)[] = [moduleId];
-  if (filter.type !== undefined) {
-    conditions.push("type = ?");
-    params.push(filter.type);
-  }
-  if (filter.status !== undefined) {
-    conditions.push("status = ?");
-    params.push(filter.status);
-  }
-  if (filter.bookmarked !== undefined) {
-    conditions.push("bookmarked = ?");
-    params.push(filter.bookmarked ? 1 : 0);
-  }
-  if (filter.createdFrom !== undefined) {
-    conditions.push("date(created_at) >= date(?)");
-    params.push(filter.createdFrom);
-  }
-  if (filter.createdTo !== undefined) {
-    conditions.push("date(created_at) <= date(?)");
-    params.push(filter.createdTo);
-  }
-  const rows = await desktop.storage.query<PageRow>(
-    `SELECT * FROM page WHERE ${conditions.join(" AND ")} ORDER BY position, created_at, id`,
-    params
-  );
+  let query = pageTable().where({
+    module_id: moduleId,
+    deleted_at: null,
+    type: filter.type,
+    status: filter.status,
+    bookmarked: filter.bookmarked === undefined ? undefined : Number(filter.bookmarked)
+  });
+  if (filter.createdFrom !== undefined) query = query.where(sql`date(created_at) >= date(${filter.createdFrom})`);
+  if (filter.createdTo !== undefined) query = query.where(sql`date(created_at) <= date(${filter.createdTo})`);
+  const rows = await query.orderBy("position", "created_at", "id").all();
   return rows.map(toPage);
 }
 
@@ -220,7 +207,7 @@ export function searchPageLinks(query: string, limit: number) {
 }
 
 export async function getPage(id: number) {
-  const [row] = await desktop.storage.query<PageRow>("SELECT * FROM page WHERE id = ? AND deleted_at IS NULL", [id]);
+  const row = await pageTable().where({ id, deleted_at: null }).first();
   return row ? toPage(row) : undefined;
 }
 
@@ -233,37 +220,32 @@ async function pageContent(content: string | null | undefined) {
 // if the content hasn't changed meanwhile, so an edit made in the editor
 // during the pass isn't overwritten.
 export async function storeInlinePageImages() {
-  const pages = await desktop.storage.query<{ id: number; content: string }>(
-    `SELECT id, content FROM page WHERE content LIKE '%src="data:image/%'`
-  );
+  const pages = await pageTable().where(sql`content LIKE '%src="data:image/%'`).all();
   for (const { id, content } of pages) {
+    if (!content) continue;
     const stored = await storeInlineImages(content);
-    if (stored !== content)
-      await desktop.storage.execute("UPDATE page SET content = ? WHERE id = ? AND content = ?", [stored, id, content]);
+    if (stored !== content) await pageTable().update({ id, content }, { content: stored });
   }
 }
 
-const nextPosition = "(SELECT COALESCE(MAX(position), 0) + 1 FROM page WHERE module_id = ?)";
+const nextPosition = (moduleId: number) => sql`SELECT COALESCE(MAX(position), 0) + 1 FROM page WHERE module_id = ${moduleId}`;
 
-// New pages go to the end of their module.
+// New pages go to the end of their module. Read back after inserting so
+// opened_at, which page_opened_on_insert sets, is in the result.
 export async function createPage(moduleId: number, input: PageInput) {
-  const result = await desktop.storage.execute(
-    `INSERT INTO page (module_id, title, type, content, status, progress, bookmarked, icon, cover, position)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ${nextPosition})`,
-    [
-      moduleId,
-      pageTitle(input.title),
-      input.type ?? PageType.Lesson,
-      await pageContent(input.content),
-      input.status ?? CompletionStatus.NotStarted,
-      clampProgress(input.progress ?? 0),
-      input.bookmarked ? 1 : 0,
-      await storeIcon(input.icon),
-      input.cover ?? null,
-      moduleId
-    ]
-  );
-  const page = await getPage(result.lastInsertId);
+  const row = await pageTable().insert({
+    module_id: moduleId,
+    title: pageTitle(input.title),
+    type: input.type ?? PageType.Lesson,
+    content: await pageContent(input.content),
+    status: input.status ?? CompletionStatus.NotStarted,
+    progress: clampProgress(input.progress ?? 0),
+    bookmarked: input.bookmarked ? 1 : 0,
+    icon: await storeIcon(input.icon),
+    cover: input.cover ?? null,
+    position: nextPosition(moduleId)
+  });
+  const page = await getPage(row.id);
   if (!page) throw new Error("The saved page could not be found.");
   if (page.content) await syncHighlightsSafely(page.id, moduleId, page.content);
   return page;
@@ -279,62 +261,32 @@ export async function updatePage(
   input: Partial<PageInput>,
   options: { skipHighlightReconciliation?: boolean } = {}
 ) {
-  const fields: string[] = [];
-  const values: (string | number | null)[] = [];
-  if (input.title !== undefined) {
-    fields.push("title = ?");
-    values.push(pageTitle(input.title));
-  }
-  if (input.type !== undefined) {
-    fields.push("type = ?");
-    values.push(input.type);
-  }
-  if (input.icon !== undefined) {
-    fields.push("icon = ?");
-    values.push(await storeIcon(input.icon));
-  }
-  const previousIcon = input.icon === undefined ? null : (await getPage(id))?.icon;
-  const replacedCover = input.cover === undefined ? null : (await getPage(id))?.cover;
-  const finishing = input.status === CompletionStatus.Completed && (await getPage(id))?.status !== CompletionStatus.Completed;
-  if (input.cover !== undefined) {
-    fields.push("cover = ?");
-    values.push(input.cover);
-  }
+  const previous =
+    input.icon !== undefined || input.cover !== undefined || input.status !== undefined || input.content !== undefined
+      ? await getPage(id)
+      : undefined;
   let content: string | null | undefined;
   if (input.content !== undefined) {
     const trimmed = await pageContent(input.content);
-    if (options.skipHighlightReconciliation) {
-      content = trimmed;
-    } else {
-      const previous = await getPage(id);
-      content = reconcileHighlightsSafely(previous?.content ?? null, trimmed);
-    }
-    fields.push("content = ?");
-    values.push(content);
+    content = options.skipHighlightReconciliation ? trimmed : reconcileHighlightsSafely(previous?.content ?? null, trimmed);
   }
-  if (input.status !== undefined) {
-    fields.push("status = ?");
-    values.push(input.status);
-  }
-  if (input.progress !== undefined) {
-    fields.push("progress = ?");
-    values.push(clampProgress(input.progress));
-  }
-  if (input.bookmarked !== undefined) {
-    fields.push("bookmarked = ?");
-    values.push(input.bookmarked ? 1 : 0);
-  }
-  if (fields.length) {
-    await desktop.storage.execute(
-      `UPDATE page SET ${fields.join(", ")}, updated_at = datetime('now') WHERE id = ?`,
-      [...values, id]
-    );
-  }
-  if (finishing) await recordStudy("completed");
-  if (replacedCover && replacedCover !== input.cover) await deleteImage(replacedCover);
-  const page = await getPage(id);
-  if (!page) throw new Error("This page no longer exists.");
-  if (input.icon !== undefined) await deleteReplacedIcon(previousIcon, page.icon);
+  const changes: Values<PageRow> = {
+    title: input.title === undefined ? undefined : pageTitle(input.title),
+    type: input.type,
+    icon: input.icon === undefined ? undefined : await storeIcon(input.icon),
+    cover: input.cover,
+    content,
+    status: input.status,
+    progress: input.progress === undefined ? undefined : clampProgress(input.progress),
+    bookmarked: input.bookmarked === undefined ? undefined : Number(input.bookmarked)
+  };
+  const edited = Object.values(changes).some((value) => value !== undefined);
+  const [row] = await pageTable().update({ id, deleted_at: null }, edited ? { ...changes, updated_at: sql`datetime('now')` } : {});
+  if (!row) throw new Error("This page no longer exists.");
+  const page = toPage(row);
+  if (input.status === CompletionStatus.Completed && previous?.status !== CompletionStatus.Completed) await recordStudy("completed");
+  if (previous?.cover && input.cover !== undefined && previous.cover !== input.cover) await deleteImage(previous.cover);
+  if (input.icon !== undefined) await deleteReplacedIcon(previous?.icon, page.icon);
   if (content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
   return page;
 }
@@ -359,7 +311,7 @@ export async function deleteRecordingFromPage(recordingId: number, pageId: numbe
 
 // For Home's recent pages. Leaves updated_at alone: opening isn't editing.
 export async function markPageOpened(id: number) {
-  await desktop.storage.execute("UPDATE page SET opened_at = datetime('now') WHERE id = ?", [id]);
+  await pageTable().update({ id }, { opened_at: sql`datetime('now')` });
   await recordStudy("opened");
 }
 
@@ -370,14 +322,13 @@ export async function reorderPages(ids: number[]) {
 
 // Moves a page to the end of another module, highlights included.
 export async function movePage(id: number, moduleId: number) {
-  await desktop.storage.execute(
-    `UPDATE page SET module_id = ?, position = ${nextPosition}, updated_at = datetime('now') WHERE id = ?`,
-    [moduleId, moduleId, id]
+  const [row] = await pageTable().update(
+    { id, deleted_at: null },
+    { module_id: moduleId, position: nextPosition(moduleId), updated_at: sql`datetime('now')` }
   );
-  await desktop.storage.execute("UPDATE highlight SET module_id = ? WHERE page_id = ?", [moduleId, id]);
-  const page = await getPage(id);
-  if (!page) throw new Error("This page no longer exists.");
-  return page;
+  if (!row) throw new Error("This page no longer exists.");
+  await desktop.storage.table<HighlightRow>("highlight").update({ page_id: id }, { module_id: moduleId });
+  return toPage(row);
 }
 
 // A copy right after the original, starting over as not started. It gets
@@ -422,10 +373,7 @@ export function deletePage(id: number) {
 
 export async function deletePages(ids: number[]) {
   if (ids.length === 0) return;
-  await desktop.storage.execute(
-    `UPDATE page SET deleted_at = ? WHERE deleted_at IS NULL AND id IN (${ids.map(() => "?").join(", ")})`,
-    [deletionTime(), ...ids]
-  );
+  await pageTable().update({ id: ids, deleted_at: null }, { deleted_at: deletionTime() });
 }
 
 export async function erasePages(filter: string, params: unknown[]) {
