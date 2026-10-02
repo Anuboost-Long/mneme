@@ -17,6 +17,7 @@ import { storeInlinePageImages } from "../features/courses/lib/page/actions";
 import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "../features/recently-deleted/lib/deleted-item/actions";
 import { initDb } from "../shared/lib/db";
+import { useShortcut, useShortcuts } from "../shared/lib/shortcuts/shortcutsState";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
 import { BodyText, PageTitle } from "../shared/ui/Typography";
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
   const openPage = useMatch("/courses/:courseId/modules/:moduleId/pages/:pageId");
   const { sidebarMode } = useSidebarMode();
   const navigate = useNavigate();
+  const { load: loadShortcuts } = useShortcuts();
   const settingsRoute = useMatch("/settings/*") !== null;
   const { pathname } = useLocation();
   const previousPath = useRef(pathname);
@@ -95,6 +97,7 @@ export default function RootLayout() {
       .then(() => {
         void storeInlinePageImages().catch(() => undefined);
         void storeInlineIcons().catch(() => undefined);
+        void loadShortcuts().catch(() => undefined);
         return getCourses();
       })
       .then((loaded) => {
@@ -124,6 +127,10 @@ export default function RootLayout() {
       localStorage.setItem("mneme.ai-panel.open", String(!aiPanelOpen));
     } catch {}
   }
+
+  useShortcut("toggle-sidebar", toggleSidebar);
+  useShortcut("toggle-agent-chat", toggleAiPanel);
+  useShortcut("open-settings", () => navigate("/settings/general"));
 
   function collapseOverlayOnContentClick() {
     if (sidebarInstant || sidebarMode !== "overlay" || !sidebarExpanded) return;

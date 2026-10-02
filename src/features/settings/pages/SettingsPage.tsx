@@ -26,9 +26,11 @@ import {
   saveBackup
 } from "../../courses/lib/backup/actions";
 import ExtensionSettings from "../../extensions/components/ExtensionSettings";
+import ShortcutSettings from "../components/ShortcutSettings";
 
 export const settingsSections = [
   { id: "general", label: "General" },
+  { id: "keyboard", label: "Keyboard" },
   { id: "data", label: "Data" },
   { id: "ai", label: "AI" },
   { id: "agent-tools", label: "Agent tools" },
@@ -436,6 +438,8 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                     </section>
                   </>
                 );
+              case "keyboard":
+                return <ShortcutSettings />;
               case "data":
                 return (
                   <>

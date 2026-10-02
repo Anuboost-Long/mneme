@@ -15,7 +15,8 @@ import { searchModuleLinks } from "../features/courses/lib/module/actions";
 import type { ModuleLink } from "../features/courses/lib/module/types";
 import { searchPageLinks } from "../features/courses/lib/page/actions";
 import type { PageLink } from "../features/courses/lib/page/types";
-import { loadCommandGroups, type PaletteCommand } from "../shared/lib/commandSources";
+import { loadCommandGroups, runCommand, type PaletteCommand } from "../shared/lib/commandSources";
+import { useShortcut } from "../shared/lib/shortcuts/shortcutsState";
 import { Caption } from "../shared/ui/Typography";
 
 // `path` marks a navigation item, so it can be reopened from Recent after
@@ -337,22 +338,14 @@ export default function CommandPalette({ courses }: Readonly<{ courses: Course[]
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
-  useEffect(() => {
-    function toggle(event: globalThis.KeyboardEvent) {
-      if (
-        !(event.metaKey || event.ctrlKey) ||
-        event.shiftKey ||
-        event.altKey ||
-        event.key.toLowerCase() !== "p"
-      )
-        return;
-      event.preventDefault();
-      if (!open && document.querySelector("dialog[open]")) return;
-      setOpen(!open);
-    }
-    window.addEventListener("keydown", toggle);
-    return () => window.removeEventListener("keydown", toggle);
-  }, [open]);
+  useShortcut("command-palette", () => {
+    if (!open && document.querySelector("dialog[open]")) return;
+    setOpen(!open);
+  });
+
+  useShortcut("new-page", () => {
+    if (!document.querySelector("dialog[open]")) void runCommand("module-new-page");
+  });
 
   return open ? <Palette courses={courses} onClose={close} /> : null;
 }

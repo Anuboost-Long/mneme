@@ -18,6 +18,7 @@ import "prosemirror-view/style/prosemirror.css";
 import clsx from "clsx";
 
 import { addCommandSource } from "../../../../shared/lib/commandSources";
+import { useShortcut } from "../../../../shared/lib/shortcuts/shortcutsState";
 import { BodyText } from "../../../../shared/ui/Typography";
 import AiActions from "../../../ai-actions/components/AiActions";
 import { markdownToEditorHtml } from "../../../ai-actions/lib/editorHtml";
@@ -223,27 +224,17 @@ export default function PageEditor({
     };
   }, []);
 
-  useEffect(() => {
-    function openFind(event: KeyboardEvent) {
-      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "f") return;
-      event.preventDefault();
-      setFindOpen(true);
-    }
-    window.addEventListener("keydown", openFind);
-    return () => window.removeEventListener("keydown", openFind);
-  }, []);
+  useShortcut("find-in-page", () => setFindOpen(true));
 
-  useEffect(() => {
-    if (!editor) return;
-    function manualSave(event: KeyboardEvent) {
-      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "s") return;
-      event.preventDefault();
+  useShortcut(
+    "save-page",
+    () => {
+      if (!editor) return;
       if (timeout.current) clearTimeout(timeout.current);
       void save(editor.getHTML());
-    }
-    window.addEventListener("keydown", manualSave);
-    return () => window.removeEventListener("keydown", manualSave);
-  }, [editor]);
+    },
+    !!editor
+  );
 
   async function save(html: string) {
     if (hideTimeout.current) clearTimeout(hideTimeout.current);
