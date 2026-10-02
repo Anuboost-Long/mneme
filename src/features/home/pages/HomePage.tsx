@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import type { Course } from "../../courses/lib/course/types";
+import LayoutsDialog from "../components/LayoutsDialog";
 import WidgetFrame from "../components/WidgetFrame";
 import WidgetGallery from "../components/WidgetGallery";
 import WidgetSettings from "../components/WidgetSettings";
@@ -57,7 +58,8 @@ export default function HomePage({
   onUpdate,
   onRemove,
   onReorder,
-  onBeautify
+  onBeautify,
+  onApplyLayout
 }: Readonly<{
   courses: Course[];
   widgets: Widget[] | null;
@@ -67,9 +69,11 @@ export default function HomePage({
   onRemove: (widget: Widget) => () => void;
   onReorder: (widgets: Widget[]) => void;
   onBeautify: () => Promise<{ name: string; undo: () => Promise<void> }>;
+  onApplyLayout: (name: string, widgets: NewWidget[]) => Promise<{ name: string; undo: () => Promise<void> }>;
 }>) {
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [choosingLayout, setChoosingLayout] = useState(false);
   const [settingsFor, setSettingsFor] = useState<Widget | null>(null);
   const [notice, setNotice] = useState<{ message: string; undo: () => void } | null>(null);
   const [beautifying, setBeautifying] = useState(false);
@@ -91,10 +95,10 @@ export default function HomePage({
     return () => clearTimeout(timer);
   }, [notice]);
 
-  async function beautify() {
+  async function applyLayout(change: () => Promise<{ name: string; undo: () => Promise<void> }>) {
     setBeautifying(true);
     try {
-      const { name, undo } = await onBeautify();
+      const { name, undo } = await change();
       arriving.current = true;
       setNotice({
         message: `Applied the ${name} layout.`,
@@ -265,10 +269,13 @@ export default function HomePage({
               <button
                 type="button"
                 disabled={beautifying}
-                onClick={() => void beautify()}
+                onClick={() => void applyLayout(onBeautify)}
                 className={secondaryButton}
               >
                 Beautify
+              </button>
+              <button type="button" onClick={() => setChoosingLayout(true)} className={secondaryButton}>
+                Layouts
               </button>
               <button type="button" onClick={() => setAdding(true)} className={secondaryButton}>
                 Add widget
@@ -287,11 +294,14 @@ export default function HomePage({
                   <button
                     type="button"
                     disabled={beautifying}
-                    onClick={() => void beautify()}
+                    onClick={() => void applyLayout(onBeautify)}
                     title="Arrange Home in one of the designed layouts"
                     className={secondaryButton}
                   >
                     Beautify
+                  </button>
+                  <button type="button" onClick={() => setChoosingLayout(true)} className={secondaryButton}>
+                    Layouts
                   </button>
                   <button
                     type="button"
@@ -332,6 +342,13 @@ export default function HomePage({
           courses={courses}
           onAdd={(widget) => void onAdd(widget)}
           onClose={() => setAdding(false)}
+        />
+      )}
+      {choosingLayout && (
+        <LayoutsDialog
+          current={(widgets ?? []).map(({ kind, size, config }) => ({ kind, size, config }))}
+          onApply={(name, layout) => void applyLayout(() => onApplyLayout(name, layout))}
+          onClose={() => setChoosingLayout(false)}
         />
       )}
       {settingsFor && settingsDefinition && (

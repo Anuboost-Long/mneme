@@ -9,6 +9,7 @@ export { AiProfile, type AiProfileRow } from "./ai-profile";
 export { Attachment, type AttachmentRow } from "./attachment";
 export { Course, type CourseRow } from "./course";
 export { Highlight, type HighlightRow } from "./highlight";
+export { HomeLayout, type HomeLayoutRow } from "./home-layout";
 export { HomeWidget, type HomeWidgetRow } from "./home-widget";
 export { Module, type ModuleRow } from "./module";
 export { Page, type PageRow } from "./page";

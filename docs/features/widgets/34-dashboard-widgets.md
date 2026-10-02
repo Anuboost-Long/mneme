@@ -31,8 +31,9 @@ No chain-sdk change was needed.
 
 ## What the user sees
 
-- **Header:** date, greeting, **New course**, **Beautify**, **Edit Home**.
-  In edit mode it shows **Beautify**, **Add widget** and **Done**.
+- **Header:** date, greeting, **New course**, **Beautify**, **Layouts**,
+  **Edit Home**. In edit mode it shows **Beautify**, **Layouts**,
+  **Add widget** and **Done**.
 - **Grid of widgets.** Each widget is a bordered card: a quiet title bar
   (`text-xs`, muted) over its content. There are no shadows except on
   the card being dragged.
@@ -71,6 +72,21 @@ exact previous layout, including notes, links and settings, through
 `replaceWidgets` with the old kinds, sizes and configs. The new cards
 settle in one after another: a 260ms fade and rise, staggered 35ms per
 card, skipped under reduced motion.
+
+## Layouts: saved and designed
+
+**Layouts** opens a dialog with two lists:
+
+- **Your layouts** — save the current Home under a name (unique, ignoring
+  case) and apply or delete it later. A saved layout keeps every widget's
+  kind, size and settings, note text included. Stored in the
+  `home_layout` table (migration 0030) through `home/lib/layout/`.
+- **Designed layouts** — the five presets below, picked directly instead
+  of at random.
+
+Applying either goes through the same path as Beautify (`applyLayout` in
+`HomeRoute`): it replaces every widget and the notice offers **Undo**.
+Beautify stays the one-click way to get a random designed layout.
 
 The presets are `layoutPresets` in `widgets/catalog.tsx`:
 

@@ -53,20 +53,22 @@ export default function HomeRoute() {
     };
   }
 
-  // A random preset, never the one just applied. Returns its name and an
-  // Undo that brings back the exact previous layout, notes and settings too.
-  async function beautify() {
-    const choices = layoutPresets.filter((preset) => preset.name !== lastPreset.current);
-    const preset = choices[Math.floor(Math.random() * choices.length)];
-    lastPreset.current = preset.name;
+  async function applyLayout(name: string, layout: NewWidget[]) {
     const previous = (widgets ?? []).map(({ kind, size, config }) => ({ kind, size, config }));
-    setWidgets(await replaceWidgets(preset.widgets));
+    setWidgets(await replaceWidgets(layout));
     return {
-      name: preset.name,
+      name,
       undo: async () => {
         setWidgets(await replaceWidgets(previous));
       }
     };
+  }
+
+  function beautify() {
+    const choices = layoutPresets.filter((preset) => preset.name !== lastPreset.current);
+    const preset = choices[Math.floor(Math.random() * choices.length)];
+    lastPreset.current = preset.name;
+    return applyLayout(preset.name, preset.widgets);
   }
 
   function reorder(next: Widget[]) {
@@ -84,6 +86,7 @@ export default function HomeRoute() {
       onRemove={remove}
       onReorder={reorder}
       onBeautify={beautify}
+      onApplyLayout={applyLayout}
     />
   );
 }
