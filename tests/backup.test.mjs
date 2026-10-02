@@ -152,3 +152,29 @@ test("a file that is not a backup is refused", async () => {
     /isn't a valid Mneme backup/
   );
 });
+
+test('Home widgets and saved layouts are backed up, without overwriting an existing Home', async () => {
+  const { addWidget, getWidgets, replaceWidgets } = await import('../src/features/home/lib/widget/actions.ts');
+  const { deleteLayout, getLayouts, saveLayout } = await import('../src/features/home/lib/layout/actions.ts');
+  await getWidgets([]);
+  await replaceWidgets([]);
+  await addWidget({ kind: 'note', size: 'large', config: { text: 'Exam on Friday' } });
+  await addWidget({ kind: 'streak', size: 'small', config: {} });
+  const layout = await saveLayout('Exam week', [{ kind: 'streak', size: 'small', config: {} }]);
+  const backup = await readBackupFile(new File([await backupArchive(await createBackup())], 'b.zip'));
+
+  await replaceWidgets([]);
+  await deleteLayout(layout.id);
+  await restoreBackup(backup);
+  const home = (await getWidgets([])).map(({ kind, size, config }) => ({ kind, size, config }));
+  assert.deepEqual(home, [
+    { kind: 'note', size: 'large', config: { text: 'Exam on Friday' } },
+    { kind: 'streak', size: 'small', config: {} }
+  ]);
+  assert.deepEqual((await getLayouts()).map((item) => item.name), ['Exam week']);
+
+  await replaceWidgets([{ kind: 'continue', size: 'medium', config: {} }]);
+  await restoreBackup(backup);
+  assert.deepEqual((await getWidgets([])).map((widget) => widget.kind), ['continue']);
+  assert.equal((await getLayouts()).length, 1);
+});

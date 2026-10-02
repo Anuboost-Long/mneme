@@ -7,7 +7,9 @@ import {
   insertAttachmentRow,
   insertIfMissing,
   insertRecordingRow,
-  setRestoredColumns
+  setRestoredColumns,
+  hasHomeWidgets,
+  insertHomeWidgets
 } from "./table";
 import type { Backup } from "./types";
 
@@ -15,7 +17,7 @@ const BACKUP_JSON = "backup.json";
 const FILES_FOLDER = "files/";
 
 export async function createBackup(): Promise<Backup> {
-  const [courses, modules, pages, attachments, recordings] = await getBackupRows();
+  const [courses, modules, pages, attachments, recordings, widgets, layouts] = await getBackupRows();
   const references = new Set([
     ...courses.flatMap((course) => [course.cover, course.icon]),
     ...modules.map((module) => module.icon),
@@ -37,6 +39,8 @@ export async function createBackup(): Promise<Backup> {
     pages,
     attachments,
     recordings,
+    widgets,
+    layouts,
     files
   };
 }
@@ -214,6 +218,15 @@ export async function restoreBackup(backup: Backup) {
       content: page.content ? await restoredContent(page.content, page.id, backup, files) : null
     });
   }
+  for (const layout of backup.layouts ?? []) {
+    await insertIfMissing("home_layout", {
+      name: layout.name,
+      widgets: layout.widgets,
+      created_at: layout.created_at,
+      updated_at: layout.updated_at
+    });
+  }
+  if (backup.widgets?.length && !(await hasHomeWidgets())) await insertHomeWidgets(backup.widgets);
 }
 
 class RestoredFiles {

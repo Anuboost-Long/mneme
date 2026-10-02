@@ -2,6 +2,8 @@ import { desktop, sql, type Values } from "@chain/sdk";
 
 import type { AttachmentRow } from "../../../../shared/lib/db/schema/attachment";
 import type { CourseRow } from "../../../../shared/lib/db/schema/course";
+import type { HomeLayoutRow } from "../../../../shared/lib/db/schema/home-layout";
+import type { HomeWidgetRow } from "../../../../shared/lib/db/schema/home-widget";
 import type { ModuleRow } from "../../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../../shared/lib/db/schema/page";
 import type { RecordingRow } from "../../../../shared/lib/db/schema/recording";
@@ -14,11 +16,22 @@ export function getBackupRows() {
     desktop.storage.table<ModuleRow>("module").where({ deleted_at: null }).orderBy("id").all(),
     desktop.storage.table<PageRow>("page").where({ deleted_at: null }).orderBy("id").all(),
     desktop.storage.table<AttachmentRow>("attachment").where(livePageIds).orderBy("id").all(),
-    desktop.storage.table<RecordingRow>("recording").where(livePageIds).orderBy("id").all()
+    desktop.storage.table<RecordingRow>("recording").where(livePageIds).orderBy("id").all(),
+    desktop.storage.table<HomeWidgetRow>("home_widget").orderBy("position", "id").all(),
+    desktop.storage.table<HomeLayoutRow>("home_layout").orderBy("id").all()
   ]);
 }
 
-type RestoredTable = "course" | "module" | "page";
+export async function hasHomeWidgets() {
+  return !!(await desktop.storage.table<HomeWidgetRow>("home_widget").first());
+}
+
+export async function insertHomeWidgets(rows: HomeWidgetRow[]) {
+  const table = desktop.storage.table<HomeWidgetRow>("home_widget");
+  for (const [position, { kind, size, config }] of rows.entries()) await table.insert({ kind, size, config, position });
+}
+
+type RestoredTable = "course" | "module" | "page" | "home_layout";
 
 export async function insertIfMissing(table: RestoredTable, values: Record<string, unknown>) {
   const columns = Object.keys(values);
