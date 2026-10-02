@@ -9,8 +9,18 @@ import Select from "../../../../shared/ui/Select";
 import { Caption } from "../../../../shared/ui/Typography";
 import { transcriptionModels, WHISPER_LANGUAGES } from "../../../extensions/lib/catalog";
 import { isReady, refreshExtensions, useExtensions } from "../../../extensions/lib/extensionsState";
-import { saveTranscript, updateTranscriptText, type Recording } from "../../lib/recordings";
-import { ENGINE_KEY, LOCALE_KEY, preferredLocale, remember, stored, SYSTEM, transcribeError, transcribeOptions } from "../../lib/transcription";
+import { saveTranscript, updateTranscriptText } from "../../lib/recording/actions";
+import type { Recording } from "../../lib/recording/types";
+import {
+  ENGINE_KEY,
+  LOCALE_KEY,
+  preferredLocale,
+  remember,
+  stored,
+  SYSTEM,
+  transcribeError,
+  transcribeOptions
+} from "../../lib/transcription";
 
 const button = clsx(
   "h-8 shrink-0 rounded-md px-3 text-sm font-medium",

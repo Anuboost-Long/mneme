@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 import { addCommandSource } from "../../../shared/lib/commandSources";
 import { DATE_GROUP_VALUES, groupByDate, groupItems } from "../../../shared/lib/dateGroups";
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import { useListView, type SortOption } from "../../../shared/lib/useListView";
 import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
 import CourseIcon from "../../../shared/ui/CourseIcon";
+import DragHandle from "../../../shared/ui/DragHandle";
 import ListToolbar, { DATE_GROUP_OPTIONS } from "../../../shared/ui/ListToolbar";
 import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
 import ReadAloudBar from "../../read-aloud/components/ReadAloudBar";
@@ -18,21 +20,20 @@ import DeletePage from "../components/DeletePage";
 import DeletePages from "../components/DeletePages";
 import LmsImportForm from "../components/LmsImportForm";
 import ModuleForm from "../components/ModuleForm";
+import MovePageDialog from "../components/MovePageDialog";
+import PageCard from "../components/PageCard";
+import type { PageItemProps } from "../components/pageDisplay";
 import PageForm, { pageTypeLabels } from "../components/PageForm";
 import ProgressSummary from "../components/ProgressSummary";
 import ReadingRow from "../components/ReadingRow";
 import { StatusChip } from "../components/StatusPicker";
-import { CompletionStatus } from "../lib/completion-status";
-import type { Course } from "../lib/courses";
-import { updateModule, type Module } from "../lib/modules";
-import { pageTypes, type Page } from "../lib/page/types";
-import { duplicatePage, setPageDone } from "../lib/page/actions";
-import MovePageDialog from "../components/MovePageDialog";
-import PageCard from "../components/PageCard";
-import type { PageItemProps } from "../components/pageDisplay";
 import ViewToggle from "../components/ViewToggle";
-import { useDragReorder } from "../../../shared/lib/useDragReorder";
-import DragHandle from "../../../shared/ui/DragHandle";
+import { CompletionStatus } from "../lib/completion-status";
+import type { Course } from "../lib/course/types";
+import { updateModule } from "../lib/module/actions";
+import type { Module } from "../lib/module/types";
+import { duplicatePage, setPageDone } from "../lib/page/actions";
+import { pageTypes, type Page } from "../lib/page/types";
 
 const PAGE_VIEWS = ["list", "gallery"] as const;
 
@@ -106,9 +107,24 @@ export default function ModulePage({
     return addCommandSource({
       group: "This module",
       load: async () => [
-        { id: "module-new-page", label: "New page", detail: module.name, run: () => setPageDialog("create") },
-        { id: "module-import-lms", label: "Import from LMS", detail: module.name, run: () => setPageDialog("import") },
-        { id: "module-import-file", label: "Import PDF or document", detail: module.name, run: () => setPageDialog("import-file") }
+        {
+          id: "module-new-page",
+          label: "New page",
+          detail: module.name,
+          run: () => setPageDialog("create")
+        },
+        {
+          id: "module-import-lms",
+          label: "Import from LMS",
+          detail: module.name,
+          run: () => setPageDialog("import")
+        },
+        {
+          id: "module-import-file",
+          label: "Import PDF or document",
+          detail: module.name,
+          run: () => setPageDialog("import-file")
+        }
       ]
     });
   }, [module, pagesReady]);
@@ -130,8 +146,18 @@ export default function ModulePage({
   const pageGroups = useMemo(
     () =>
       groupBy === "type"
-        ? groupItems(visiblePages, (page) => page.type, pageTypes, (type) => pageTypeLabels[type])
-        : groupByDate(visiblePages, (page) => page.created_at, groupBy, sortValue === "oldest" ? "oldest" : "newest"),
+        ? groupItems(
+            visiblePages,
+            (page) => page.type,
+            pageTypes,
+            (type) => pageTypeLabels[type]
+          )
+        : groupByDate(
+            visiblePages,
+            (page) => page.created_at,
+            groupBy,
+            sortValue === "oldest" ? "oldest" : "newest"
+          ),
     [visiblePages, groupBy, sortValue]
   );
 
@@ -139,7 +165,11 @@ export default function ModulePage({
   // Dragging needs the whole list in page order, not a search, filter or
   // selection of it. It works the same in both views.
   const canReorder =
-    sortValue === "order" && groupBy === "none" && !query.trim() && typeFilter === "all" && selectedPageIds === null;
+    sortValue === "order" &&
+    groupBy === "none" &&
+    !query.trim() &&
+    typeFilter === "all" &&
+    selectedPageIds === null;
   const reorderable = useDragReorder(visiblePages, onReorderPages);
 
   // Dragging only works on the whole list in page order, so this puts the
@@ -161,13 +191,23 @@ export default function ModulePage({
         setDoneError(null);
         setPageDone(page.id, page.status !== CompletionStatus.Completed)
           .then(onSavePage)
-          .catch((error) => setDoneError(errorMessage(error, "Couldn’t update this page. Try again.")));
+          .catch((error) =>
+            setDoneError(errorMessage(error, "Couldn’t update this page. Try again."))
+          );
       },
       onEdit: () => setPageDialog({ type: "edit", page }),
       onDelete: () => setPageDialog({ type: "delete", page }),
       actions: [
-        { label: "Duplicate", icon: "M8 8h12v12H8zM16 8V4H4v12h4", onSelect: () => duplicate(page) },
-        { label: "Move to…", icon: "M5 12h14m-6-6 6 6-6 6", onSelect: () => setPageDialog({ type: "move", page }) }
+        {
+          label: "Duplicate",
+          icon: "M8 8h12v12H8zM16 8V4H4v12h4",
+          onSelect: () => duplicate(page)
+        },
+        {
+          label: "Move to…",
+          icon: "M5 12h14m-6-6 6 6-6 6",
+          onSelect: () => setPageDialog({ type: "move", page })
+        }
       ],
       selectable: selectedPageIds !== null,
       selected: selectedPageIds?.has(page.id) ?? false,
@@ -179,7 +219,9 @@ export default function ModulePage({
     setDoneError(null);
     duplicatePage(page.id)
       .then(onPagesChanged)
-      .catch((error) => setDoneError(errorMessage(error, "Couldn’t duplicate this page. Try again.")));
+      .catch((error) =>
+        setDoneError(errorMessage(error, "Couldn’t duplicate this page. Try again."))
+      );
   }
 
   function togglePageSelected(id: number) {
@@ -296,7 +338,9 @@ export default function ModulePage({
           {reader.supported && module.description && (
             <button
               type="button"
-              onClick={() => reader.read([{ text: module.name }, ...textChunks(module.description ?? "")])}
+              onClick={() =>
+                reader.read([{ text: module.name }, ...textChunks(module.description ?? "")])
+              }
               className={clsx(
                 "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
                 "hover:bg-ink/5"
@@ -405,7 +449,10 @@ export default function ModulePage({
                   <button
                     type="button"
                     onClick={showPageOrder}
-                    className={clsx("h-9 rounded-md px-3 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}
+                    className={clsx(
+                      "h-9 rounded-md px-3 text-sm text-muted",
+                      "hover:bg-ink/5 hover:text-ink"
+                    )}
                   >
                     Rearrange
                   </button>
@@ -534,7 +581,14 @@ export default function ModulePage({
                           <PageCard
                             key={page.id}
                             ref={canReorder ? reorderable.itemRef(page.id) : undefined}
-                            handle={canReorder ? <DragHandle name={page.title} {...reorderable.handleProps(page.id, index)} /> : undefined}
+                            handle={
+                              canReorder ? (
+                                <DragHandle
+                                  name={page.title}
+                                  {...reorderable.handleProps(page.id, index)}
+                                />
+                              ) : undefined
+                            }
                             dragging={reorderable.draggingId === page.id}
                             {...pageItemProps(page)}
                           />
@@ -546,7 +600,14 @@ export default function ModulePage({
                           <ReadingRow
                             key={page.id}
                             ref={canReorder ? reorderable.itemRef(page.id) : undefined}
-                            handle={canReorder ? <DragHandle name={page.title} {...reorderable.handleProps(page.id, index)} /> : undefined}
+                            handle={
+                              canReorder ? (
+                                <DragHandle
+                                  name={page.title}
+                                  {...reorderable.handleProps(page.id, index)}
+                                />
+                              ) : undefined
+                            }
                             dragging={reorderable.draggingId === page.id}
                             {...pageItemProps(page)}
                           />

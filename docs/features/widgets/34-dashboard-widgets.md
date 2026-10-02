@@ -15,6 +15,7 @@ to add a widget kind. Read it before extending Home.
 
 **Implemented and verified in the running app.** The following were
 exercised through `chain inspect`:
+
 - first-run seeding (once, including under React's double-run effects)
 - every catalog widget rendered at every size it supports, with real
   data and no runtime errors
@@ -73,16 +74,17 @@ card, skipped under reduced motion.
 
 The presets are `layoutPresets` in `widgets/catalog.tsx`:
 
-| Preset | Idea | Widgets in order |
-| --- | --- | --- |
-| Focus | Get back into studying | Recent pages L, Continue M, Streak S, Finished S, Activity M, Quick actions M, Modules W, Status S, Library S |
-| Progress | See how far you are | Course progress L, Activity W (30 days), Status S, Finished S, Streak S, Library S, Modules M, Recent courses M, Page types M |
-| Minimal | Just the essentials | Continue M, Streak S, Finished S, Quick actions M, Recent pages W, Recent courses M |
-| Review | Revise before an exam | Needs revision L, Highlights M, Streak S, Status S, Recordings M, Quick actions M, Recent pages W, Continue M |
-| Planner | Plan the week | Note L ("This week" with a goals list), Continue M, Streak S, Finished S, Page count S (in progress), Page count S (not started), Activity M, Recent pages W, Modules M |
+| Preset   | Idea                   | Widgets in order                                                                                                                                                        |
+| -------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focus    | Get back into studying | Recent pages L, Continue M, Streak S, Finished S, Activity M, Quick actions M, Modules W, Status S, Library S                                                           |
+| Progress | See how far you are    | Course progress L, Activity W (30 days), Status S, Finished S, Streak S, Library S, Modules M, Recent courses M, Page types M                                           |
+| Minimal  | Just the essentials    | Continue M, Streak S, Finished S, Quick actions M, Recent pages W, Recent courses M                                                                                     |
+| Review   | Revise before an exam  | Needs revision L, Highlights M, Streak S, Status S, Recordings M, Quick actions M, Recent pages W, Continue M                                                           |
+| Planner  | Plan the week          | Note L ("This week" with a goals list), Continue M, Streak S, Finished S, Page count S (in progress), Page count S (not started), Activity M, Recent pages W, Modules M |
 
 **Designing a preset.** A preset must tile the 6-column grid exactly;
 all five were measured at 100% filled.
+
 - The order is the placement order. A Large goes first and takes
   columns 1–2 of two rows; the following cards fill row 1 and then row 2
   beside it; the rest start row 3.
@@ -98,12 +100,12 @@ all five were measured at 100% filled.
 
 Sizes are cells on the grid, like iOS widget sizes:
 
-| Size   | Columns × rows | Notes                                   |
-| ------ | -------------- | --------------------------------------- |
-| small  | 1 × 1          |                                         |
-| medium | 2 × 1          |                                         |
-| wide   | 4 × 1          | 2 × 1 when the grid has only 2 columns  |
-| large  | 2 × 2          |                                         |
+| Size   | Columns × rows | Notes                                  |
+| ------ | -------------- | -------------------------------------- |
+| small  | 1 × 1          |                                        |
+| medium | 2 × 1          |                                        |
+| wide   | 4 × 1          | 2 × 1 when the grid has only 2 columns |
+| large  | 2 × 2          |                                        |
 
 - **The grid** (`HomePage`):
   - `grid-cols-2 @2xl:grid-cols-4 @5xl:grid-cols-6`
@@ -155,6 +157,7 @@ Two tables, added in migration 24 (`home-widgets`):
 
   An unknown `kind` (say, from a newer build) is skipped when rendering,
   never deleted.
+
 - `study_day`, counts per local day, for the streak and activity
   widgets:
   - `day` (`YYYY-MM-DD`, local time)
@@ -175,8 +178,9 @@ Also used:
 
 ### Where study activity is recorded
 
-`src/shared/lib/studyDays.ts` has `recordStudy("opened" | "completed")`,
+`src/shared/lib/study-day/` has `recordStudy("opened" | "completed")`,
 an upsert on today's row. It's best effort and never throws.
+
 - `markPageOpened` records `opened`.
 - `updatePage` records `completed` only when a page's status changes to
   Completed from something else, so re-saving a finished page doesn't
@@ -187,7 +191,8 @@ reads it.
 
 ### Seeding
 
-`getWidgets(defaults)` in `features/home/lib/widgets.ts`:
+`getWidgets(defaults)` in `features/home/lib/widget/`:
+
 1. Claims `home.widgets-seeded` with one
    `INSERT … ON CONFLICT DO NOTHING`, and seeds only if that insert
    affected a row.
@@ -230,7 +235,7 @@ src/features/home/
     FileRecordingDialog.tsx files a Home recording on a page, optionally transcribed
   pages/HomePage.tsx  header, grid, edit mode, Undo
 src/routes/HomeRoute.tsx  loads and saves widgets; hands HomePage plain callbacks
-src/shared/lib/studyDays.ts  localDay, recordStudy
+src/shared/lib/study-day/  localDay, recordStudy
 ```
 
 It follows the app's husk/content layering. `HomeRoute` owns
@@ -262,6 +267,7 @@ A catalog entry is a `WidgetDefinition` (`widgets/types.ts`):
 ```
 
 A component gets `WidgetProps`:
+
 - `widget` (`id`, `kind`, `size`, `config`)
 - `courses`
 - `editing`
@@ -298,20 +304,20 @@ Rules that keep widgets consistent:
 `WidgetSettings` renders `fields` generically, so a new widget usually
 needs no settings UI of its own:
 
-| `type`    | Control                                  | Stored as              |
-| --------- | ---------------------------------------- | ---------------------- |
+| `type`    | Control                                                    | Stored as          |
+| --------- | ---------------------------------------------------------- | ------------------ |
 | `course`  | Select: All courses + each course (`required` drops "All") | course id, 0 = all |
-| `select`  | Select from `options`                    | the option's value     |
-| `text`    | Text input                               | string                 |
-| `actions` | Checklist of AI actions; none ticked = all | `number[]`           |
-| `links`   | Search pages and courses, add and remove | `{ kind, id }[]`       |
+| `select`  | Select from `options`                                      | the option's value |
+| `text`    | Text input                                                 | string             |
+| `actions` | Checklist of AI actions; none ticked = all                 | `number[]`         |
+| `links`   | Search pages and courses, add and remove                   | `{ kind, id }[]`   |
 
 Add a field type in `WidgetField` and `FieldControl` when a second widget
 needs it.
 
 ### Adding a widget kind, step by step
 
-1. If it needs new data, add a query to `lib/dashboard.ts`. Keep SQL
+1. If it needs new data, add a query to `lib/dashboard/`. Keep SQL
    there and out of components.
 2. Write the component in the matching `widgets/<category>.tsx`, using
    `parts.tsx`.
@@ -324,29 +330,29 @@ needs it.
 
 ## The catalog (21 widgets)
 
-| Category | Widget | Sizes | Settings |
-| --- | --- | --- | --- |
-| Study | Continue — last opened page | S M | — |
-| Study | Recent pages | M W L | course |
-| Study | Needs revision | S M W L | course |
-| Study | Recorder — record from Home, then save to a page, optionally transcribed; Large also lists recent recordings | S M W L | — |
-| Study | Highlights | M W L | — |
-| Progress | Study streak — current and best, last 7 days as dots | S M | — |
-| Progress | Activity — bars per day | M W L | opened/finished, 7/14/30 days |
-| Progress | Pages finished | S | week/month/year |
-| Progress | Page status — stacked bar and legend | S M | course |
-| Progress | Modules in progress (or all modules of one course) | M W L | course |
-| Progress | Course progress — %, pages done, modules in Large | S M L | course (required) |
-| Courses | Pinned courses | S M L | — |
-| Courses | Recent courses | S M L | — |
-| Courses | Library — a bookshelf: each course a spine in its colour, thicker and taller with more pages, filled from the bottom as pages get done; the last book leans; totals underneath | S M W L | — |
-| Courses | Page types | M L | course |
-| AI | Quick AI actions — run on the last opened page | S M L | which actions |
-| AI | Agent usage — runs, tokens, cost | S M | 7/30/365 days |
-| Your own | Page list — course, type, status, order | S M W L | all four |
-| Your own | Page count — same filters, own label | S M | filters, "counted as" |
-| Your own | Note — saved as you type | S M W L | — |
-| Your own | Quick links — chosen pages and courses | S M L | links |
+| Category | Widget                                                                                                                                                                         | Sizes   | Settings                      |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | ----------------------------- |
+| Study    | Continue — last opened page                                                                                                                                                    | S M     | —                             |
+| Study    | Recent pages                                                                                                                                                                   | M W L   | course                        |
+| Study    | Needs revision                                                                                                                                                                 | S M W L | course                        |
+| Study    | Recorder — record from Home, then save to a page, optionally transcribed; Large also lists recent recordings                                                                   | S M W L | —                             |
+| Study    | Highlights                                                                                                                                                                     | M W L   | —                             |
+| Progress | Study streak — current and best, last 7 days as dots                                                                                                                           | S M     | —                             |
+| Progress | Activity — bars per day                                                                                                                                                        | M W L   | opened/finished, 7/14/30 days |
+| Progress | Pages finished                                                                                                                                                                 | S       | week/month/year               |
+| Progress | Page status — stacked bar and legend                                                                                                                                           | S M     | course                        |
+| Progress | Modules in progress (or all modules of one course)                                                                                                                             | M W L   | course                        |
+| Progress | Course progress — %, pages done, modules in Large                                                                                                                              | S M L   | course (required)             |
+| Courses  | Pinned courses                                                                                                                                                                 | S M L   | —                             |
+| Courses  | Recent courses                                                                                                                                                                 | S M L   | —                             |
+| Courses  | Library — a bookshelf: each course a spine in its colour, thicker and taller with more pages, filled from the bottom as pages get done; the last book leans; totals underneath | S M W L | —                             |
+| Courses  | Page types                                                                                                                                                                     | M L     | course                        |
+| AI       | Quick AI actions — run on the last opened page                                                                                                                                 | S M L   | which actions                 |
+| AI       | Agent usage — runs, tokens, cost                                                                                                                                               | S M     | 7/30/365 days                 |
+| Your own | Page list — course, type, status, order                                                                                                                                        | S M W L | all four                      |
+| Your own | Page count — same filters, own label                                                                                                                                           | S M     | filters, "counted as"         |
+| Your own | Note — saved as you type                                                                                                                                                       | S M W L | —                             |
+| Your own | Quick links — chosen pages and courses                                                                                                                                         | S M L   | links                         |
 
 Default layout: Continue (M), Study streak (S), Pages finished (S), Quick
 AI actions (M), Recent pages (W), Activity (M), Modules in progress (M),
@@ -357,6 +363,7 @@ six-column grid.
 
 The `recordings` kind is the Recorder (`widgets/Recorder.tsx`). It used
 to be a list, so old Recordings widgets became recorders automatically.
+
 - **Recording** uses the same `useAudioRecorder` as the page's recording
   block: record, pause, resume, stop, a live timer, and a waveform on
   Medium and up. Denied microphone access opens the same
@@ -378,6 +385,7 @@ to be a list, so old Recordings widgets became recorders automatically.
     transcribable there.
   - **Transcribe into page:** the same, then `transcribeRecording`. Each
     transcript line is appended as a paragraph after the block.
+
 - **The audio is saved before transcription runs,** so a failed or
   silent transcription loses nothing. The dialog says which case
   happened and links to the page.
@@ -387,7 +395,7 @@ to be a list, so old Recordings widgets became recorders automatically.
   and coming back, and the widget remounting, until it's saved,
   discarded, or the app quits. An earlier version kept it in widget
   state, and a user's take was lost on remount.
-- **Known gap:** leaving Home *while* recording still stops and drops
+- **Known gap:** leaving Home _while_ recording still stops and drops
   that recording, because the recorder lives in the widget. Keeping it
   alive across routes means moving `useAudioRecorder` to an app-level
   provider.
@@ -409,6 +417,7 @@ to be a list, so old Recordings widgets became recorders automatically.
 
 The widget navigates to the last opened page with
 `state: { runActionId }`. That page's `AiActions` component:
+
 1. reads the route state
 2. clears it with `navigate(".", { replace: true, state: null })`, so
    Back doesn't run it again

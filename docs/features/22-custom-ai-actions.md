@@ -20,7 +20,7 @@ live (it's documented in its `--help`).
 **Changed from the plan:** module/course actions aren't disabled for
 passthrough/custom agents. They still run, over argv with the
 200,000-character cap, and the error names Claude or Codex as the way
-past the cap. Claude and Codex now take *every* action's content on
+past the cap. Claude and Codex now take _every_ action's content on
 stdin, page actions included, so the cap only applies to the other
 agents.
 
@@ -39,11 +39,11 @@ in the same **AI actions** menu as the defaults.
   with the ↑/↓ keys, so it's never drag-only. (Replaced the original
   move up/down buttons on 27 September.)
 - **Action form** (dialog, same `Dialog` component as `PageForm`):
-  - *Name*, required.
-  - *Icon*: a small fixed set, like `courseIcons`, shown next to the name
+  - _Name_, required.
+  - _Icon_: a small fixed set, like `courseIcons`, shown next to the name
     in the menu.
-  - *Prompt*: the instructions, required.
-  - *Runs on* (one choice, radio group):
+  - _Prompt_: the instructions, required.
+  - _Runs on_ (one choice, radio group):
     - **Selection or page**: today's behaviour (selection if any,
       otherwise the page).
     - **Whole module**: every page in the current module, in order.
@@ -53,9 +53,10 @@ in the same **AI actions** menu as the defaults.
     Current module + ...). Those overlap (the module already contains
     the page), so a single "Runs on" choice says the same thing without
     contradictory combinations. "Lecture notes" becomes an optional
-    *Only these page types* filter (the existing `PageType` enum) on
+    _Only these page types_ filter (the existing `PageType` enum) on
     module/course scope, which is what it actually meant.
-  - *Result goes to* (radio group):
+
+  - _Result goes to_ (radio group):
     - **Preview first**: today's panel, where the user picks insert or
       replace.
     - **Insert below**: inserted automatically when it finishes (after
@@ -94,8 +95,8 @@ ALTER TABLE ai_action ADD COLUMN page_types TEXT;                    -- JSON arr
 
 `features/ai-actions/lib/context.ts` gathers the content:
 
-- *Selection or page*: from the editor, as today.
-- *Module / course*: `getPages` per module, each page as
+- _Selection or page_: from the editor, as today.
+- _Module / course_: `getPages` per module, each page as
   `<page title="…" type="…">…</page>` (plus `module="…"` for course
   scope). Page HTML is compacted: images become `[image]` placeholders
   and every attribute is dropped, keeping headings, lists and tables.
@@ -106,7 +107,7 @@ in argv (Claude and Codex). Passthrough / custom agents keep argv and the
 
 ## Code layout
 
-- `lib/actions.ts`: add `createAction`, `updateAction`, `deleteAction`,
+- `lib/action/`: add `createAction`, `updateAction`, `deleteAction`,
   `duplicateAction`, `moveAction`.
 - `lib/context.ts`: new, as above.
 - `lib/runAction.ts` / `useAiAction.ts`: take the action's scope and

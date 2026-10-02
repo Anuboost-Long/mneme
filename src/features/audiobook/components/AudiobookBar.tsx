@@ -9,7 +9,8 @@ import PlaybackDeck, { PlaybackKeys } from "../../../shared/ui/PlaybackDeck";
 import { Caption } from "../../../shared/ui/Typography";
 import { keepInView, paintHighlight } from "../../read-aloud/lib/highlight";
 import { textRange, type ReadableChunk } from "../../read-aloud/lib/readableText";
-import { deletePageAudio, isOutdated, type PageAudio } from "../lib/pageAudio";
+import { deletePageAudio } from "../lib/page-audio/actions";
+import { isOutdated, type PageAudio } from "../lib/page-audio/types";
 
 export default function AudiobookBar({
   audio,
@@ -65,8 +66,13 @@ export default function AudiobookBar({
             "mb-2 flex items-center gap-3 rounded-lg border border-ink/15 bg-surface px-3 py-2 shadow-md"
           )}
         >
-          <Caption role={error ? "alert" : undefined} tone={error ? "error" : "muted"} className={clsx("flex-1")}>
-            {error ?? "This page has changed since its audio was made, so sentences aren’t highlighted."}
+          <Caption
+            role={error ? "alert" : undefined}
+            tone={error ? "error" : "muted"}
+            className={clsx("flex-1")}
+          >
+            {error ??
+              "This page has changed since its audio was made, so sentences aren’t highlighted."}
           </Caption>
           <button
             type="button"

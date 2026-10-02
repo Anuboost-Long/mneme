@@ -1,7 +1,7 @@
-import { getModules } from "../../courses/lib/modules";
-import { PageType, type Page } from "../../courses/lib/page/types";
+import { getModules } from "../../courses/lib/module/actions";
 import { getPages } from "../../courses/lib/page/actions";
-import { ActionScope, type AiAction } from "./actions";
+import { PageType, type Page } from "../../courses/lib/page/types";
+import { ActionScope, type AiAction } from "./action/types";
 import { escapeHtml } from "./editorHtml";
 
 // Page HTML trimmed for an agent to read: every attribute is dropped,
@@ -12,7 +12,8 @@ export function compactHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc.body.querySelectorAll("*").forEach((element) => {
     const keep = element.tagName === "IMG" ? ["src", "alt"] : [];
-    for (const { name } of Array.from(element.attributes)) if (!keep.includes(name)) element.removeAttribute(name);
+    for (const { name } of Array.from(element.attributes))
+      if (!keep.includes(name)) element.removeAttribute(name);
   });
   return doc.body.innerHTML;
 }
@@ -30,10 +31,16 @@ function matchesTypes(action: AiAction, page: Page) {
 // them, filtered to the action's page types. Empty string when nothing
 // matched — the caller turns that into an error rather than sending an
 // agent nothing to work on.
-export async function gatherContext(action: AiAction, location: { moduleId: number; courseId: number }): Promise<string> {
+export async function gatherContext(
+  action: AiAction,
+  location: { moduleId: number; courseId: number }
+): Promise<string> {
   if (action.scope === ActionScope.Module) {
     const pages = await getPages(location.moduleId);
-    return pages.filter((page) => matchesTypes(action, page)).map((page) => pageBlock(page)).join("\n\n");
+    return pages
+      .filter((page) => matchesTypes(action, page))
+      .map((page) => pageBlock(page))
+      .join("\n\n");
   }
   const blocks: string[] = [];
   for (const module of await getModules(location.courseId)) {

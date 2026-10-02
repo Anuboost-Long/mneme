@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import { eraseItems, getDeletedItems, restoreItems, type DeletedItem } from "../features/recently-deleted/lib/recentlyDeleted";
-import RecentlyDeletedPage from "../features/recently-deleted/pages/RecentlyDeletedPage";
+
 import { useCourses } from "../features/courses/lib/coursesState";
+import {
+  eraseItems,
+  getDeletedItems,
+  restoreItems
+} from "../features/recently-deleted/lib/deleted-item/actions";
+import type { DeletedItem } from "../features/recently-deleted/lib/deleted-item/types";
+import RecentlyDeletedPage from "../features/recently-deleted/pages/RecentlyDeletedPage";
 
 export default function RecentlyDeletedRoute() {
   const { refresh } = useCourses();
@@ -12,7 +18,9 @@ export default function RecentlyDeletedRoute() {
     getDeletedItems()
       .then((loaded) => active && setItems(loaded))
       .catch(() => active && setItems([]));
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function restore(selected: DeletedItem[]) {

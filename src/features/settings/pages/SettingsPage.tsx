@@ -4,6 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { pickFiles } from "../../../shared/lib/pickFiles";
+import { skipIntervals, useSkipInterval } from "../../../shared/lib/playbackPreferences";
 import { useSidebarMode, type SidebarMode } from "../../../shared/providers/SidebarModeProvider";
 import { useTheme } from "../../../shared/providers/ThemeProvider";
 import {
@@ -23,8 +24,7 @@ import {
   readBackupFile,
   restoreBackup,
   saveBackup
-} from "../../courses/lib/backup";
-import { skipIntervals, useSkipInterval } from "../../../shared/lib/playbackPreferences";
+} from "../../courses/lib/backup/actions";
 import ExtensionSettings from "../../extensions/components/ExtensionSettings";
 
 export const settingsSections = [

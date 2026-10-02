@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import CoursesPage from "../features/courses/pages/CoursesPage";
-import { getModuleCounts } from "../features/courses/lib/modules";
-import type { PageProgress } from "../features/courses/lib/page/types";
-import { getCoursePageProgress } from "../features/courses/lib/page/actions";
+
 import { useCourses } from "../features/courses/lib/coursesState";
+import { getModuleCounts } from "../features/courses/lib/module/actions";
+import { getCoursePageProgress } from "../features/courses/lib/page/actions";
+import type { PageProgress } from "../features/courses/lib/page/types";
+import CoursesPage from "../features/courses/pages/CoursesPage";
 
 export default function CoursesRoute() {
   const { courses, create, save, remove, reorder } = useCourses();
@@ -12,10 +13,26 @@ export default function CoursesRoute() {
 
   useEffect(() => {
     let active = true;
-    getModuleCounts().then((loaded) => { if (active) setModuleCounts(loaded); });
-    getCoursePageProgress().then((loaded) => { if (active) setPageProgress(loaded); });
-    return () => { active = false; };
+    getModuleCounts().then((loaded) => {
+      if (active) setModuleCounts(loaded);
+    });
+    getCoursePageProgress().then((loaded) => {
+      if (active) setPageProgress(loaded);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  return <CoursesPage courses={courses} moduleCounts={moduleCounts} pageProgress={pageProgress} onCreate={create} onSave={save} onDelete={remove} onReorder={reorder} />;
+  return (
+    <CoursesPage
+      courses={courses}
+      moduleCounts={moduleCounts}
+      pageProgress={pageProgress}
+      onCreate={create}
+      onSave={save}
+      onDelete={remove}
+      onReorder={reorder}
+    />
+  );
 }

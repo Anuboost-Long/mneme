@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 
 import { Caption } from "../../../shared/ui/Typography";
 import { pageContentPreview } from "../../courses/lib/page/types";
-import { getDeletedPages, type DeletedItem, type DeletedPage } from "../lib/recentlyDeleted";
+import { getDeletedPages } from "../lib/deleted-item/actions";
+import type { DeletedItem, DeletedPage } from "../lib/deleted-item/types";
 
 function groupByModule(pages: DeletedPage[]) {
   const groups = new Map<number, DeletedPage[]>();
-  for (const page of pages) groups.set(page.module_id, [...(groups.get(page.module_id) ?? []), page]);
+  for (const page of pages)
+    groups.set(page.module_id, [...(groups.get(page.module_id) ?? []), page]);
   return [...groups.values()];
 }
 
@@ -19,7 +21,9 @@ function PageList({ pages }: Readonly<{ pages: DeletedPage[] }>) {
       {listed.map((page) => (
         <li key={page.id} className={clsx("min-w-0")}>
           <span className={clsx("block truncate text-sm")}>{page.title}</span>
-          <Caption as="span" tone="muted" className={clsx("block truncate")}>{pageContentPreview(page.content) || "Empty page"}</Caption>
+          <Caption as="span" tone="muted" className={clsx("block truncate")}>
+            {pageContentPreview(page.content) || "Empty page"}
+          </Caption>
         </li>
       ))}
     </ul>
@@ -35,18 +39,26 @@ export default function DeletedItemPreview({ item }: Readonly<{ item: DeletedIte
     getDeletedPages(item)
       .then((loaded) => active && setPages(loaded))
       .catch(() => active && setFailed(true));
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [item]);
 
-  if (failed) return <Caption tone="error">Couldn’t load the preview. Close it and try again.</Caption>;
+  if (failed)
+    return <Caption tone="error">Couldn’t load the preview. Close it and try again.</Caption>;
   if (!pages) return <Caption tone="muted">Loading…</Caption>;
 
   switch (item.kind) {
     case "page": {
       const content = pages[0]?.content;
-      return content
-        ? <div className={clsx("page-editor-content max-h-96 overflow-y-auto wrap-anywhere")} dangerouslySetInnerHTML={{ __html: content }} />
-        : <Caption tone="muted">This page is empty.</Caption>;
+      return content ? (
+        <div
+          className={clsx("page-editor-content max-h-96 overflow-y-auto wrap-anywhere")}
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      ) : (
+        <Caption tone="muted">This page is empty.</Caption>
+      );
     }
     case "module":
       return <PageList pages={pages} />;
@@ -56,7 +68,9 @@ export default function DeletedItemPreview({ item }: Readonly<{ item: DeletedIte
         <div className={clsx("space-y-4")}>
           {groupByModule(pages).map((modulePages) => (
             <section key={modulePages[0].module_id} aria-label={modulePages[0].module_name}>
-              <Caption as="h3" tone="muted" className={clsx("mb-1.5 font-medium")}>{modulePages[0].module_name}</Caption>
+              <Caption as="h3" tone="muted" className={clsx("mb-1.5 font-medium")}>
+                {modulePages[0].module_name}
+              </Caption>
               <PageList pages={modulePages} />
             </section>
           ))}

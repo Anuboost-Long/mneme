@@ -1,27 +1,44 @@
-import assert from 'node:assert/strict';
-import { test } from 'node:test';
-import { useTestDesktop } from './support/desktop.mjs';
+import assert from "node:assert/strict";
+import { test } from "node:test";
+
+import { useTestDesktop } from "./support/desktop.mjs";
 
 const { database, writtenFiles } = useTestDesktop();
-const { initDb } = await import('../src/shared/lib/db/index.ts');
-const { createCourse, eraseCourse, getCourse } = await import('../src/features/courses/lib/courses.ts');
-const { createModule, getModules } = await import('../src/features/courses/lib/modules.ts');
-const { getPage, getPages, createPage, updatePage } = await import('../src/features/courses/lib/page/actions.ts');
-const { createAttachment, getAttachment } = await import('../src/features/courses/lib/attachments.ts');
-const { createRecording, getRecording } = await import('../src/features/courses/lib/recordings.ts');
-const { backupArchive, createBackup, readBackupFile, restoreBackup } = await import('../src/features/courses/lib/backup.ts');
+const { initDb } = await import("../src/shared/lib/db/index.ts");
+const { createCourse, eraseCourse, getCourse } =
+  await import("../src/features/courses/lib/course/actions.ts");
+const { createModule, getModules } = await import("../src/features/courses/lib/module/actions.ts");
+const { getPage, getPages, createPage, updatePage } =
+  await import("../src/features/courses/lib/page/actions.ts");
+const { createAttachment, getAttachment } =
+  await import("../src/features/courses/lib/attachment/actions.ts");
+const { createRecording, getRecording } =
+  await import("../src/features/courses/lib/recording/actions.ts");
+const { backupArchive, createBackup, readBackupFile, restoreBackup } =
+  await import("../src/features/courses/lib/backup/actions.ts");
 await initDb();
 
-const png = (seed) => `data:image/png;base64,${Buffer.alloc(64, seed).toString('base64')}`;
+const png = (seed) => `data:image/png;base64,${Buffer.alloc(64, seed).toString("base64")}`;
 const bytesOf = (reference) => Buffer.from(writtenFiles.get(reference));
-const referenceOf = (url) => url.split('/').pop();
+const referenceOf = (url) => url.split("/").pop();
 
-test('a backup carries every file its pages use, and a restore brings them back under new references', async () => {
-  const course = await createCourse({ name: 'Anatomy', icon: png(1) });
-  const module = await createModule(course.id, { name: 'Bones', icon: png(2) });
-  const page = await createPage(module.id, { title: 'Skull', icon: png(3), content: `<p>Skull</p><img src="${png(4)}">` });
-  const attachmentId = await createAttachment(page.id, new File([Buffer.from('slides')], 'slides.pdf', { type: 'application/pdf' }));
-  const { id: recordingId } = await createRecording(page.id, new Blob([Buffer.from('audio')], { type: 'audio/mp4' }), 1000);
+test("a backup carries every file its pages use, and a restore brings them back under new references", async () => {
+  const course = await createCourse({ name: "Anatomy", icon: png(1) });
+  const module = await createModule(course.id, { name: "Bones", icon: png(2) });
+  const page = await createPage(module.id, {
+    title: "Skull",
+    icon: png(3),
+    content: `<p>Skull</p><img src="${png(4)}">`
+  });
+  const attachmentId = await createAttachment(
+    page.id,
+    new File([Buffer.from("slides")], "slides.pdf", { type: "application/pdf" })
+  );
+  const { id: recordingId } = await createRecording(
+    page.id,
+    new Blob([Buffer.from("audio")], { type: "audio/mp4" }),
+    1000
+  );
   const imageSrc = (await getPage(page.id)).content.match(/src="([^"]+)"/)[1];
   await updatePage(page.id, {
     content: `<p>Skull</p><img src="${imageSrc}"><div data-attachment-id="${attachmentId}"></div><div data-recording-id="${recordingId}"></div>`
@@ -36,7 +53,7 @@ test('a backup carries every file its pages use, and a restore brings them back 
   };
 
   const archive = await backupArchive(await createBackup());
-  const backup = await readBackupFile(new File([archive], 'mneme-backup.zip'));
+  const backup = await readBackupFile(new File([archive], "mneme-backup.zip"));
   assert.equal(backup.version, 2);
   assert.equal(Object.keys(backup.files).length, 6);
 
@@ -51,42 +68,87 @@ test('a backup carries every file its pages use, and a restore brings them back 
   const restoredAttachmentId = Number(restoredContent.match(/data-attachment-id="(\d+)"/)[1]);
   const restoredRecordingId = Number(restoredContent.match(/data-recording-id="(\d+)"/)[1]);
 
-  assert.notEqual(restoredSrc, imageSrc, 'the image points at its restored file');
+  assert.notEqual(restoredSrc, imageSrc, "the image points at its restored file");
   assert.deepEqual(bytesOf(restoredCourse.icon), original.courseIcon);
   assert.deepEqual(bytesOf(restoredModule.icon), original.moduleIcon);
   assert.deepEqual(bytesOf(restoredPage.icon), original.pageIcon);
   assert.deepEqual(bytesOf(referenceOf(restoredSrc)), original.image);
-  assert.deepEqual(bytesOf((await getAttachment(restoredAttachmentId)).file_path), original.attachment);
-  assert.deepEqual(bytesOf((await getRecording(restoredRecordingId)).file_reference), original.recording);
+  assert.deepEqual(
+    bytesOf((await getAttachment(restoredAttachmentId)).file_path),
+    original.attachment
+  );
+  assert.deepEqual(
+    bytesOf((await getRecording(restoredRecordingId)).file_reference),
+    original.recording
+  );
   await eraseCourse(course.id);
 });
 
-test('a version 1 JSON backup still restores', async () => {
+test("a version 1 JSON backup still restores", async () => {
   const backup = {
     version: 1,
-    exportedAt: '2026-01-01T00:00:00.000Z',
-    courses: [{ id: 900, name: 'Old course', description: null, icon: 'globe', color: null, created_at: '2026-01-01', updated_at: '2026-01-01' }],
-    modules: [{ id: 900, course_id: 900, name: 'Old module', description: null, created_at: '2026-01-01', updated_at: '2026-01-01' }],
-    pages: [{ id: 900, module_id: 900, title: 'Old page', type: 'lesson', content: '<p>Kept</p>', created_at: '2026-01-01', updated_at: '2026-01-01' }]
+    exportedAt: "2026-01-01T00:00:00.000Z",
+    courses: [
+      {
+        id: 900,
+        name: "Old course",
+        description: null,
+        icon: "globe",
+        color: null,
+        created_at: "2026-01-01",
+        updated_at: "2026-01-01"
+      }
+    ],
+    modules: [
+      {
+        id: 900,
+        course_id: 900,
+        name: "Old module",
+        description: null,
+        created_at: "2026-01-01",
+        updated_at: "2026-01-01"
+      }
+    ],
+    pages: [
+      {
+        id: 900,
+        module_id: 900,
+        title: "Old page",
+        type: "lesson",
+        content: "<p>Kept</p>",
+        created_at: "2026-01-01",
+        updated_at: "2026-01-01"
+      }
+    ]
   };
-  await restoreBackup(await readBackupFile(new File([JSON.stringify(backup)], 'mneme-backup.json')));
-  assert.equal((await getCourse(900)).icon, 'globe');
-  assert.equal((await getPage(900)).content, '<p>Kept</p>');
+  await restoreBackup(
+    await readBackupFile(new File([JSON.stringify(backup)], "mneme-backup.json"))
+  );
+  assert.equal((await getCourse(900)).icon, "globe");
+  assert.equal((await getPage(900)).content, "<p>Kept</p>");
   await eraseCourse(900);
 });
 
-test('restoring over existing courses leaves them and their files alone', async () => {
-  const course = await createCourse({ name: 'Kept', icon: png(9) });
+test("restoring over existing courses leaves them and their files alone", async () => {
+  const course = await createCourse({ name: "Kept", icon: png(9) });
   const icon = (await getCourse(course.id)).icon;
-  const backup = await readBackupFile(new File([await backupArchive(await createBackup())], 'b.zip'));
+  const backup = await readBackupFile(
+    new File([await backupArchive(await createBackup())], "b.zip")
+  );
   const filesBefore = writtenFiles.size;
   await restoreBackup(backup);
   assert.equal((await getCourse(course.id)).icon, icon);
-  assert.equal(writtenFiles.size, filesBefore, 'no file is written for a row that already exists');
-  assert.equal(database.prepare('SELECT COUNT(*) AS n FROM course WHERE name = ?').get('Kept').n, 1);
+  assert.equal(writtenFiles.size, filesBefore, "no file is written for a row that already exists");
+  assert.equal(
+    database.prepare("SELECT COUNT(*) AS n FROM course WHERE name = ?").get("Kept").n,
+    1
+  );
   await eraseCourse(course.id);
 });
 
-test('a file that is not a backup is refused', async () => {
-  await assert.rejects(readBackupFile(new File(['not a backup'], 'notes.txt')), /isn't a valid Mneme backup/);
+test("a file that is not a backup is refused", async () => {
+  await assert.rejects(
+    readBackupFile(new File(["not a backup"], "notes.txt")),
+    /isn't a valid Mneme backup/
+  );
 });

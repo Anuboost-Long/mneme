@@ -15,16 +15,22 @@ import {
   openAttachment,
   renameAttachment,
   revealAttachment,
-  saveAttachmentCopy,
-  type Attachment
-} from "../../lib/attachments";
+  saveAttachmentCopy
+} from "../../lib/attachment/actions";
+import type { Attachment } from "../../lib/attachment/types";
 import { fileExtension } from "../../lib/page-files";
 import ItemMenu from "../ItemMenu";
 
 const folderIcon = "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z";
 const saveIcon = "M12 4v11m0 0-4-4m4 4 4-4M5 19h14";
 
-export default function AttachmentNodeView({ node, deleteNode, editor, extension, updateAttributes }: Readonly<ReactNodeViewProps>) {
+export default function AttachmentNodeView({
+  node,
+  deleteNode,
+  editor,
+  extension,
+  updateAttributes
+}: Readonly<ReactNodeViewProps>) {
   const attachmentId = node.attrs.attachmentId as number | null;
   const [attachment, setAttachment] = useState<Attachment | null | undefined>();
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
@@ -53,7 +59,11 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
   if (attachmentId === null) {
     return (
       <NodeViewWrapper>
-        <FileChooser pageId={(extension.options as { pageId: number }).pageId} disabled={!editor.isEditable} onChosen={(id) => updateAttributes({ attachmentId: id })} />
+        <FileChooser
+          pageId={(extension.options as { pageId: number }).pageId}
+          disabled={!editor.isEditable}
+          onChosen={(id) => updateAttributes({ attachmentId: id })}
+        />
       </NodeViewWrapper>
     );
   }
@@ -62,7 +72,10 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
 
   if (attachment === null) {
     return (
-      <NodeViewWrapper contentEditable={false} className={clsx("rounded-lg p-3", "border border-dashed border-ink/20")}>
+      <NodeViewWrapper
+        contentEditable={false}
+        className={clsx("rounded-lg p-3", "border border-dashed border-ink/20")}
+      >
         <Caption tone="muted">This attachment is no longer available.</Caption>
       </NodeViewWrapper>
     );
@@ -89,11 +102,18 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
   }
 
   return (
-    <NodeViewWrapper contentEditable={false} className={clsx("rounded-lg p-3", "border border-ink/15")}>
+    <NodeViewWrapper
+      contentEditable={false}
+      className={clsx("rounded-lg p-3", "border border-ink/15")}
+    >
       <div className={clsx("flex items-center gap-3")}>
         <span
           aria-hidden="true"
-          className={clsx("flex size-10 shrink-0 items-center justify-center rounded-md", "bg-ink/6 text-ink", "text-xs font-bold")}
+          className={clsx(
+            "flex size-10 shrink-0 items-center justify-center rounded-md",
+            "bg-ink/6 text-ink",
+            "text-xs font-bold"
+          )}
         >
           {label.slice(0, 4)}
         </span>
@@ -105,12 +125,32 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
               onChange={(event) => setName(event.target.value)}
               onKeyDown={(event) => event.key === "Escape" && setMode("view")}
               aria-label="File name"
-              className={clsx("h-8 min-w-0 flex-1 rounded-md", "border border-ink/20 bg-surface", "px-2 text-sm", "focus-visible:outline-1 focus-visible:outline-ink")}
+              className={clsx(
+                "h-8 min-w-0 flex-1 rounded-md",
+                "border border-ink/20 bg-surface",
+                "px-2 text-sm",
+                "focus-visible:outline-1 focus-visible:outline-ink"
+              )}
             />
-            <button type="button" onClick={() => setMode("view")} className={clsx("h-8 rounded-md px-3 text-sm", "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink")}>
+            <button
+              type="button"
+              onClick={() => setMode("view")}
+              className={clsx(
+                "h-8 rounded-md px-3 text-sm",
+                "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink"
+              )}
+            >
               Cancel
             </button>
-            <button type="submit" className={clsx("h-8 rounded-md", "bg-action text-on-action", "px-3 text-sm font-medium", "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink")}>
+            <button
+              type="submit"
+              className={clsx(
+                "h-8 rounded-md",
+                "bg-action text-on-action",
+                "px-3 text-sm font-medium",
+                "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              )}
+            >
               Save name
             </button>
           </form>
@@ -126,7 +166,12 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
             <button
               type="button"
               onClick={() => act(openAttachment, "Couldn’t open this file. Try Show in Finder.")}
-              className={clsx("h-8 shrink-0 rounded-md", "border border-ink/20 bg-surface", "px-3 text-sm", "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink")}
+              className={clsx(
+                "h-8 shrink-0 rounded-md",
+                "border border-ink/20 bg-surface",
+                "px-3 text-sm",
+                "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink"
+              )}
             >
               Open
             </button>
@@ -140,8 +185,18 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
                 }}
                 onDelete={() => setMode("delete")}
                 actions={[
-                  { label: "Show in Finder", icon: folderIcon, onSelect: () => act(revealAttachment, "Couldn’t show this file in Finder. Try again.") },
-                  { label: "Save a copy…", icon: saveIcon, onSelect: () => act(saveAttachmentCopy, "Couldn’t save a copy of this file. Try again.") }
+                  {
+                    label: "Show in Finder",
+                    icon: folderIcon,
+                    onSelect: () =>
+                      act(revealAttachment, "Couldn’t show this file in Finder. Try again.")
+                  },
+                  {
+                    label: "Save a copy…",
+                    icon: saveIcon,
+                    onSelect: () =>
+                      act(saveAttachmentCopy, "Couldn’t save a copy of this file. Try again.")
+                  }
                 ]}
               />
             )}
@@ -153,7 +208,11 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
           <track kind="captions" />
         </audio>
       )}
-      {error && <Caption tone="error" className={clsx("mt-2")}>{error}</Caption>}
+      {error && (
+        <Caption tone="error" className={clsx("mt-2")}>
+          {error}
+        </Caption>
+      )}
       {mode === "delete" && (
         <ConfirmDeleteDialog
           title="Delete file?"
@@ -169,7 +228,11 @@ export default function AttachmentNodeView({ node, deleteNode, editor, extension
   );
 }
 
-function FileChooser({ pageId, disabled, onChosen }: Readonly<{ pageId: number; disabled: boolean; onChosen: (id: number) => void }>) {
+function FileChooser({
+  pageId,
+  disabled,
+  onChosen
+}: Readonly<{ pageId: number; disabled: boolean; onChosen: (id: number) => void }>) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -187,17 +250,32 @@ function FileChooser({ pageId, disabled, onChosen }: Readonly<{ pageId: number; 
   }
 
   return (
-    <div contentEditable={false} className={clsx("flex flex-wrap items-center gap-3 rounded-lg p-3", "border border-dashed border-ink/20")}>
+    <div
+      contentEditable={false}
+      className={clsx(
+        "flex flex-wrap items-center gap-3 rounded-lg p-3",
+        "border border-dashed border-ink/20"
+      )}
+    >
       <button
         type="button"
         disabled={disabled || saving}
         onClick={() => void choose()}
-        className={clsx("h-8 rounded-md", "border border-ink/20 bg-surface", "px-3 text-sm", "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink")}
+        className={clsx(
+          "h-8 rounded-md",
+          "border border-ink/20 bg-surface",
+          "px-3 text-sm",
+          "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink"
+        )}
       >
         {saving ? "Attaching…" : "Choose a file to attach…"}
       </button>
       <Caption tone="muted">or drop one anywhere on the page</Caption>
-      {error && <Caption tone="error" className={clsx("w-full")}>{error}</Caption>}
+      {error && (
+        <Caption tone="error" className={clsx("w-full")}>
+          {error}
+        </Caption>
+      )}
     </div>
   );
 }

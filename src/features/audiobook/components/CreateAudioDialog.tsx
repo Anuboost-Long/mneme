@@ -10,7 +10,8 @@ import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { useExtensions } from "../../extensions/lib/extensionsState";
 import type { ReadableChunk } from "../../read-aloud/lib/readableText";
 import { downloadedVoices, RATES } from "../../read-aloud/lib/useReadAloud";
-import { cancelCompile, compilePageAudio, type PageAudio } from "../lib/pageAudio";
+import { cancelCompile, compilePageAudio } from "../lib/page-audio/actions";
+import type { PageAudio } from "../lib/page-audio/types";
 
 export default function CreateAudioDialog({
   pageId,
@@ -59,8 +60,8 @@ export default function CreateAudioDialog({
       {(close, complete) => (
         <>
           <BodyText tone="muted">
-            Reads this page into one audio file saved on this device, so you can listen offline.
-            It takes about 0.5 MB per minute of audio, and you can delete it any time.
+            Reads this page into one audio file saved on this device, so you can listen offline. It
+            takes about 0.5 MB per minute of audio, and you can delete it any time.
             {replacing && " It replaces the page’s current audio."}
           </BodyText>
           {voice ? (
@@ -124,7 +125,10 @@ export default function CreateAudioDialog({
             <button
               type="button"
               onClick={creating ? () => void cancelCompile() : close}
-              className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
             >
               {creating ? "Cancel download" : "Cancel"}
             </button>

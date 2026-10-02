@@ -27,7 +27,7 @@ This is the scaffold produced by `chain init`:
   should almost never need to open it (the real native logic lives in
   `chain-sdk`'s `crates/core`). `chain dev`/`chain build` point Tauri at
   it via the `TAURI_APP_PATH` env var, so running `tauri dev`/`tauri
-  build` directly (instead of through `chain`) won't find it.
+build` directly (instead of through `chain`) won't find it.
 - Tailwind CSS v4, wired through `@tailwindcss/vite` in `vite.config.ts`.
   `src/App.css` defines the `chain-navy`/`chain-lime`/`chain-cream` theme
   tokens (matched to `asset/app-icon.svg`) via a Tailwind `@theme` block —
@@ -113,25 +113,29 @@ This is the scaffold produced by `chain init`:
       operations, and plain reads passed straight through
       (`export { getPage } from "./table"`). It holds no `<entity>Table()`
       or SQL.
-    Only `actions.ts` imports `table.ts`; everything outside the folder
-    imports `actions.ts` or `types.ts` (`tests/conventions.test.mjs`
-    fails otherwise). Once `table.ts` passes 500 lines it becomes a
-    `table/` folder: `table/index.ts` creates the table connection
-    (`<entity>Table()` and the row mapping), and each operation gets its
-    own file.
-    Flat `lib/*.ts` files that predate this move into a folder when a
-    change touches them. See `features/courses/lib/completion-status.ts`
-    for why status/type columns are numeric enums (smaller storage)
-    rather than TEXT.
+      Only `actions.ts` imports `table.ts`; everything outside the folder
+      imports `actions.ts` or `types.ts` (`tests/conventions.test.mjs`
+      fails otherwise). Once `table.ts` passes 500 lines it becomes a
+      `table/` folder: `table/index.ts` creates the table connection
+      (`<entity>Table()` and the row mapping), and each operation gets its
+      own file.
+      Only `table.ts` files touch `desktop.storage` (plus `shared/lib/db/`:
+      opening the database and `savePositions`); a convention test fails
+      otherwise. Settings go through `shared/lib/settings/actions.ts`
+      (`getSetting`, `putSetting`, `claimSetting`), study-day counts and
+      streaks through `shared/lib/study-day/actions.ts`. Filters that span
+      calls (`erasePages`, `deleteRecordings`, ...) take a `sql` fragment,
+      never a SQL string; screens call the id versions (`erasePage(id)`).
+      See `features/courses/lib/completion-status.ts` for why status/type
+      columns are numeric enums (smaller storage) rather than TEXT.
   - Typed queries are the default: `desktop.storage.table()` for reads
     and writes, `desktop.storage.transaction()` for multi-step writes
-    (`page/actions.ts` and `courses.ts` show both). When a change touches a
-    `lib/*.ts` file that still uses raw `desktop.storage.query`/`execute`,
-    move that whole file to `table()` in the same change, not just the
-    query you came to edit. Raw SQL stays only where `table()` can't say
-    it: joins, aggregates and `GROUP BY`, `LIKE` search, and SQL-computed
-    values such as `COALESCE(MAX(position), 0) + 1` (pass those to
-    `table()` as a `sql` fragment where it accepts one).
+    (`page/table.ts` and `course/table.ts` show both). Raw
+    `desktop.storage.query`/`execute` stays only where `table()` can't say
+    it: joins, aggregates and `GROUP BY`, `UNION`, `LIKE` search over
+    chosen columns, `json_each`, and atomic upserts (`ON CONFLICT`,
+    `INSERT OR IGNORE`). SQL-computed values such as
+    `COALESCE(MAX(position), 0) + 1` go to `table()` as a `sql` fragment.
 - Chain's placeholder branding: `asset/app-icon.svg` (used in the nav
   bar) and `asset/icons/` (the full desktop icon set), also copied into
   `.chain/native/icons/` where Tauri's bundler actually reads them from

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getPageAudio, type PageAudio } from "../features/audiobook/lib/pageAudio";
-import PageDetailPage from "../features/courses/pages/PageDetailPage";
-import { getModule } from "../features/courses/lib/modules";
-import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import { updateCourse } from "../features/courses/lib/courses";
+
+import { getPageAudio } from "../features/audiobook/lib/page-audio/actions";
+import type { PageAudio } from "../features/audiobook/lib/page-audio/types";
+import { updateCourse } from "../features/courses/lib/course/actions";
 import { useCourses } from "../features/courses/lib/coursesState";
+import { getModule } from "../features/courses/lib/module/actions";
 import { getPage, markPageOpened } from "../features/courses/lib/page/actions";
+import type { Page as PageRecord } from "../features/courses/lib/page/types";
+import PageDetailPage from "../features/courses/pages/PageDetailPage";
 
 export default function PageRoute() {
   const { courseId, pageId } = useParams();
@@ -23,23 +25,38 @@ export default function PageRoute() {
     let active = true;
     setPageReady(false);
     void markPageOpened(Number(pageId)).catch(() => undefined);
-    getPage(Number(pageId)).then((loaded) => { if (active) { setPage(loaded); setPageReady(true); } });
-    return () => { active = false; };
+    getPage(Number(pageId)).then((loaded) => {
+      if (active) {
+        setPage(loaded);
+        setPageReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [pageId]);
 
   useEffect(() => {
     if (!pageId) return;
     let active = true;
     setPageAudio(null);
-    getPageAudio(Number(pageId)).then((loaded) => { if (active) setPageAudio(loaded); });
-    return () => { active = false; };
+    getPageAudio(Number(pageId)).then((loaded) => {
+      if (active) setPageAudio(loaded);
+    });
+    return () => {
+      active = false;
+    };
   }, [pageId]);
 
   useEffect(() => {
     if (!page) return;
     let active = true;
-    getModule(page.module_id).then((loaded) => { if (active) setModuleName(loaded?.name); });
-    return () => { active = false; };
+    getModule(page.module_id).then((loaded) => {
+      if (active) setModuleName(loaded?.name);
+    });
+    return () => {
+      active = false;
+    };
   }, [page?.module_id]);
 
   return (
@@ -51,8 +68,12 @@ export default function PageRoute() {
       onSavePage={setPage}
       pageAudio={pageAudio}
       onChangePageAudio={setPageAudio}
-      onChangeCourseProfile={async (id) => { if (course) save(await updateCourse(course.id, { ai_profile_id: id })); }}
-      onDeletePage={() => navigate(`/courses/${courseId}/modules/${page?.module_id}`, { replace: true })}
+      onChangeCourseProfile={async (id) => {
+        if (course) save(await updateCourse(course.id, { ai_profile_id: id }));
+      }}
+      onDeletePage={() =>
+        navigate(`/courses/${courseId}/modules/${page?.module_id}`, { replace: true })
+      }
     />
   );
 }

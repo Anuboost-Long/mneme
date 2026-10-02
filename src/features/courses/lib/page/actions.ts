@@ -1,23 +1,18 @@
-import type { Values } from "@chain/sdk";
+import { sql, type SqlFragment, type Values } from "@chain/sdk";
 
 import type { PageRow } from "../../../../shared/lib/db/schema/page";
-import { recordStudy } from "../../../../shared/lib/studyDays";
-import { deletePageAudios } from "../../../audiobook/lib/pageAudio";
-import { copyAttachments, deleteAttachments } from "../attachments";
+import { recordStudy } from "../../../../shared/lib/study-day/actions";
+import { deletePageAudios } from "../../../audiobook/lib/page-audio/actions";
+import { copyAttachments, deleteAttachments } from "../attachment/actions";
 import { CompletionStatus } from "../completion-status";
-import {
-  copyIcon,
-  deleteIcon,
-  deleteReplacedIcon,
-  storeIcon,
-} from "../course-image";
-import { reconcileHighlights, syncPageHighlights } from "../highlights";
+import { reconcileHighlights, syncPageHighlights } from "../highlight/actions";
+import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "../icon/actions";
 import { copyImage, deleteImage, storeInlineImages } from "../page-image";
-import { copyRecordings, deleteRecordings } from "../recordings";
+import { copyRecordings, deleteRecording, deleteRecordings } from "../recording/actions";
 import {
   deletePageRows,
   getPage,
-  getPagePictures,
+  getPagesMatching,
   getPages,
   getPagesWithInlineImages,
   insertPage,
@@ -26,7 +21,7 @@ import {
   savePagePositions,
   setPageOpened,
   softDeletePages,
-  updatePageColumns,
+  updatePageColumns
 } from "./table";
 import { PageType, type PageInput } from "./types";
 
@@ -36,7 +31,7 @@ export {
   getPage,
   getPages,
   searchPageLinks,
-  searchPages,
+  searchPages
 } from "./table";
 
 function pageTitle(title: string) {
@@ -48,11 +43,7 @@ function clampProgress(progress: number) {
   return Math.min(100, Math.max(0, Math.round(progress)));
 }
 
-async function syncHighlightsSafely(
-  pageId: number,
-  moduleId: number,
-  content: string | null,
-) {
+async function syncHighlightsSafely(pageId: number, moduleId: number, content: string | null) {
   try {
     await syncPageHighlights(pageId, moduleId, content);
   } catch (error) {
@@ -62,7 +53,7 @@ async function syncHighlightsSafely(
 
 function reconcileHighlightsSafely(
   previousContent: string | null,
-  nextContent: string | null,
+  nextContent: string | null
 ): string | null {
   try {
     return reconcileHighlights(previousContent, nextContent);
@@ -95,7 +86,7 @@ export async function createPage(moduleId: number, input: PageInput) {
     progress: clampProgress(input.progress ?? 0),
     bookmarked: input.bookmarked ? 1 : 0,
     icon: await storeIcon(input.icon),
-    cover: input.cover ?? null,
+    cover: input.cover ?? null
   });
   if (!page) throw new Error("The saved page could not be found.");
   if (page.content) await syncHighlightsSafely(page.id, moduleId, page.content);
@@ -105,7 +96,7 @@ export async function createPage(moduleId: number, input: PageInput) {
 export async function updatePage(
   id: number,
   input: Partial<PageInput>,
-  options: { skipHighlightReconciliation?: boolean } = {},
+  options: { skipHighlightReconciliation?: boolean } = {}
 ) {
   const previous =
     input.icon !== undefined ||
@@ -128,10 +119,8 @@ export async function updatePage(
     cover: input.cover,
     content,
     status: input.status,
-    progress:
-      input.progress === undefined ? undefined : clampProgress(input.progress),
-    bookmarked:
-      input.bookmarked === undefined ? undefined : Number(input.bookmarked),
+    progress: input.progress === undefined ? undefined : clampProgress(input.progress),
+    bookmarked: input.bookmarked === undefined ? undefined : Number(input.bookmarked)
   };
   const page = await updatePageColumns(id, changes);
   if (!page) throw new Error("This page no longer exists.");
@@ -140,16 +129,10 @@ export async function updatePage(
     previous?.status !== CompletionStatus.Completed
   )
     await recordStudy("completed");
-  if (
-    previous?.cover &&
-    input.cover !== undefined &&
-    previous.cover !== input.cover
-  )
+  if (previous?.cover && input.cover !== undefined && previous.cover !== input.cover)
     await deleteImage(previous.cover);
-  if (input.icon !== undefined)
-    await deleteReplacedIcon(previous?.icon, page.icon);
-  if (content !== undefined)
-    await syncHighlightsSafely(page.id, page.module_id, page.content);
+  if (input.icon !== undefined) await deleteReplacedIcon(previous?.icon, page.icon);
+  if (content !== undefined) await syncHighlightsSafely(page.id, page.module_id, page.content);
   return page;
 }
 
@@ -159,18 +142,14 @@ export async function appendToPage(id: number, html: string) {
   return updatePage(id, { content: `${page.content ?? ""}${html}` });
 }
 
-export async function deleteRecordingFromPage(
-  recordingId: number,
-  pageId: number,
-) {
-  await deleteRecordings("id = ?", [recordingId]);
+export async function deleteRecordingFromPage(recordingId: number, pageId: number) {
+  await deleteRecording(recordingId);
   const page = await getPage(pageId);
   const content = page?.content?.replace(
     new RegExp(`<div data-recording-id="${recordingId}"[^>]*></div>`, "g"),
-    "",
+    ""
   );
-  if (page && content !== page.content)
-    await updatePage(pageId, { content: content ?? null });
+  if (page && content !== page.content) await updatePage(pageId, { content: content ?? null });
 }
 
 export async function markPageOpened(id: number) {
@@ -195,25 +174,16 @@ export async function duplicatePage(id: number) {
     title: `${original.title} (copy)`,
     type: original.type,
     icon: await copyIcon(original.icon),
-    cover: original.cover ? await copyImage(original.cover) : null,
+    cover: original.cover ? await copyImage(original.cover) : null
   });
   const siblings = await getPages(original.module_id);
   const ordered = siblings.filter((page) => page.id !== copy.id);
-  ordered.splice(
-    ordered.findIndex((page) => page.id === original.id) + 1,
-    0,
-    copy,
-  );
+  ordered.splice(ordered.findIndex((page) => page.id === original.id) + 1, 0, copy);
   await reorderPages(ordered.map((page) => page.id));
   const content = original.content
-    ? await copyAttachments(
-        await copyRecordings(original.content, copy.id),
-        copy.id,
-      )
+    ? await copyAttachments(await copyRecordings(original.content, copy.id), copy.id)
     : null;
-  return content
-    ? updatePage(copy.id, { content })
-    : ((await getPage(copy.id)) ?? copy);
+  return content ? updatePage(copy.id, { content }) : ((await getPage(copy.id)) ?? copy);
 }
 
 export function setPageDone(id: number, done: boolean) {
@@ -221,7 +191,7 @@ export function setPageDone(id: number, done: boolean) {
     id,
     done
       ? { status: CompletionStatus.Completed, progress: 100 }
-      : { status: CompletionStatus.NotStarted, progress: 0 },
+      : { status: CompletionStatus.NotStarted, progress: 0 }
   );
 }
 
@@ -241,14 +211,18 @@ export async function deletePages(ids: number[]) {
   await softDeletePages(ids, deletionTime());
 }
 
-export async function erasePages(filter: string, params: unknown[]) {
-  const ofPages = `page_id IN (SELECT id FROM page WHERE ${filter})`;
-  for (const { cover, icon } of await getPagePictures(filter, params)) {
+export function erasePage(id: number) {
+  return erasePages(sql`id = ${id}`);
+}
+
+export async function erasePages(filter: SqlFragment) {
+  const ofPages = sql`page_id IN (SELECT id FROM page WHERE ${filter})`;
+  for (const { cover, icon } of await getPagesMatching(filter)) {
     if (cover) await deleteImage(cover);
     await deleteIcon(icon);
   }
-  await deleteRecordings(ofPages, params);
-  await deleteAttachments(ofPages, params);
-  await deletePageAudios(ofPages, params);
-  await deletePageRows(filter, params);
+  await deleteRecordings(ofPages);
+  await deleteAttachments(ofPages);
+  await deletePageAudios(ofPages);
+  await deletePageRows(filter);
 }

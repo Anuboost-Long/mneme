@@ -3,23 +3,23 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { useFileUrl } from "../../../shared/lib/useFileUrl";
+import CourseIcon from "../../../shared/ui/CourseIcon";
 import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
+import AudiobookBar from "../../audiobook/components/AudiobookBar";
+import CreateAudioDialog from "../../audiobook/components/CreateAudioDialog";
+import type { PageAudio } from "../../audiobook/lib/page-audio/types";
 import ReadAloudBar from "../../read-aloud/components/ReadAloudBar";
 import { elementChunk, elementChunks } from "../../read-aloud/lib/readableText";
 import { useReadAloud } from "../../read-aloud/lib/useReadAloud";
-import AudiobookBar from "../../audiobook/components/AudiobookBar";
-import CreateAudioDialog from "../../audiobook/components/CreateAudioDialog";
-import type { PageAudio } from "../../audiobook/lib/pageAudio";
 import DeletePage from "../components/DeletePage";
 import PageEditor from "../components/editor/PageEditor";
 import PageForm, { pageTypeLabels } from "../components/PageForm";
-import { CompletionStatus } from "../lib/completion-status";
-import type { Course } from "../lib/courses";
-import type { Page } from "../lib/page/types";
-import { setPageDone, updatePage } from "../lib/page/actions";
 import { StatusChip } from "../components/StatusPicker";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { useFileUrl } from "../../../shared/lib/useFileUrl";
+import { CompletionStatus } from "../lib/completion-status";
+import type { Course } from "../lib/course/types";
+import { setPageDone, updatePage } from "../lib/page/actions";
+import type { Page } from "../lib/page/types";
 
 export default function PageDetailPage({
   course,
@@ -176,7 +176,13 @@ export default function PageDetailPage({
           {page.title}
         </span>
       </nav>
-      {coverUrl && <img src={coverUrl} alt="" className={clsx("mt-4 aspect-16/5 w-full rounded-lg object-cover")} />}
+      {coverUrl && (
+        <img
+          src={coverUrl}
+          alt=""
+          className={clsx("mt-4 aspect-16/5 w-full rounded-lg object-cover")}
+        />
+      )}
       <div className={clsx("mt-6 flex flex-wrap items-start justify-between gap-4")}>
         <div ref={heading} className={clsx("min-w-0")}>
           <div className={clsx("flex items-center gap-4")}>
@@ -197,9 +203,16 @@ export default function PageDetailPage({
               itemLabel={page.title}
               onChange={(status) => {
                 setDoneError(null);
-                updatePage(page.id, { status, progress: status === CompletionStatus.Completed ? 100 : undefined })
+                updatePage(page.id, {
+                  status,
+                  progress: status === CompletionStatus.Completed ? 100 : undefined
+                })
                   .then(onSavePage)
-                  .catch((error) => setDoneError(errorMessage(error, "Couldn’t change this page’s status. Try again.")));
+                  .catch((error) =>
+                    setDoneError(
+                      errorMessage(error, "Couldn’t change this page’s status. Try again.")
+                    )
+                  );
               }}
             />
           </div>

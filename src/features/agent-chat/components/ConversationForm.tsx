@@ -1,12 +1,19 @@
-import { useState } from "react";
 import clsx from "clsx";
+import { useState } from "react";
+
+import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import { BodyText } from "../../../shared/ui/Typography";
-import type { Conversation } from "../lib/conversations";
-import { errorMessage } from "../../../shared/lib/errorMessage";
+import type { Conversation } from "../lib/conversation/types";
 
-export default function ConversationForm({ action, conversation, onRename, onDelete, onClose }: Readonly<{
+export default function ConversationForm({
+  action,
+  conversation,
+  onRename,
+  onDelete,
+  onClose
+}: Readonly<{
   action: "rename" | "delete";
   conversation?: Conversation;
   onRename: (id: number, title: string) => Promise<void>;
@@ -24,8 +31,12 @@ export default function ConversationForm({ action, conversation, onRename, onDel
     setError("");
     try {
       switch (action) {
-        case "rename": if (conversation) await onRename(conversation.id, title); break;
-        case "delete": if (conversation) await onDelete(conversation.id); break;
+        case "rename":
+          if (conversation) await onRename(conversation.id, title);
+          break;
+        case "delete":
+          if (conversation) await onDelete(conversation.id);
+          break;
       }
       complete(onClose);
     } catch (error) {
@@ -36,15 +47,59 @@ export default function ConversationForm({ action, conversation, onRename, onDel
 
   return (
     <Dialog title={labels[action]} onClose={onClose} busy={busy}>
-      {(close, complete) => <form onSubmit={(event) => { event.preventDefault(); void save(complete); }}>
-        {action === "rename" && <TextInput label="Conversation title" required autoFocus value={title} disabled={busy} onChange={(event) => setTitle(event.target.value)} />}
-        {action === "delete" && <BodyText>Delete “{conversation?.title ?? "New conversation"}” and all its messages? This cannot be undone. Usage totals will remain.</BodyText>}
-        {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
-        <div className={clsx("mt-6 flex justify-end gap-3 border-t border-ink/10 pt-5")}>
-          <button type="button" disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-3 py-2 text-sm")}>Cancel</button>
-          <button type="submit" disabled={busy} className={clsx("rounded-md px-3 py-2 text-sm", action === "delete" ? "bg-red-700 text-white hover:bg-red-800" : "bg-action text-on-action", "disabled:opacity-50")}>{busy ? "Saving…" : labels[action]}</button>
-        </div>
-      </form>}
+      {(close, complete) => (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save(complete);
+          }}
+        >
+          {action === "rename" && (
+            <TextInput
+              label="Conversation title"
+              required
+              autoFocus
+              value={title}
+              disabled={busy}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          )}
+          {action === "delete" && (
+            <BodyText>
+              Delete “{conversation?.title ?? "New conversation"}” and all its messages? This cannot
+              be undone. Usage totals will remain.
+            </BodyText>
+          )}
+          {error && (
+            <BodyText role="alert" tone="error" className={clsx("mt-4")}>
+              {error}
+            </BodyText>
+          )}
+          <div className={clsx("mt-6 flex justify-end gap-3 border-t border-ink/10 pt-5")}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={close}
+              className={clsx("rounded-md border border-ink/15 px-3 py-2 text-sm")}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              className={clsx(
+                "rounded-md px-3 py-2 text-sm",
+                action === "delete"
+                  ? "bg-red-700 text-white hover:bg-red-800"
+                  : "bg-action text-on-action",
+                "disabled:opacity-50"
+              )}
+            >
+              {busy ? "Saving…" : labels[action]}
+            </button>
+          </div>
+        </form>
+      )}
     </Dialog>
   );
 }

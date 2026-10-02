@@ -5,7 +5,7 @@ import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
 import CourseIcon from "../../../shared/ui/CourseIcon";
 import { BodyText, Caption, PageTitle } from "../../../shared/ui/Typography";
 import DeletedItemPreview from "../components/DeletedItemPreview";
-import { daysLeft, deletedItemKey, KEEP_DAYS, type DeletedItem } from "../lib/recentlyDeleted";
+import { daysLeft, deletedItemKey, KEEP_DAYS, type DeletedItem } from "../lib/deleted-item/types";
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
@@ -25,7 +25,11 @@ function timeLeft(item: DeletedItem) {
   return days === 0 ? "Deleting soon" : `${plural(days, "day")} left`;
 }
 
-export default function RecentlyDeletedPage({ items, onRestore, onErase }: Readonly<{
+export default function RecentlyDeletedPage({
+  items,
+  onRestore,
+  onErase
+}: Readonly<{
   items: DeletedItem[] | null;
   onRestore: (items: DeletedItem[]) => Promise<void>;
   onErase: (items: DeletedItem[]) => Promise<void>;
@@ -63,21 +67,33 @@ export default function RecentlyDeletedPage({ items, onRestore, onErase }: Reado
     <div className={clsx("w-full px-4 py-5 sm:px-6")}>
       <PageTitle>Recently deleted</PageTitle>
       <BodyText tone="muted" className={clsx("mt-1")}>
-        Deleted courses, modules and pages stay here for {KEEP_DAYS} days. Restore them, or they’re deleted permanently after that.
+        Deleted courses, modules and pages stay here for {KEEP_DAYS} days. Restore them, or they’re
+        deleted permanently after that.
       </BodyText>
 
       {items?.length === 0 && (
-        <BodyText tone="muted" className={clsx("mt-10 text-center")}>Nothing here. When you delete a course, module or page, you can get it back from here.</BodyText>
+        <BodyText tone="muted" className={clsx("mt-10 text-center")}>
+          Nothing here. When you delete a course, module or page, you can get it back from here.
+        </BodyText>
       )}
 
       {items && items.length > 0 && (
         <>
           <div className={clsx("mt-5 flex flex-wrap items-center gap-2")}>
             <label className={clsx("flex items-center gap-2 pr-1 text-sm text-muted")}>
-              <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(items.map(deletedItemKey)))} className={clsx("size-4")} />
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={() =>
+                  setSelected(allSelected ? new Set() : new Set(items.map(deletedItemKey)))
+                }
+                className={clsx("size-4")}
+              />
               <span>Select all</span>
             </label>
-            <BodyText tone="muted" className={clsx("text-sm")}>{chosen.length} selected</BodyText>
+            <BodyText tone="muted" className={clsx("text-sm")}>
+              {chosen.length} selected
+            </BodyText>
             <span className={clsx("flex-1")} />
             <button
               type="button"
@@ -104,7 +120,11 @@ export default function RecentlyDeletedPage({ items, onRestore, onErase }: Reado
               Delete permanently
             </button>
           </div>
-          {error && <BodyText role="alert" tone="error" className={clsx("mt-3")}>{error}</BodyText>}
+          {error && (
+            <BodyText role="alert" tone="error" className={clsx("mt-3")}>
+              {error}
+            </BodyText>
+          )}
 
           <ul className={clsx("mt-4 divide-y divide-ink/10 rounded-lg", "border border-ink/10")}>
             {items.map((item) => {
@@ -113,20 +133,51 @@ export default function RecentlyDeletedPage({ items, onRestore, onErase }: Reado
               return (
                 <li key={key} className={clsx(open && "bg-ink/2")}>
                   <div className={clsx("flex items-center gap-3 pl-3")}>
-                    <input type="checkbox" aria-label={`Select ${item.name}`} checked={selected.has(key)} onChange={() => toggle(key)} className={clsx("size-4 shrink-0")} />
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${item.name}`}
+                      checked={selected.has(key)}
+                      onChange={() => toggle(key)}
+                      className={clsx("size-4 shrink-0")}
+                    />
                     <button
                       type="button"
                       aria-expanded={open}
                       onClick={() => setOpenKey(open ? null : key)}
-                      className={clsx("flex min-w-0 flex-1 items-center gap-3 py-2.5 pr-3 text-left", "hover:bg-ink/4 focus-visible:bg-ink/4 focus-visible:outline-none")}
+                      className={clsx(
+                        "flex min-w-0 flex-1 items-center gap-3 py-2.5 pr-3 text-left",
+                        "hover:bg-ink/4 focus-visible:bg-ink/4 focus-visible:outline-none"
+                      )}
                     >
                       <CourseIcon icon={item.icon} color={item.color} small />
                       <span className={clsx("min-w-0 flex-1")}>
-                        <span className={clsx("block truncate text-sm font-medium")}>{item.name}</span>
-                        <Caption as="span" tone="muted" className={clsx("block truncate")}>{whereItWas(item)}</Caption>
+                        <span className={clsx("block truncate text-sm font-medium")}>
+                          {item.name}
+                        </span>
+                        <Caption as="span" tone="muted" className={clsx("block truncate")}>
+                          {whereItWas(item)}
+                        </Caption>
                       </span>
-                      <Caption as="span" tone="muted" className={clsx("shrink-0 text-right tabular-nums")}>{timeLeft(item)}</Caption>
-                      <svg className={clsx("size-4 shrink-0 text-muted transition-transform motion-reduce:transition-none", open && "rotate-180")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <Caption
+                        as="span"
+                        tone="muted"
+                        className={clsx("shrink-0 text-right tabular-nums")}
+                      >
+                        {timeLeft(item)}
+                      </Caption>
+                      <svg
+                        className={clsx(
+                          "size-4 shrink-0 text-muted transition-transform motion-reduce:transition-none",
+                          open && "rotate-180"
+                        )}
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
                         <path d="m4 6 4 4 4-4" />
                       </svg>
                     </button>
@@ -143,7 +194,9 @@ export default function RecentlyDeletedPage({ items, onRestore, onErase }: Reado
         </>
       )}
 
-      <p aria-live="polite" className={clsx("sr-only")}>{notice}</p>
+      <p aria-live="polite" className={clsx("sr-only")}>
+        {notice}
+      </p>
 
       {erasing && (
         <ConfirmDeleteDialog

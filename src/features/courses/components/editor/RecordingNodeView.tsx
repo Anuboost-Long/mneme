@@ -6,19 +6,22 @@ import { useEffect, useRef, useState } from "react";
 import { errorMessage } from "../../../../shared/lib/errorMessage";
 import { formatDuration } from "../../../../shared/lib/formatDuration";
 import { usePlayback } from "../../../../shared/lib/usePlayback";
+import CassetteDeck, {
+  DeckIcon,
+  DeckKey,
+  type ReelMotion
+} from "../../../../shared/ui/CassetteDeck";
 import ConfirmDeleteDialog from "../../../../shared/ui/ConfirmDeleteDialog";
-import CassetteDeck, { DeckIcon, DeckKey, type ReelMotion } from "../../../../shared/ui/CassetteDeck";
 import PlaybackDeck, { PlaybackKeys } from "../../../../shared/ui/PlaybackDeck";
 import { Caption } from "../../../../shared/ui/Typography";
 import {
   createRecording,
   deleteRecording,
   getRecording,
-  renameRecording,
-  type Recording
-} from "../../lib/recordings";
+  renameRecording
+} from "../../lib/recording/actions";
+import type { Recording } from "../../lib/recording/types";
 import { useAudioRecorder, type RecorderStatus } from "../../lib/useAudioRecorder";
-
 import { insertParagraphs } from "./insertParagraphs";
 import MicrophoneAccessDialog from "./MicrophoneAccessDialog";
 import TranscriptPanel from "./TranscriptPanel";

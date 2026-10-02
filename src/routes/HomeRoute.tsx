@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import HomePage from "../features/home/pages/HomePage";
-import { addWidget, getWidgets, removeWidget, reorderWidgets, replaceWidgets, restoreWidget, updateWidget, type NewWidget, type Widget } from "../features/home/lib/widgets";
-import { defaultWidgets, layoutPresets } from "../features/home/widgets/catalog";
+
 import { useCourses } from "../features/courses/lib/coursesState";
+import {
+  addWidget,
+  getWidgets,
+  removeWidget,
+  reorderWidgets,
+  replaceWidgets,
+  restoreWidget,
+  updateWidget
+} from "../features/home/lib/widget/actions";
+import type { NewWidget, Widget } from "../features/home/lib/widget/types";
+import HomePage from "../features/home/pages/HomePage";
+import { defaultWidgets, layoutPresets } from "../features/home/widgets/catalog";
 
 export default function HomeRoute() {
   const { courses, create } = useCourses();
@@ -14,7 +24,9 @@ export default function HomeRoute() {
     getWidgets(defaultWidgets)
       .then((loaded) => active && setWidgets(loaded))
       .catch(() => active && setWidgets([]));
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function add(widget: NewWidget) {
@@ -23,7 +35,9 @@ export default function HomeRoute() {
   }
 
   function update(widget: Widget) {
-    setWidgets((current) => current?.map((item) => (item.id === widget.id ? widget : item)) ?? null);
+    setWidgets(
+      (current) => current?.map((item) => (item.id === widget.id ? widget : item)) ?? null
+    );
     void updateWidget(widget);
   }
 
@@ -60,5 +74,16 @@ export default function HomeRoute() {
     void reorderWidgets(next.map((widget) => widget.id));
   }
 
-  return <HomePage courses={courses} widgets={widgets} onCreateCourse={create} onAdd={add} onUpdate={update} onRemove={remove} onReorder={reorder} onBeautify={beautify} />;
+  return (
+    <HomePage
+      courses={courses}
+      widgets={widgets}
+      onCreateCourse={create}
+      onAdd={add}
+      onUpdate={update}
+      onRemove={remove}
+      onReorder={reorder}
+      onBeautify={beautify}
+    />
+  );
 }

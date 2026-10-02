@@ -22,7 +22,8 @@ import { BodyText } from "../../../../shared/ui/Typography";
 import AiActions from "../../../ai-actions/components/AiActions";
 import { markdownToEditorHtml } from "../../../ai-actions/lib/editorHtml";
 import type { ActionLocation } from "../../../ai-actions/lib/useAiAction";
-import { createAttachment } from "../../lib/attachments";
+import type { ReadableChunk } from "../../../read-aloud/lib/readableText";
+import { createAttachment } from "../../lib/attachment/actions";
 import { storePageFile } from "../../lib/page-files";
 import { hasInlineImages, pageImage, storeInlineImages } from "../../lib/page-image";
 import { updatePage } from "../../lib/page/actions";
@@ -36,9 +37,8 @@ import FindBar from "./FindBar";
 import FindInPage from "./FindInPage";
 import HighlightMark from "./HighlightMark";
 import PageOutline from "./PageOutline";
-import RecordingBlock from "./RecordingBlock";
-import type { ReadableChunk } from "../../../read-aloud/lib/readableText";
 import { hasStructuredHtml, looksLikeMarkdown } from "./pasteMarkdown";
+import RecordingBlock from "./RecordingBlock";
 import SelectionMenu from "./SelectionMenu";
 import SlashCommands from "./SlashCommands";
 import Video from "./Video";
@@ -127,7 +127,11 @@ export default function PageEditor({
               .then((stored) => view.pasteHTML(stored));
             return true;
           }
-          if (view.state.selection.$from.parent.type.spec.code || hasStructuredHtml(html) || !looksLikeMarkdown(text))
+          if (
+            view.state.selection.$from.parent.type.spec.code ||
+            hasStructuredHtml(html) ||
+            !looksLikeMarkdown(text)
+          )
             return false;
           event.preventDefault();
           view.pasteHTML(markdownToEditorHtml(text));
@@ -171,7 +175,12 @@ export default function PageEditor({
           id: "page-start-recording",
           label: "Start recording",
           detail: "Adds a recording where the cursor is",
-          run: () => editor.chain().focus().insertContent({ type: "recording", attrs: { startOnInsert: true } }).run()
+          run: () =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "recording", attrs: { startOnInsert: true } })
+              .run()
         }
       ]
     });
@@ -303,7 +312,8 @@ export default function PageEditor({
   async function droppedNode(file: File) {
     const { nodes } = editor!.state.schema;
     if (file.type.startsWith("image/")) return nodes.image.create({ src: await pageImage(file) });
-    if (file.type.startsWith("video/")) return nodes.video.create({ file: await storePageFile(file) });
+    if (file.type.startsWith("video/"))
+      return nodes.video.create({ file: await storePageFile(file) });
     return nodes.attachment.create({ attachmentId: await createAttachment(pageId, file) });
   }
 

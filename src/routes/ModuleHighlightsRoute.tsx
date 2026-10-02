@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import ModuleHighlightsPage from "../features/courses/pages/ModuleHighlightsPage";
-import { getModule, type Module as ModuleRecord } from "../features/courses/lib/modules";
-import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import { getPages } from "../features/courses/lib/page/actions";
-import { getModuleHighlights, type Highlight } from "../features/courses/lib/highlights";
+
 import { useCourses } from "../features/courses/lib/coursesState";
+import { getModuleHighlights } from "../features/courses/lib/highlight/actions";
+import type { Highlight } from "../features/courses/lib/highlight/types";
+import { getModule } from "../features/courses/lib/module/actions";
+import type { Module as ModuleRecord } from "../features/courses/lib/module/types";
+import { getPages } from "../features/courses/lib/page/actions";
+import type { Page as PageRecord } from "../features/courses/lib/page/types";
+import ModuleHighlightsPage from "../features/courses/pages/ModuleHighlightsPage";
 
 export default function ModuleHighlightsRoute() {
   const { courseId, moduleId } = useParams();
@@ -21,18 +24,33 @@ export default function ModuleHighlightsRoute() {
     if (!moduleId) return;
     let active = true;
     setModuleReady(false);
-    getModule(Number(moduleId)).then((loaded) => { if (active) { setModule(loaded); setModuleReady(true); } });
-    return () => { active = false; };
+    getModule(Number(moduleId)).then((loaded) => {
+      if (active) {
+        setModule(loaded);
+        setModuleReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [moduleId]);
 
   useEffect(() => {
     if (!module) return;
     let active = true;
     setHighlightsReady(false);
-    Promise.all([getPages(module.id), getModuleHighlights(module.id)]).then(([loadedPages, loadedHighlights]) => {
-      if (active) { setPages(loadedPages); setHighlights(loadedHighlights); setHighlightsReady(true); }
-    });
-    return () => { active = false; };
+    Promise.all([getPages(module.id), getModuleHighlights(module.id)]).then(
+      ([loadedPages, loadedHighlights]) => {
+        if (active) {
+          setPages(loadedPages);
+          setHighlights(loadedHighlights);
+          setHighlightsReady(true);
+        }
+      }
+    );
+    return () => {
+      active = false;
+    };
   }, [module?.id]);
 
   return (
@@ -43,8 +61,14 @@ export default function ModuleHighlightsRoute() {
       pages={pages}
       highlights={highlights}
       highlightsReady={highlightsReady}
-      onRemoveHighlight={(id) => setHighlights((current) => current.filter((item) => item.id !== id))}
-      onKeepHighlight={(id) => setHighlights((current) => current.map((item) => item.id === id ? { ...item, orphaned_at: null } : item))}
+      onRemoveHighlight={(id) =>
+        setHighlights((current) => current.filter((item) => item.id !== id))
+      }
+      onKeepHighlight={(id) =>
+        setHighlights((current) =>
+          current.map((item) => (item.id === id ? { ...item, orphaned_at: null } : item))
+        )
+      }
     />
   );
 }

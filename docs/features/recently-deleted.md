@@ -29,7 +29,7 @@ value (`deleteCourse`, `deleteModule`, `deletePages`, each in one
   earlier keeps its own, different value, so it isn't restored along with
   the module later.
 
-`deletionTime()` (in `features/courses/lib/pages.ts`) returns a UTC
+`deletionTime()` (in `features/courses/lib/page/`) returns a UTC
 timestamp in milliseconds, forced to increase strictly within the app.
 This matters: the tests caught a page and its module being deleted in
 the same millisecond, which made the page look like it was deleted with

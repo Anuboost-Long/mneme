@@ -1,21 +1,21 @@
 import clsx from "clsx";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAtom, useSetAtom } from "jotai";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
 
 import CommandPalette from "../app/CommandPalette";
 import NavBar from "../app/NavBar";
 import Sidebar from "../app/Sidebar";
 import AgentChatPanel from "../features/agent-chat/components/AgentChatPanel";
-import { cleanUpConversations } from "../features/agent-chat/lib/retention";
+import { cleanUpConversations } from "../features/agent-chat/lib/conversation/actions";
 import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import CourseForm from "../features/courses/components/CourseForm";
-import { storeInlineIcons } from "../features/courses/lib/course-image";
-import { getCourses } from "../features/courses/lib/courses";
-import { storeInlinePageImages } from "../features/courses/lib/page/actions";
+import { getCourses } from "../features/courses/lib/course/actions";
 import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
+import { storeInlineIcons } from "../features/courses/lib/icon/actions";
+import { storeInlinePageImages } from "../features/courses/lib/page/actions";
 import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
-import { purgeExpiredItems } from "../features/recently-deleted/lib/recentlyDeleted";
+import { purgeExpiredItems } from "../features/recently-deleted/lib/deleted-item/actions";
 import { initDb } from "../shared/lib/db";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
 import { BodyText, PageTitle } from "../shared/ui/Typography";
@@ -185,9 +185,7 @@ export default function RootLayout() {
               </button>
             </section>
           )}
-          {(status === "ready" || settingsRoute) && (
-            <Outlet />
-          )}
+          {(status === "ready" || settingsRoute) && <Outlet />}
         </main>
         {!chatRoute && (
           <div
@@ -196,7 +194,9 @@ export default function RootLayout() {
               "absolute inset-y-0 right-0 z-30 w-full sm:w-80 lg:w-96",
               "shadow-xl",
               "motion-safe:transition-[translate,opacity] motion-safe:duration-200 motion-safe:ease-out",
-              aiPanelOpen ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-full opacity-0"
+              aiPanelOpen
+                ? "translate-x-0 opacity-100"
+                : "pointer-events-none translate-x-full opacity-0"
             )}
           >
             <AgentChatPanel

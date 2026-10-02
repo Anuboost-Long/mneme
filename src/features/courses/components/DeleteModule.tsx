@@ -1,10 +1,16 @@
-import { useState } from "react";
 import clsx from "clsx";
-import { deleteModule, type Module } from "../lib/modules";
+import { useState } from "react";
+
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
+import { deleteModule } from "../lib/module/actions";
+import type { Module } from "../lib/module/types";
 
-export default function DeleteModule({ module, onClose, onDelete }: Readonly<{
+export default function DeleteModule({
+  module,
+  onClose,
+  onDelete
+}: Readonly<{
   module: Module;
   onClose: () => void;
   onDelete: () => void;
@@ -27,14 +33,43 @@ export default function DeleteModule({ module, onClose, onDelete }: Readonly<{
 
   return (
     <Dialog title="Delete module?" busy={busy} onClose={onClose}>
-      {(close, complete) => <>
-      <BodyText tone="muted" className={clsx("wrap-anywhere")}>“{module.name}” moves to Recently deleted. You can restore it from there for 30 days.</BodyText>
-      {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
-      <div className={clsx("mt-8 flex justify-end gap-3")}>
-        <button type="button" autoFocus disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}>Cancel</button>
-        <button type="button" disabled={busy} onClick={() => confirmDelete(complete)} className={clsx("rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white", "hover:bg-red-800")}>{busy ? "Deleting…" : "Delete module"}</button>
-      </div>
-      </>}
+      {(close, complete) => (
+        <>
+          <BodyText tone="muted" className={clsx("wrap-anywhere")}>
+            “{module.name}” moves to Recently deleted. You can restore it from there for 30 days.
+          </BodyText>
+          {error && (
+            <BodyText role="alert" tone="error" className={clsx("mt-4")}>
+              {error}
+            </BodyText>
+          )}
+          <div className={clsx("mt-8 flex justify-end gap-3")}>
+            <button
+              type="button"
+              autoFocus
+              disabled={busy}
+              onClick={close}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => confirmDelete(complete)}
+              className={clsx(
+                "rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white",
+                "hover:bg-red-800"
+              )}
+            >
+              {busy ? "Deleting…" : "Delete module"}
+            </button>
+          </div>
+        </>
+      )}
     </Dialog>
   );
 }

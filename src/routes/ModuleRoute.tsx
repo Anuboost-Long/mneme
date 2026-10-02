@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import ModulePage from "../features/courses/pages/ModulePage";
-import { getModule, type Module as ModuleRecord } from "../features/courses/lib/modules";
-import type { Page as PageRecord } from "../features/courses/lib/page/types";
+
 import { useCourses } from "../features/courses/lib/coursesState";
+import { getModule } from "../features/courses/lib/module/actions";
+import type { Module as ModuleRecord } from "../features/courses/lib/module/types";
 import { getPages, reorderPages } from "../features/courses/lib/page/actions";
+import type { Page as PageRecord } from "../features/courses/lib/page/types";
+import ModulePage from "../features/courses/pages/ModulePage";
 
 export default function ModuleRoute() {
   const { courseId, moduleId } = useParams();
@@ -21,22 +23,38 @@ export default function ModuleRoute() {
     if (!moduleId) return;
     let active = true;
     setModuleReady(false);
-    getModule(Number(moduleId)).then((loaded) => { if (active) { setModule(loaded); setModuleReady(true); } });
-    return () => { active = false; };
+    getModule(Number(moduleId)).then((loaded) => {
+      if (active) {
+        setModule(loaded);
+        setModuleReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [moduleId]);
 
   useEffect(() => {
     if (!module) return;
     let active = true;
     setPagesReady(false);
-    getPages(module.id).then((loaded) => { if (active) { setPages(loaded); setPagesReady(true); } });
-    return () => { active = false; };
+    getPages(module.id).then((loaded) => {
+      if (active) {
+        setPages(loaded);
+        setPagesReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [module?.id, pagesVersion]);
 
   function savePage(page: PageRecord) {
-    setPages((current) => current.some((item) => item.id === page.id)
-      ? current.map((item) => item.id === page.id ? page : item)
-      : [...current, page]);
+    setPages((current) =>
+      current.some((item) => item.id === page.id)
+        ? current.map((item) => (item.id === page.id ? page : item))
+        : [...current, page]
+    );
   }
 
   function removePage(id: number) {

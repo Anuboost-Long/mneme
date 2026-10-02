@@ -6,15 +6,11 @@ import { Link } from "react-router-dom";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Select from "../../../shared/ui/Select";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getConnections, type AgentConnection } from "../../agent-chat/lib/connections";
+import { getConnections } from "../../agent-chat/lib/connection/actions";
+import type { AgentConnection } from "../../agent-chat/lib/connection/types";
 import ProfilePicker, { type CourseProfile } from "../../ai-profiles/components/ProfilePicker";
-import {
-  ActionScope,
-  getActionConnectionId,
-  getActions,
-  setActionConnectionId,
-  type AiAction
-} from "../lib/actions";
+import { getActionConnectionId, getActions, setActionConnectionId } from "../lib/action/actions";
+import { ActionScope, type AiAction } from "../lib/action/types";
 import ActionIcon from "./ActionIcon";
 
 const scopeTags: Partial<Record<ActionScope, string>> = {

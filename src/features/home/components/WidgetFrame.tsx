@@ -2,9 +2,14 @@ import clsx from "clsx";
 import { useRef, type KeyboardEvent, type PointerEvent, type ReactNode, type Ref } from "react";
 
 import DragHandle from "../../../shared/ui/DragHandle";
-import type { WidgetSize } from "../lib/widgets";
+import type { WidgetSize } from "../lib/widget/types";
 
-export const sizeLabels: Record<WidgetSize, string> = { small: "Small", medium: "Medium", wide: "Wide", large: "Large" };
+export const sizeLabels: Record<WidgetSize, string> = {
+  small: "Small",
+  medium: "Medium",
+  wide: "Wide",
+  large: "Large"
+};
 
 // Grid spans on Home's 2 / 4 / 6 column grid (see HomePage).
 export const sizeSpans: Record<WidgetSize, string> = {
@@ -24,7 +29,8 @@ const sizeCells: Record<WidgetSize, { columns: number; rows: number }> = {
 
 // The supported size closest to a span of `columns` x `rows` cells.
 function nearestSize(sizes: WidgetSize[], columns: number, rows: number) {
-  const distance = (size: WidgetSize) => Math.abs(sizeCells[size].columns - columns) + Math.abs(sizeCells[size].rows - rows) * 2;
+  const distance = (size: WidgetSize) =>
+    Math.abs(sizeCells[size].columns - columns) + Math.abs(sizeCells[size].rows - rows) * 2;
   return sizes.reduce((best, size) => (distance(size) < distance(best) ? size : best));
 }
 
@@ -41,9 +47,26 @@ function gridMetrics(grid: HTMLElement) {
   };
 }
 
-const iconButton = clsx("grid size-7 shrink-0 place-items-center rounded-md", "text-muted", "hover:bg-ink/6 hover:text-ink focus-visible:outline-1 focus-visible:outline-ink");
+const iconButton = clsx(
+  "grid size-7 shrink-0 place-items-center rounded-md",
+  "text-muted",
+  "hover:bg-ink/6 hover:text-ink focus-visible:outline-1 focus-visible:outline-ink"
+);
 
-export default function WidgetFrame({ ref, widgetId, title, size, sizes, editing, dragging, handle, onResize, onSettings, onRemove, children }: Readonly<{
+export default function WidgetFrame({
+  ref,
+  widgetId,
+  title,
+  size,
+  sizes,
+  editing,
+  dragging,
+  handle,
+  onResize,
+  onSettings,
+  onRemove,
+  children
+}: Readonly<{
   ref?: Ref<HTMLLIElement>;
   widgetId: number;
   title: string;
@@ -51,7 +74,10 @@ export default function WidgetFrame({ ref, widgetId, title, size, sizes, editing
   sizes: WidgetSize[];
   editing: boolean;
   dragging: boolean;
-  handle: { onPointerDown: (event: PointerEvent<HTMLElement>) => void; onKeyDown: (event: KeyboardEvent<HTMLElement>) => void };
+  handle: {
+    onPointerDown: (event: PointerEvent<HTMLElement>) => void;
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
+  };
   onResize: (size: WidgetSize) => void;
   onSettings: (() => void) | null;
   onRemove: () => void;
@@ -73,8 +99,14 @@ export default function WidgetFrame({ ref, widgetId, title, size, sizes, editing
     const grid = item.current?.parentElement;
     if (!start || !grid) return;
     const { columns, cellWidth, rowHeight, gap } = gridMetrics(grid);
-    const spanColumns = Math.min(columns, Math.max(1, Math.round((start.width + event.clientX - start.x + gap) / (cellWidth + gap))));
-    const spanRows = Math.min(2, Math.max(1, Math.round((start.height + event.clientY - start.y + gap) / (rowHeight + gap))));
+    const spanColumns = Math.min(
+      columns,
+      Math.max(1, Math.round((start.width + event.clientX - start.x + gap) / (cellWidth + gap)))
+    );
+    const spanRows = Math.min(
+      2,
+      Math.max(1, Math.round((start.height + event.clientY - start.y + gap) / (rowHeight + gap)))
+    );
     const snapped = nearestSize(sizes, spanColumns, spanRows);
     if (snapped !== size) onResize(snapped);
   }
@@ -109,12 +141,30 @@ export default function WidgetFrame({ ref, widgetId, title, size, sizes, editing
       >
         <header className={clsx("flex h-9 shrink-0 items-center gap-1 px-3", editing && "pl-1")}>
           {editing && <DragHandle name={title} {...handle} />}
-          <h2 className={clsx("min-w-0 flex-1 truncate text-xs font-medium text-muted")}>{title}</h2>
+          <h2 className={clsx("min-w-0 flex-1 truncate text-xs font-medium text-muted")}>
+            {title}
+          </h2>
           {editing && (
             <>
               {onSettings && (
-                <button type="button" onClick={onSettings} aria-label={`Settings for ${title}`} title="Settings" className={iconButton}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <button
+                  type="button"
+                  onClick={onSettings}
+                  aria-label={`Settings for ${title}`}
+                  title="Settings"
+                  className={iconButton}
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
                     <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
                     <circle cx="16" cy="6" r="2" />
                     <circle cx="10" cy="12" r="2" />
@@ -139,9 +189,22 @@ export default function WidgetFrame({ ref, widgetId, title, size, sizes, editing
           onKeyDown={resizeWithKeys}
           aria-label={`Resize ${title}, now ${sizeLabels[size]}. Drag the corner, or use the arrow keys.`}
           title="Drag to resize"
-          className={clsx("absolute right-0 bottom-0 z-10 grid size-6 cursor-nwse-resize touch-none place-items-center rounded-tl-md rounded-br-lg", "text-muted", "hover:text-ink focus-visible:outline-1 focus-visible:outline-ink")}
+          className={clsx(
+            "absolute right-0 bottom-0 z-10 grid size-6 cursor-nwse-resize touch-none place-items-center rounded-tl-md rounded-br-lg",
+            "text-muted",
+            "hover:text-ink focus-visible:outline-1 focus-visible:outline-ink"
+          )}
         >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M9 3 3 9M9 6.5 6.5 9" />
           </svg>
         </button>
@@ -152,9 +215,22 @@ export default function WidgetFrame({ ref, widgetId, title, size, sizes, editing
           onClick={onRemove}
           aria-label={`Remove ${title}`}
           title="Remove"
-          className={clsx("absolute -top-2 -left-2 z-10 grid size-6 place-items-center rounded-full", "bg-ink text-surface", "hover:bg-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink")}
+          className={clsx(
+            "absolute -top-2 -left-2 z-10 grid size-6 place-items-center rounded-full",
+            "bg-ink text-surface",
+            "hover:bg-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          )}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M3 6h6" />
           </svg>
         </button>

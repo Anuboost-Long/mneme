@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import CoursePage from "../features/courses/pages/CoursePage";
-import { getModules, reorderModules, type Module } from "../features/courses/lib/modules";
-import type { PageProgress } from "../features/courses/lib/page/types";
-import { getModulePageProgress } from "../features/courses/lib/page/actions";
+
 import { useCourses } from "../features/courses/lib/coursesState";
+import { getModules, reorderModules } from "../features/courses/lib/module/actions";
+import type { Module } from "../features/courses/lib/module/types";
+import { getModulePageProgress } from "../features/courses/lib/page/actions";
+import type { PageProgress } from "../features/courses/lib/page/types";
+import CoursePage from "../features/courses/pages/CoursePage";
 
 export default function CourseRoute() {
   const { courseId } = useParams();
@@ -19,15 +21,26 @@ export default function CourseRoute() {
     if (!course) return;
     let active = true;
     setModulesReady(false);
-    getModules(course.id).then((loaded) => { if (active) { setModules(loaded); setModulesReady(true); } });
-    getModulePageProgress(course.id).then((loaded) => { if (active) setPageProgress(loaded); });
-    return () => { active = false; };
+    getModules(course.id).then((loaded) => {
+      if (active) {
+        setModules(loaded);
+        setModulesReady(true);
+      }
+    });
+    getModulePageProgress(course.id).then((loaded) => {
+      if (active) setPageProgress(loaded);
+    });
+    return () => {
+      active = false;
+    };
   }, [course?.id]);
 
   function saveModule(module: Module) {
-    setModules((current) => current.some((item) => item.id === module.id)
-      ? current.map((item) => item.id === module.id ? module : item)
-      : [...current, module]);
+    setModules((current) =>
+      current.some((item) => item.id === module.id)
+        ? current.map((item) => (item.id === module.id ? module : item))
+        : [...current, module]
+    );
   }
 
   function removeModule(id: number) {
@@ -48,7 +61,10 @@ export default function CourseRoute() {
       modulesReady={modulesReady}
       pageProgress={pageProgress}
       onSaveCourse={save}
-      onDeleteCourse={(id) => { remove(id); navigate("/courses", { replace: true }); }}
+      onDeleteCourse={(id) => {
+        remove(id);
+        navigate("/courses", { replace: true });
+      }}
       onSaveModule={saveModule}
       onDeleteModule={removeModule}
       onReorderModules={reorder}

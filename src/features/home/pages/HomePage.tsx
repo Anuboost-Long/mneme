@@ -3,11 +3,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/courses";
+import type { Course } from "../../courses/lib/course/types";
 import WidgetFrame from "../components/WidgetFrame";
 import WidgetGallery from "../components/WidgetGallery";
 import WidgetSettings from "../components/WidgetSettings";
-import type { NewWidget, Widget, WidgetSize } from "../lib/widgets";
+import type { NewWidget, Widget, WidgetSize } from "../lib/widget/types";
 import { widgetDefinitions, widgetTitle } from "../widgets/catalog";
 
 const UNDO_VISIBLE_MS = 8000;
@@ -20,19 +20,45 @@ function greeting() {
   return "Good evening";
 }
 
-const resizeAnimation: KeyframeAnimationOptions = { duration: 280, easing: "cubic-bezier(0.2, 0, 0, 1)" };
+const resizeAnimation: KeyframeAnimationOptions = {
+  duration: 280,
+  easing: "cubic-bezier(0.2, 0, 0, 1)"
+};
 
 // Every card's box, relative to the page, keyed by widget id.
 function cardBoxes(grid: HTMLElement) {
   return new Map(
-    Array.from(grid.children, (card) => [Number((card as HTMLElement).dataset.widgetId), card.getBoundingClientRect()] as const)
+    Array.from(
+      grid.children,
+      (card) =>
+        [Number((card as HTMLElement).dataset.widgetId), card.getBoundingClientRect()] as const
+    )
   );
 }
 
-const secondaryButton = clsx("h-8 rounded-md", "border border-ink/20 bg-surface", "px-3 text-sm", "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink");
-const primaryButton = clsx("h-8 rounded-md", "bg-action text-on-action", "px-3 text-sm font-medium", "hover:bg-action/85 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink");
+const secondaryButton = clsx(
+  "h-8 rounded-md",
+  "border border-ink/20 bg-surface",
+  "px-3 text-sm",
+  "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink"
+);
+const primaryButton = clsx(
+  "h-8 rounded-md",
+  "bg-action text-on-action",
+  "px-3 text-sm font-medium",
+  "hover:bg-action/85 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink"
+);
 
-export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUpdate, onRemove, onReorder, onBeautify }: Readonly<{
+export default function HomePage({
+  courses,
+  widgets,
+  onCreateCourse,
+  onAdd,
+  onUpdate,
+  onRemove,
+  onReorder,
+  onBeautify
+}: Readonly<{
   courses: Course[];
   widgets: Widget[] | null;
   onCreateCourse: () => void;
@@ -53,7 +79,11 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
   const grid = useRef<HTMLUListElement>(null);
   const boxesBeforeResize = useRef<Map<number, DOMRect> | null>(null);
   const sizesKey = known.map((widget) => `${widget.id}:${widget.size}`).join(",");
-  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric"
+  });
 
   useEffect(() => {
     if (!notice) return;
@@ -86,8 +116,16 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     Array.from(grid.current.children).forEach((card, index) =>
       card.animate(
-        [{ opacity: 0, transform: "translateY(8px) scale(0.98)" }, { opacity: 1, transform: "none" }],
-        { duration: 260, delay: index * 35, easing: "cubic-bezier(0.2, 0, 0, 1)", fill: "backwards" }
+        [
+          { opacity: 0, transform: "translateY(8px) scale(0.98)" },
+          { opacity: 1, transform: "none" }
+        ],
+        {
+          duration: 260,
+          delay: index * 35,
+          easing: "cubic-bezier(0.2, 0, 0, 1)",
+          fill: "backwards"
+        }
       )
     );
   }, [idsKey]);
@@ -114,7 +152,9 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
       const resized = differs(from.width, after.width) || differs(from.height, after.height);
       if (!moved && !resized) continue;
       for (const animation of card.getAnimations()) animation.cancel();
-      const start: Keyframe = { transform: `translate(${from.left - after.left}px, ${from.top - after.top}px)` };
+      const start: Keyframe = {
+        transform: `translate(${from.left - after.left}px, ${from.top - after.top}px)`
+      };
       const end: Keyframe = { transform: "translate(0, 0)" };
       if (resized) {
         Object.assign(start, { width: `${from.width}px`, height: `${from.height}px` });
@@ -131,8 +171,20 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
       return (
         <section className={clsx("rounded-lg p-5", "border border-ink/10")}>
           <h2 className={clsx("text-base font-semibold")}>Start your first course</h2>
-          <BodyText tone="muted" className={clsx("mt-1 max-w-xl")}>Make a course for a subject you’re studying, then bring in pages, PDFs and notes as you go. Home fills with your progress as you study.</BodyText>
-          <button type="button" onClick={onCreateCourse} className={clsx("mt-4 h-9 rounded-md", "bg-chain-lime text-chain-navy", "px-4 text-sm font-semibold", "hover:bg-chain-lime/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink")}>
+          <BodyText tone="muted" className={clsx("mt-1 max-w-xl")}>
+            Make a course for a subject you’re studying, then bring in pages, PDFs and notes as you
+            go. Home fills with your progress as you study.
+          </BodyText>
+          <button
+            type="button"
+            onClick={onCreateCourse}
+            className={clsx(
+              "mt-4 h-9 rounded-md",
+              "bg-chain-lime text-chain-navy",
+              "px-4 text-sm font-semibold",
+              "hover:bg-chain-lime/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            )}
+          >
             Create a course
           </button>
         </section>
@@ -143,13 +195,31 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
       return (
         <section className={clsx("rounded-lg p-5", "border border-dashed border-ink/20")}>
           <h2 className={clsx("text-base font-semibold")}>Your Home is empty</h2>
-          <BodyText tone="muted" className={clsx("mt-1")}>Add widgets for what you want to see first: your streak, recent pages, a course’s progress, a note to yourself…</BodyText>
-          <button type="button" onClick={() => { setEditing(true); setAdding(true); }} className={clsx(primaryButton, "mt-4")}>Add widget</button>
+          <BodyText tone="muted" className={clsx("mt-1")}>
+            Add widgets for what you want to see first: your streak, recent pages, a course’s
+            progress, a note to yourself…
+          </BodyText>
+          <button
+            type="button"
+            onClick={() => {
+              setEditing(true);
+              setAdding(true);
+            }}
+            className={clsx(primaryButton, "mt-4")}
+          >
+            Add widget
+          </button>
         </section>
       );
     }
     return (
-      <ul ref={grid} aria-label="Widgets" className={clsx("grid grid-flow-row-dense auto-rows-40 grid-cols-2 gap-4 @2xl:grid-cols-4 @5xl:grid-cols-6")}>
+      <ul
+        ref={grid}
+        aria-label="Widgets"
+        className={clsx(
+          "grid grid-flow-row-dense auto-rows-40 grid-cols-2 gap-4 @2xl:grid-cols-4 @5xl:grid-cols-6"
+        )}
+      >
         {reorderable.items.map((widget, index) => {
           const definition = widgetDefinitions.get(widget.kind);
           if (!definition) return null;
@@ -169,7 +239,12 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
               onSettings={() => setSettingsFor(widget)}
               onRemove={() => setNotice({ message: `Removed ${title}.`, undo: onRemove(widget) })}
             >
-              {definition.render({ widget, courses, editing, onConfig: (config) => onUpdate({ ...widget, config }) })}
+              {definition.render({
+                widget,
+                courses,
+                editing,
+                onConfig: (config) => onUpdate({ ...widget, config })
+              })}
             </WidgetFrame>
           );
         })}
@@ -187,17 +262,44 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
         <div className={clsx("flex gap-2")}>
           {editing ? (
             <>
-              <button type="button" disabled={beautifying} onClick={() => void beautify()} className={secondaryButton}>Beautify</button>
-              <button type="button" onClick={() => setAdding(true)} className={secondaryButton}>Add widget</button>
-              <button type="button" onClick={() => setEditing(false)} className={primaryButton}>Done</button>
+              <button
+                type="button"
+                disabled={beautifying}
+                onClick={() => void beautify()}
+                className={secondaryButton}
+              >
+                Beautify
+              </button>
+              <button type="button" onClick={() => setAdding(true)} className={secondaryButton}>
+                Add widget
+              </button>
+              <button type="button" onClick={() => setEditing(false)} className={primaryButton}>
+                Done
+              </button>
             </>
           ) : (
             <>
-              <button type="button" onClick={onCreateCourse} className={secondaryButton}>New course</button>
+              <button type="button" onClick={onCreateCourse} className={secondaryButton}>
+                New course
+              </button>
               {courses.length > 0 && (
                 <>
-                  <button type="button" disabled={beautifying} onClick={() => void beautify()} title="Arrange Home in one of the designed layouts" className={secondaryButton}>Beautify</button>
-                  <button type="button" onClick={() => setEditing(true)} className={secondaryButton}>Edit Home</button>
+                  <button
+                    type="button"
+                    disabled={beautifying}
+                    onClick={() => void beautify()}
+                    title="Arrange Home in one of the designed layouts"
+                    className={secondaryButton}
+                  >
+                    Beautify
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className={secondaryButton}
+                  >
+                    Edit Home
+                  </button>
                 </>
               )}
             </>
@@ -206,7 +308,9 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
       </header>
 
       {notice && (
-        <output className={clsx("flex h-9 items-center gap-3 rounded-md px-3", "bg-ink/6", "text-sm")}>
+        <output
+          className={clsx("flex h-9 items-center gap-3 rounded-md px-3", "bg-ink/6", "text-sm")}
+        >
           <span className={clsx("min-w-0 flex-1 truncate")}>{notice.message}</span>
           <button
             type="button"
@@ -223,9 +327,21 @@ export default function HomePage({ courses, widgets, onCreateCourse, onAdd, onUp
 
       {renderBody()}
 
-      {adding && <WidgetGallery courses={courses} onAdd={(widget) => void onAdd(widget)} onClose={() => setAdding(false)} />}
+      {adding && (
+        <WidgetGallery
+          courses={courses}
+          onAdd={(widget) => void onAdd(widget)}
+          onClose={() => setAdding(false)}
+        />
+      )}
       {settingsFor && settingsDefinition && (
-        <WidgetSettings widget={settingsFor} definition={settingsDefinition} courses={courses} onSave={onUpdate} onClose={() => setSettingsFor(null)} />
+        <WidgetSettings
+          widget={settingsFor}
+          definition={settingsDefinition}
+          courses={courses}
+          onSave={onUpdate}
+          onClose={() => setSettingsFor(null)}
+        />
       )}
     </div>
   );

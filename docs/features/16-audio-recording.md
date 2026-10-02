@@ -19,7 +19,7 @@ the terminal microphone access.
 ## How it works
 
 - Migration 0016 `recording` (`db/schema/recording.ts`) and
-  `lib/recordings.ts`. Foreign keys aren't enforced, so page, module and
+  `lib/recording/`. Foreign keys aren't enforced, so page, module and
   course deletes call `deleteRecordings()` first. It deletes the audio
   files, then the rows.
 - `lib/useAudioRecorder.ts`: the recorder is `MediaRecorder` with its

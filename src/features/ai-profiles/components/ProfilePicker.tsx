@@ -5,12 +5,8 @@ import { Link } from "react-router-dom";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Select from "../../../shared/ui/Select";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
-import {
-  getDefaultProfileId,
-  getProfiles,
-  setDefaultProfileId,
-  type AiProfile
-} from "../lib/profiles";
+import { getDefaultProfileId, getProfiles, setDefaultProfileId } from "../lib/profile/actions";
+import type { AiProfile } from "../lib/profile/types";
 
 const unset = 0;
 

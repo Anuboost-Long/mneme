@@ -59,8 +59,8 @@ Status values (per roadmap Phase 5): `not_started`, `in_progress`,
 
 ## Backend/service layer needed (new)
 
-A small repository module (`src/lib/modules.ts`) wrapping
-`desktop.storage.query`/`execute`, matching `src/lib/courses.ts`'s
+A small repository module (`src/lib/module/`) wrapping
+`desktop.storage.query`/`execute`, matching `src/lib/course/`'s
 shape:
 
 - `getModules(courseId)` — ordered by `created_at, id`.
@@ -72,7 +72,7 @@ shape:
 
 ## Backend/service layer changed (existing)
 
-- `deleteCourse` (`src/lib/courses.ts`) now deletes the course's
+- `deleteCourse` (`src/lib/course/`) now deletes the course's
   modules first (`DELETE FROM module WHERE course_id = ?`), then the
   course itself, resolving the deferred child-deletion policy.
 
@@ -101,21 +101,21 @@ shape:
 
 ## Implementation — 15 September 2026
 
-- [x] `src/lib/modules.ts`: repository (`createModule`, `getModules`,
-  `getModule`, `updateModule`, `deleteModule`) on parameterized Chain
-  SDK storage calls, matching `courses.ts`'s shape.
+- [x] `src/lib/module/`: repository (`createModule`, `getModules`,
+      `getModule`, `updateModule`, `deleteModule`) on parameterized Chain
+      SDK storage calls, matching `courses.ts`'s shape.
 - [x] `deleteCourse` now deletes a course's modules before the course
-  itself, resolving the deferred child-deletion policy.
+      itself, resolving the deferred child-deletion policy.
 - [x] Course page module list, create/edit dialog (`ModuleForm.tsx`),
-  delete confirmation (`DeleteModule.tsx`).
+      delete confirmation (`DeleteModule.tsx`).
 - [x] SQLite repository lifecycle tests: `node --test tests/modules.test.mjs`
-  (create/rename/delete, partial edits, default status, per-course
-  scoping, course-deletion cascade).
+      (create/rename/delete, partial edits, default status, per-course
+      scoping, course-deletion cascade).
 - [x] Whole-frontend typecheck and production build: `npm run build:web`.
 - [ ] Native app restart/persistence acceptance check for the new UI.
 - [ ] Browser interaction checks (blocked this pass — Claude in Chrome
-  extension wasn't connected; the dev server was left running on
-  `localhost:1420` for manual verification).
+      extension wasn't connected; the dev server was left running on
+      `localhost:1420` for manual verification).
 
 Modules were superseded as an openable surface by
 [Page system](06-page-system.md) in the same pass — opening a module

@@ -9,6 +9,7 @@ you don't need.
 
 **Implemented and verified in the running app** with a generated test
 tone. The following were exercised:
+
 - the list and its toolbar
 - expanding a recording: the player and its transcript area
 - transcribing (a tone has no speech, which the screen reports)
@@ -60,9 +61,9 @@ checked with real speech yet.
   groups and rows.
 - `src/features/recordings/components/RecordingDetails.tsx` is the
   expanded panel.
-- `src/features/courses/lib/recordings.ts` has `getAllRecordings` and the
+- `src/features/courses/lib/recording/` has `getAllRecordings` and the
   `RecordingListItem` type.
-- `src/features/courses/lib/pages.ts` has `deleteRecordingFromPage` and
+- `src/features/courses/lib/page/` has `deleteRecordingFromPage` and
   `appendToPage`.
 - `src/features/courses/lib/transcription.ts` is shared with the page's
   transcript panel and Home's Recorder.

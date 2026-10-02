@@ -35,7 +35,7 @@ of the Course → Module → Page hierarchy everything else builds on.
 - **Semester / university / instructor / course code** — the roadmap
   itself marks these "Later" under Phase 4, not part of the initial
   pass.
-- Modules and Pages (Phases 5–6) — a course needs to open to *something*,
+- Modules and Pages (Phases 5–6) — a course needs to open to _something_,
   so this increment's course page will show a placeholder empty state,
   not real module/page content yet.
 
@@ -55,7 +55,7 @@ CREATE TABLE course (
 
 ## Backend/service layer needed (new)
 
-A small repository module (e.g. `src/lib/courses.ts`) wrapping
+A small repository module (e.g. `src/lib/course/`) wrapping
 `desktop.storage.query`/`execute` — no ORM, per chain-sdk's storage
 contract:
 
@@ -112,8 +112,8 @@ contract:
 - [x] SQLite repository lifecycle test: `node --test tests/courses.test.mjs`.
 - [x] Whole-frontend typecheck and production build: `npm run build:web`.
 - [x] Browser interaction checks using a test SQLite adapter: create two courses,
-  creation order, open, edit, failed save/retry, reload, cancel deletion, delete,
-  missing course, narrow layout, Escape dismissal, startup failure/retry.
+      creation order, open, edit, failed save/retry, reload, cancel deletion, delete,
+      missing course, narrow layout, Escape dismissal, startup failure/retry.
 - [ ] Native app restart/persistence acceptance check for the new UI.
 
 No lint script or lint configuration exists in the project; lint was not available.

@@ -1,6 +1,7 @@
 import { atom, useAtom, useSetAtom } from "jotai";
 
-import { getCourses, reorderCourses, type Course } from "./courses";
+import { getCourses, reorderCourses } from "./course/actions";
+import type { Course } from "./course/types";
 
 export const coursesAtom = atom<Course[]>([]);
 export const creatingCourseAtom = atom(false);
