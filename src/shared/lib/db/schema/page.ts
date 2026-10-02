@@ -4,6 +4,9 @@ import { Column, Index, PrimaryKey, Table, Trigger } from "@chain/sdk/schema";
 @Trigger("highlight_page_delete", `CREATE TRIGGER highlight_page_delete BEFORE DELETE ON page BEGIN
       DELETE FROM highlight WHERE page_id = OLD.id;
     END`)
+@Trigger("page_opened_on_insert", `CREATE TRIGGER page_opened_on_insert AFTER INSERT ON page WHEN NEW.opened_at IS NULL BEGIN
+      UPDATE page SET opened_at = NEW.updated_at WHERE id = NEW.id;
+    END`)
 export class Page {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
@@ -16,9 +19,11 @@ export class Page {
   content!: string | null;
 
   @Column({ defaultSql: "datetime('now')" })
+  @Index({ name: "page_created" })
   created_at!: string;
 
   @Column({ defaultSql: "datetime('now')" })
+  @Index({ name: "page_updated" })
   updated_at!: string;
 
   @Column({ default: 1 })
@@ -44,11 +49,14 @@ export class Page {
   position!: number;
 
   // Last time the page was opened; separate from updated_at so reading a
-  // page doesn't count as editing it.
+  // page doesn't count as editing it. A page never opened since it was
+  // made counts as opened then.
+  @Index({ name: "page_opened" })
   opened_at!: string | null;
 
   // When it moved to Recently deleted. Everything deleted along with it gets
   // the same value, which is how a restore finds what to bring back.
+  @Index({ name: "page_deleted", where: "deleted_at IS NOT NULL" })
   deleted_at!: string | null;
 }
 

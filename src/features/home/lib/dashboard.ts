@@ -36,9 +36,9 @@ export const pageSorts = { opened: "Last opened", edited: "Last edited", created
 
 export type PageSort = keyof typeof pageSorts;
 
-// A page counts as recent from when it was last opened, or edited if it
-// has never been opened since opened_at was added.
-const seenAt = "COALESCE(page.opened_at, page.updated_at)";
+// A page counts as recent from when it was last opened (or made, if never
+// opened). Plain opened_at, so the page_opened index serves the sort.
+const seenAt = "page.opened_at";
 
 const orderBy: Record<PageSort, string> = {
   opened: "seen_at DESC, page.id DESC",

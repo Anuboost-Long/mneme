@@ -26,6 +26,7 @@ export class Recording {
   segments!: string | null;
 
   @Column({ defaultSql: "datetime('now')" })
+  @Index({ name: "recording_created" })
   created_at!: string;
 
   @Column({ defaultSql: "datetime('now')" })

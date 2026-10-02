@@ -1,4 +1,4 @@
-import { Column, ForeignKey, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Column, ForeignKey, Index, PrimaryKey, Table } from "@chain/sdk/schema";
 import { AiProfile } from "./ai-profile";
 
 @Table()
@@ -30,6 +30,7 @@ export class Course {
   bookmarked!: number;
 
   @ForeignKey(() => AiProfile, { onDelete: "set null" })
+  @Index({ name: "course_ai_profile" })
   ai_profile_id!: number | null;
 
   // A `desktop.files` reference to the cover image, never a path.

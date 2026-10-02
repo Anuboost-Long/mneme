@@ -121,3 +121,13 @@ test('a new page defaults to not-started, 0% progress and unbookmarked, and each
   await deletePage(plain.id);
   await deletePage(starred.id);
 });
+
+test('a new page counts as opened when it was made, however it was inserted', async () => {
+  const { id: moduleId } = await module();
+  const created = await createPage(moduleId, { title: 'Fresh' });
+  assert.equal(created.opened_at, created.updated_at);
+  database.prepare("INSERT INTO page (module_id, title, updated_at) VALUES (?, 'Restored', '2025-05-05 10:00:00')").run(moduleId);
+  const restored = database.prepare("SELECT opened_at FROM page WHERE title = 'Restored'").get();
+  assert.equal(restored.opened_at, '2025-05-05 10:00:00');
+  await deletePage(created.id);
+});

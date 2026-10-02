@@ -36,6 +36,7 @@ export class Module {
 
   // When it moved to Recently deleted. Everything deleted along with it gets
   // the same value, which is how a restore finds what to bring back.
+  @Index({ name: "module_deleted", where: "deleted_at IS NOT NULL" })
   deleted_at!: string | null;
 }
 
