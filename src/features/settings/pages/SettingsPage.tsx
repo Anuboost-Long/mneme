@@ -96,7 +96,7 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
 
   async function chooseBackupFile() {
     try {
-      const [file] = await pickFiles({ extensions: ["json"] });
+      const [file] = await pickFiles({ extensions: ["zip", "json"] });
       await restoreFromFile(file);
     } catch {
       setRestoreStatus("error");
@@ -448,8 +448,8 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                       <div>
                         <SectionTitle id="data-title">Data</SectionTitle>
                         <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>
-                          Back up your courses, modules and pages to a file, or restore an earlier
-                          backup.
+                          Back up your courses, modules and pages, with their pictures and files, or
+                          restore an earlier backup.
                         </BodyText>
                       </div>
                       <div
