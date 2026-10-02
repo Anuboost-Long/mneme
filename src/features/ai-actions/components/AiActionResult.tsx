@@ -7,6 +7,7 @@ import type { ActionRun, Placement } from "../lib/useAiAction";
 
 const scopeLabels: Record<RunScope, string> = {
   selection: "Selected text",
+  image: "Image",
   page: "Whole page",
   module: "Whole module",
   course: "Whole course",

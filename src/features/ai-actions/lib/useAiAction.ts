@@ -38,6 +38,7 @@ const undoNoticeMs = 10_000;
 
 const emptyMessages: Record<RunScope, string> = {
   selection: "",
+  image: "",
   page: "",
   module: "No pages in this module match this action’s page types.",
   course: "No pages in this course match this action’s page types."
@@ -118,6 +119,7 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
   async function createResultPage(action: AiAction, scope: RunScope, text: string) {
     const subject = {
       selection: location.pageTitle,
+      image: location.pageTitle,
       page: location.pageTitle,
       module: location.moduleName,
       course: location.courseName
@@ -130,7 +132,7 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
     navigate(`/courses/${location.courseId}/modules/${location.moduleId}/pages/${page.id}`);
   }
 
-  async function start(connection: AgentConnection, action: AiAction) {
+  async function start(connection: AgentConnection, action: AiAction, onImage = false) {
     void kill.current?.();
     kill.current = null;
     const id = ++runId.current;
@@ -144,7 +146,7 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
     let placement: Placement = "end";
     if (!selection.empty) placement = "selection";
     else if (cursorPlaced.current) placement = "cursor";
-    const scope = runScope(action, !selection.empty);
+    const scope = onImage ? "image" : runScope(action, !selection.empty);
     range.current = { from: selection.from, to: selection.to };
     setUndoNotice(null);
     setRun({ action, scope, placement, text: "", status: "running" });
@@ -179,7 +181,7 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
       if (scope === "module" || scope === "course") html = await gatherContext(action, location);
       else
         html = compactHtml(
-          scope === "selection"
+          scope === "selection" || scope === "image"
             ? getHTMLFromFragment(selection.content().content, editor.schema)
             : editor.getHTML()
         );

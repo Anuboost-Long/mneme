@@ -13,10 +13,11 @@ import type { AiAction } from "./action/types";
 // What a run actually received: "selection"/"page" for a page-scoped
 // action (whichever applied when it started), or the action's own
 // module/course scope.
-export type RunScope = "selection" | "page" | "module" | "course";
+export type RunScope = "selection" | "image" | "page" | "module" | "course";
 
 const subjects: Record<RunScope, string> = {
   selection: "the selected text",
+  image: "the picture marked [Image 1] (the HTML around it is only its place on the page)",
   page: "the page",
   module: "every page in this module, each in its own <page> element",
   course: "every page in this course, each in its own <page> element tagged with its module"
@@ -25,6 +26,7 @@ const subjects: Record<RunScope, string> = {
 const tooLong: Record<RunScope, string> = {
   selection:
     "The selection is too long for this agent. Select less, or choose Claude or Codex under Run with.",
+  image: "This picture is too large for this agent. Choose Claude or Codex under Run with.",
   page: "This page is too long for this agent. Select part of it, or choose Claude or Codex under Run with.",
   module: "This module is too long for this agent. Choose Claude or Codex under Run with.",
   course: "This course is too long for this agent. Choose Claude or Codex under Run with."
