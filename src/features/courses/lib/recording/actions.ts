@@ -8,7 +8,7 @@ import {
   updateRecordingColumns
 } from "./table";
 
-export { getAllRecordings, getRecording } from "./table";
+export { getAllRecordings, getPageRecordings, getRecording } from "./table";
 
 const EXTENSIONS: Record<string, string> = {
   "audio/mp4": "m4a",

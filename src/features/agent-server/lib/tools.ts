@@ -8,9 +8,14 @@ import {
   getPages,
   searchPages,
   createPage,
+  createPageAfter,
+  insertBlocks,
+  movePage,
   updatePage
 } from "../../courses/lib/page/actions";
-import type { Page } from "../../courses/lib/page/types";
+import { PageType, type Page } from "../../courses/lib/page/types";
+import { getPageRecordings, getRecording } from "../../courses/lib/recording/actions";
+import type { Recording } from "../../courses/lib/recording/types";
 
 // A result that's already MCP content, e.g. images the agent should see,
 // rather than data to send as JSON text.
@@ -34,6 +39,7 @@ export type Tool = {
   // call's raw (not yet validated) arguments.
   mutates?: boolean;
   describeCall?: (args: Record<string, unknown>) => string;
+  check?: (args: Record<string, unknown>) => Promise<unknown>;
   execute: (args: Record<string, unknown>) => Promise<unknown>;
 };
 
@@ -77,6 +83,26 @@ function optionalString(args: Record<string, unknown>, key: string): string | un
 // included, once the caller has actually picked one.
 function pageSummary({ content: _content, ...summary }: Page) {
   return summary;
+}
+
+async function requirePage(id: number) {
+  const page = await getPage(id);
+  if (!page) throw new Error(`No page with id ${id}. Call list_pages or search_pages to find one.`);
+  return page;
+}
+
+async function requireModule(id: number) {
+  const module = await getModule(id);
+  if (!module) throw new Error(`No module with id ${id}. Call list_modules to find one.`);
+  return module;
+}
+
+function transcriptOf({ id, page_id, name, duration_ms, transcript }: Recording) {
+  return { id, page_id, name, duration_ms, transcript };
+}
+
+function pageRef(args: Record<string, unknown>, key: string) {
+  return typeof args[key] === "number" ? `#${args[key]}` : "?";
 }
 
 export const tools: Tool[] = [
@@ -220,12 +246,135 @@ export const tools: Tool[] = [
     mutates: true,
     describeCall: (args) =>
       `Create a page titled "${typeof args.title === "string" && args.title.trim() ? args.title : "Untitled"}"${typeof args.module_id === "number" ? ` in module #${args.module_id}` : ""}.`,
-    execute: async (args) =>
-      createPage(requireNumber(args, "module_id"), {
+    check: (args) => requireModule(requireNumber(args, "module_id")),
+    execute: async (args) => {
+      const module = await requireModule(requireNumber(args, "module_id"));
+      return createPage(module.id, {
         title: requireString(args, "title"),
         type: optionalNumber(args, "type"),
         content: optionalString(args, "content")
-      })
+      });
+    }
+  },
+  {
+    name: "insert_blocks",
+    description:
+      "Add HTML blocks to a page without rewriting the rest of it: at the end (default), at the start, or right after the first top-level block whose text contains after_text. Everything already on the page, highlights included, stays exactly as it was, so prefer this to update_page when you're adding rather than changing content.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "Page id." },
+        html: { type: "string", description: "The blocks to add, as HTML (paragraphs, headings, lists, tables...)." },
+        position: { type: "string", enum: ["start", "end"], description: "Where to add them when after_text isn't given. Defaults to end." },
+        after_text: { type: "string", description: "Add them right after the first block containing this text (case-insensitive)." }
+      },
+      required: ["id", "html"]
+    },
+    mutates: true,
+    describeCall: (args) => {
+      const after = optionalString(args, "after_text");
+      let where = " at the end";
+      if (after) where = ` after “${after}”`;
+      else if (args.position === "start") where = " at the start";
+      return `Add content to page ${pageRef(args, "id")}${where}.`;
+    },
+    check: (args) => requirePage(requireNumber(args, "id")),
+    execute: async (args) =>
+      pageSummary(
+        await insertBlocks((await requirePage(requireNumber(args, "id"))).id, requireString(args, "html"), {
+          after: optionalString(args, "after_text"),
+          at: args.position === "start" ? "start" : "end"
+        })
+      )
+  },
+  {
+    name: "move_page",
+    description:
+      "Move a page to the end of another module, in this or any other course. Its recordings, attachments and highlights move with it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "Page id." },
+        module_id: { type: "number", description: "Module id to move the page into." }
+      },
+      required: ["id", "module_id"]
+    },
+    mutates: true,
+    describeCall: (args) => `Move page ${pageRef(args, "id")} to module ${pageRef(args, "module_id")}.`,
+    check: async (args) => {
+      await requirePage(requireNumber(args, "id"));
+      await requireModule(requireNumber(args, "module_id"));
+    },
+    execute: async (args) => {
+      const page = await requirePage(requireNumber(args, "id"));
+      const module = await requireModule(requireNumber(args, "module_id"));
+      return pageSummary(await movePage(page.id, module.id));
+    }
+  },
+  {
+    name: "read_transcript",
+    description:
+      "Read the transcripts of the audio recordings on a page (page_id), or of one recording (recording_id). A recording that hasn't been transcribed yet has transcript null; the user can transcribe it from its recording block.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        page_id: { type: "number", description: "Page id: every recording on that page, oldest first." },
+        recording_id: { type: "number", description: "Recording id: just that recording." }
+      }
+    },
+    execute: async (args) => {
+      const recordingId = optionalNumber(args, "recording_id");
+      if (recordingId !== undefined) {
+        const recording = await getRecording(recordingId);
+        if (!recording) throw new Error(`No recording with id ${recordingId}.`);
+        return transcriptOf(recording);
+      }
+      const pageId = optionalNumber(args, "page_id");
+      if (pageId === undefined) throw new Error('Pass "page_id" or "recording_id".');
+      const page = await requirePage(pageId);
+      return (await getPageRecordings(page.id)).map(transcriptOf);
+    }
+  },
+  {
+    name: "create_summary",
+    description:
+      "Save a summary you wrote as a new Notes page: right after the page it summarizes (page_id), or at the end of a module (module_id). The title defaults to “Summary: <source title>”. Use this rather than create_page for summaries, so they're filed the same way every time.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        page_id: { type: "number", description: "The page being summarized." },
+        module_id: { type: "number", description: "The module being summarized, when it's the whole module." },
+        content: { type: "string", description: "The summary as HTML." },
+        title: { type: "string", description: "Page title, if not the default." }
+      },
+      required: ["content"]
+    },
+    mutates: true,
+    describeCall: (args) => {
+      const source = typeof args.page_id === "number" ? `page #${args.page_id}` : `module ${pageRef(args, "module_id")}`;
+      return `Save a summary of ${source} as a new page.`;
+    },
+    check: async (args) => {
+      requireString(args, "content");
+      const pageId = optionalNumber(args, "page_id");
+      if (pageId !== undefined) return requirePage(pageId);
+      const moduleId = optionalNumber(args, "module_id");
+      if (moduleId === undefined) throw new Error('Pass "page_id" or "module_id".');
+      return requireModule(moduleId);
+    },
+    execute: async (args) => {
+      const content = requireString(args, "content");
+      const title = optionalString(args, "title")?.trim();
+      const pageId = optionalNumber(args, "page_id");
+      if (pageId !== undefined) {
+        const source = await requirePage(pageId);
+        return pageSummary(await createPageAfter(source.id, { title: title || `Summary: ${source.title}`, type: PageType.Notes, content }));
+      }
+      const moduleId = optionalNumber(args, "module_id");
+      if (moduleId === undefined) throw new Error('Pass "page_id" or "module_id".');
+      const module = await requireModule(moduleId);
+      return pageSummary(await createPage(module.id, { title: title || `Summary: ${module.name}`, type: PageType.Notes, content }));
+    }
   },
   {
     name: "update_page",

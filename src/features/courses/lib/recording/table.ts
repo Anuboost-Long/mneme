@@ -9,6 +9,10 @@ export function getRecording(id: number) {
   return recordingTable().find(id);
 }
 
+export function getPageRecordings(pageId: number) {
+  return recordingTable().where({ page_id: pageId }).orderBy("created_at", "id").all();
+}
+
 export function getRecordings(filter: SqlFragment) {
   return recordingTable().where(filter).all();
 }

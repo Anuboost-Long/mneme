@@ -142,6 +142,24 @@ export async function appendToPage(id: number, html: string) {
   return updatePage(id, { content: `${page.content ?? ""}${html}` });
 }
 
+export async function insertBlocks(id: number, html: string, where: { after?: string; at?: "start" | "end" } = {}) {
+  const page = await getPage(id);
+  if (!page) throw new Error("This page no longer exists.");
+  const doc = new DOMParser().parseFromString(`<!doctype html><html><body>${page.content ?? ""}</body></html>`, "text/html");
+  const holder = doc.createElement("div");
+  holder.innerHTML = html;
+  if (!holder.textContent?.trim() && !holder.querySelector("img, video, table, hr")) throw new Error("There’s nothing to insert.");
+  const blocks = Array.from(holder.childNodes);
+  const needle = where.after?.trim().toLowerCase();
+  if (needle) {
+    const anchor = Array.from(doc.body.children).find((block) => block.textContent?.toLowerCase().includes(needle));
+    if (!anchor) throw new Error(`No block on this page contains “${where.after}”.`);
+    anchor.after(...blocks);
+  } else if (where.at === "start") doc.body.prepend(...blocks);
+  else doc.body.append(...blocks);
+  return updatePage(id, { content: doc.body.innerHTML });
+}
+
 export async function deleteRecordingFromPage(recordingId: number, pageId: number) {
   await deleteRecording(recordingId);
   const page = await getPage(pageId);
@@ -167,19 +185,25 @@ export async function movePage(id: number, moduleId: number) {
   return page;
 }
 
+export async function createPageAfter(id: number, input: PageInput) {
+  const original = await getPage(id);
+  if (!original) throw new Error("This page no longer exists.");
+  const page = await createPage(original.module_id, input);
+  const ordered = (await getPages(original.module_id)).filter((item) => item.id !== page.id);
+  ordered.splice(ordered.findIndex((item) => item.id === original.id) + 1, 0, page);
+  await reorderPages(ordered.map((item) => item.id));
+  return page;
+}
+
 export async function duplicatePage(id: number) {
   const original = await getPage(id);
   if (!original) throw new Error("This page no longer exists.");
-  const copy = await createPage(original.module_id, {
+  const copy = await createPageAfter(id, {
     title: `${original.title} (copy)`,
     type: original.type,
     icon: await copyIcon(original.icon),
     cover: original.cover ? await copyImage(original.cover) : null
   });
-  const siblings = await getPages(original.module_id);
-  const ordered = siblings.filter((page) => page.id !== copy.id);
-  ordered.splice(ordered.findIndex((page) => page.id === original.id) + 1, 0, copy);
-  await reorderPages(ordered.map((page) => page.id));
   const content = original.content
     ? await copyAttachments(await copyRecordings(original.content, copy.id), copy.id)
     : null;

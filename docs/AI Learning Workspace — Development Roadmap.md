@@ -670,11 +670,11 @@ Allow screenshots, slides, diagrams, and textbook pages to be stored and analyse
 - [x] Paste image from clipboard.
 - [x] Drag image into editor.
 - [x] Resize images. (Corner handle; width is saved.)
-- [ ] Add image captions.
-- [ ] Open full image.
+- [x] Add image captions. (Under the image; saved as `data-caption`, and used as the alt text when there is none.)
+- [x] Open full image. (Open full size on the image toolbar; Esc, the close button or a click outside closes it.)
 - [x] Add "Extract Text". (Phase 15; plus Extract table.)
-- [ ] Add "Explain Image".
-- [ ] Add "Summarize Image".
+- [x] Add "Explain Image". (Image menu; runs on that picture with the agent chosen in AI actions, which must accept images: Claude or Codex.)
+- [x] Add "Summarize Image". (Same; the result opens in the AI result panel with Insert below.)
 - [x] Add "Insert Extracted Text".
 
 ---
@@ -1116,7 +1116,7 @@ Build tools individually.
 ### Tool 3 — Create Page (`create_page`)
 
 - [x] Define input.
-- [ ] Validate destination. (The module id isn't checked, and foreign keys aren't enforced, so a wrong id creates an orphaned page.)
+- [x] Validate destination. (create_page and move_page refuse a missing or deleted module, and every changing tool checks its ids before the approval prompt.)
 - [x] Create page.
 - [x] Return page ID.
 - [x] Allow AI to call it.
@@ -1129,11 +1129,11 @@ for tools that change the workspace.
 
 ### Remaining initial tools
 
-- [ ] `insert_blocks` (today `update_page` replaces the whole page).
-- [ ] `move_page`.
+- [x] `insert_blocks`. (At the start, the end, or after the first block containing some text; the rest of the page, highlights included, is untouched.)
+- [x] `move_page`. (To the end of any module; recordings, attachments and highlights follow.)
 - [x] `inspect_image`. (As `get_page_images`: a page's pictures as real image content, in page order.)
-- [ ] `read_transcript` (recording transcripts aren't exposed yet).
-- [ ] `create_summary`.
+- [x] `read_transcript`. (A page's recordings or one recording; null when not transcribed yet.)
+- [x] `create_summary`. (Saves the agent's summary as a Notes page right after its page, or at the end of a module.)
 
 ---
 
@@ -1386,11 +1386,11 @@ Cmd + S      Manual Save
 
 ## Development Steps
 
-- [ ] Create shortcut manager.
-- [ ] Add default shortcuts.
-- [ ] Detect shortcut conflicts.
-- [ ] Allow customization.
-- [ ] Save preferences.
+- [x] Create shortcut manager. (`shared/lib/shortcuts/`: `useShortcut(id, run)` follows the current keys; see features/32-keyboard-shortcuts.md.)
+- [x] Add default shortcuts. (Command palette ⌘P, new page ⌘N, find ⌘F, save ⌘S, sidebar ⌘\, agent chat ⌘⇧A, settings ⌘,; Ctrl on Windows.)
+- [x] Detect shortcut conflicts. (A key already used by another shortcut, the editor or the system is refused with what it does.)
+- [x] Allow customization. (Settings → Keyboard: change, reset, reset all.)
+- [x] Save preferences. (Only changed shortcuts are stored, in settings.)
 
 ---
 

@@ -41,6 +41,11 @@ async function callTool(params: Record<string, unknown> | undefined, conversatio
 
   const args = (params?.arguments as Record<string, unknown> | undefined) ?? {};
   if (tool.mutates) {
+    try {
+      await tool.check?.(args);
+    } catch (error) {
+      return { content: [{ type: "text", text: errorMessage(error, String(error)) }], isError: true };
+    }
     const description = tool.describeCall?.(args) ?? `Run ${tool.name}.`;
     const approved = await requestApproval(conversationId, tool.name, description);
     if (!approved) return { content: [{ type: "text", text: "The user denied permission for this action." }], isError: true };
