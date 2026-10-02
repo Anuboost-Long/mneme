@@ -1,6 +1,7 @@
 import { useState } from "react";
 import clsx from "clsx";
-import { deletePage, type Page } from "../lib/pages";
+import type { Page } from "../lib/page/types";
+import { deletePage } from "../lib/page/actions";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
 

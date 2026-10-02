@@ -7,7 +7,7 @@ import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus } from "./completion-status";
 import { deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
 import { deleteImage } from "./page-image";
-import { deletionTime } from "./pages";
+import { deletionTime } from "./page/actions";
 import { eraseModules } from "./modules";
 
 export type Course = {

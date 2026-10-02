@@ -5,7 +5,7 @@ import { timeAgo } from "../../../shared/lib/date";
 import { formatDuration } from "../../../shared/lib/formatDuration";
 import { Caption } from "../../../shared/ui/Typography";
 import { CompletionStatus } from "../../courses/lib/completion-status";
-import type { PageType } from "../../courses/lib/pages";
+import type { PageType } from "../../courses/lib/page/types";
 import { getPages, getRecentHighlights, getRecentRecordings, type PageFilter, type PageSort } from "../lib/dashboard";
 import { useWidgetData } from "../lib/useWidgetData";
 import { PageGlyph, pageLink, RowLink, Rows, rowsFor, WidgetNote } from "./parts";

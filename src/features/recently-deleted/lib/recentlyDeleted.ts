@@ -3,7 +3,7 @@ import { desktop } from "@chain/sdk";
 import { parseStoredDate } from "../../../shared/lib/date";
 import { eraseCourse } from "../../courses/lib/courses";
 import { eraseModules } from "../../courses/lib/modules";
-import { erasePages } from "../../courses/lib/pages";
+import { erasePages } from "../../courses/lib/page/actions";
 
 export const KEEP_DAYS = 30;
 

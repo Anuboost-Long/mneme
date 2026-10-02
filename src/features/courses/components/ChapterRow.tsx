@@ -5,7 +5,7 @@ import CourseIcon from "../../../shared/ui/CourseIcon";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { completionStatusLabels, type CompletionStatus } from "../lib/completion-status";
 import type { Module } from "../lib/modules";
-import type { PageProgress } from "../lib/pages";
+import type { PageProgress } from "../lib/page/types";
 import ItemMenu from "./ItemMenu";
 import StatusPicker, { statusMarkerStyles } from "./StatusPicker";
 

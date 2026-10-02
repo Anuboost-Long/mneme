@@ -6,7 +6,8 @@ import Dialog from "../../../shared/ui/Dialog";
 import Select from "../../../shared/ui/Select";
 import { BodyText } from "../../../shared/ui/Typography";
 import { getModuleDestinations, type ModuleLink } from "../lib/modules";
-import { movePage, type Page } from "../lib/pages";
+import type { Page } from "../lib/page/types";
+import { movePage } from "../lib/page/actions";
 
 export default function MovePageDialog({ page, onClose, onMoved }: Readonly<{
   page: Page;

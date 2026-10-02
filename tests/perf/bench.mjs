@@ -36,7 +36,7 @@ const midPage = database.prepare('SELECT id FROM page WHERE module_id = ? LIMIT 
 
 const courses = await import('../../src/features/courses/lib/courses.ts');
 const modules = await import('../../src/features/courses/lib/modules.ts');
-const pages = await import('../../src/features/courses/lib/pages.ts');
+const pages = await import('../../src/features/courses/lib/page/table.ts');
 const highlights = await import('../../src/features/courses/lib/highlights.ts');
 const recordings = await import('../../src/features/courses/lib/recordings.ts');
 const dashboard = await import('../../src/features/home/lib/dashboard.ts');

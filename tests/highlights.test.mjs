@@ -6,7 +6,8 @@ useTestDesktop();
 const { initDb } = await import('../src/shared/lib/db/index.ts');
 const { createCourse } = await import('../src/features/courses/lib/courses.ts');
 const { createModule } = await import('../src/features/courses/lib/modules.ts');
-const { createPage, getPage, updatePage } = await import('../src/features/courses/lib/pages.ts');
+const { getPage } = await import('../src/features/courses/lib/page/table.ts');
+const { createPage, updatePage } = await import('../src/features/courses/lib/page/actions.ts');
 const { getModuleHighlights } = await import('../src/features/courses/lib/highlights.ts');
 await initDb();
 

@@ -3,7 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getPageAudio, type PageAudio } from "../features/audiobook/lib/pageAudio";
 import PageDetailPage from "../features/courses/pages/PageDetailPage";
 import { getModule } from "../features/courses/lib/modules";
-import { getPage, markPageOpened, type Page as PageRecord } from "../features/courses/lib/pages";
+import type { Page as PageRecord } from "../features/courses/lib/page/types";
+import { getPage } from "../features/courses/lib/page/table";
+import { markPageOpened } from "../features/courses/lib/page/actions";
 import { updateCourse } from "../features/courses/lib/courses";
 import { useCourses } from "../features/courses/lib/coursesState";
 

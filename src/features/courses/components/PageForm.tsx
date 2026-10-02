@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import clsx from "clsx";
-import { createPage, PageType, pageTypes, updatePage, type Page } from "../lib/pages";
+import { PageType, pageTypes, type Page } from "../lib/page/types";
+import { createPage, updatePage } from "../lib/page/actions";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";

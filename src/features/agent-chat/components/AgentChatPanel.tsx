@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import Select from "../../../shared/ui/Select";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getPage } from "../../courses/lib/pages";
+import { getPage } from "../../courses/lib/page/table";
 import { useAgentChat } from "../lib/useAgentChat";
 import AgentPicker from "./AgentPicker";
 import ConversationPane from "./ConversationPane";

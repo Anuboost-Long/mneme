@@ -2,7 +2,7 @@ import { desktop } from "@chain/sdk";
 
 import { localDay } from "../../../shared/lib/studyDays";
 import { CompletionStatus } from "../../courses/lib/completion-status";
-import type { PageType } from "../../courses/lib/pages";
+import type { PageType } from "../../courses/lib/page/types";
 
 export type RecentPage = {
   id: number;

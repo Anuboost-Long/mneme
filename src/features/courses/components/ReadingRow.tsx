@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import CourseIcon from "../../../shared/ui/CourseIcon";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { CompletionStatus, completionStatusLabels } from "../lib/completion-status";
-import { pageContentPreview } from "../lib/pages";
+import { pageContentPreview } from "../lib/page/types";
 import { pageTypeLabels } from "./PageForm";
 import ItemMenu from "./ItemMenu";
 import { pageMeta, readingTime, typeGlyphs, type PageItemProps } from "./pageDisplay";

@@ -20,7 +20,7 @@ import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
 import { DATE_GROUP_VALUES, groupByDate } from "../../../shared/lib/dateGroups";
 import { courseDetails, type Course } from "../lib/courses";
 import { useFileUrl } from "../../../shared/lib/useFileUrl";
-import type { PageProgress } from "../lib/pages";
+import type { PageProgress } from "../lib/page/types";
 import { ModuleStatus, moduleStatuses, updateModule, type Module } from "../lib/modules";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 

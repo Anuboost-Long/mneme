@@ -1,5 +1,5 @@
 import { CompletionStatus, completionStatusLabels } from "../lib/completion-status";
-import { pageContentPreview, PageType, type Page } from "../lib/pages";
+import { pageContentPreview, PageType, type Page } from "../lib/page/types";
 import type { ItemAction } from "./ItemMenu";
 import { pageTypeLabels } from "./PageForm";
 

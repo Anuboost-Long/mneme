@@ -1,7 +1,9 @@
 import { extractImages, toBase64 } from "../../../shared/lib/htmlImages";
 import { getCourse, getCourses } from "../../courses/lib/courses";
 import { getModule, getModules } from "../../courses/lib/modules";
-import { createPage, getPage, getPages, searchPages, updatePage, type Page } from "../../courses/lib/pages";
+import type { Page } from "../../courses/lib/page/types";
+import { getPage, getPages, searchPages } from "../../courses/lib/page/table";
+import { createPage, updatePage } from "../../courses/lib/page/actions";
 import { completionStatusLabels } from "../../courses/lib/completion-status";
 import { pageTypeLabels } from "../../courses/components/PageForm";
 

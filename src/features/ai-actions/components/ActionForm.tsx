@@ -5,7 +5,7 @@ import { TextArea, TextInput } from "../../../shared/ui/Input";
 import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { pageTypeLabels } from "../../courses/components/PageForm";
-import { pageTypes, type PageType } from "../../courses/lib/pages";
+import { pageTypes, type PageType } from "../../courses/lib/page/types";
 import { ActionOutput, ActionScope, createAction, updateAction, type ActionInput, type AiAction } from "../lib/actions";
 import ActionIcon, { actionIconLabels, actionIcons } from "./ActionIcon";
 

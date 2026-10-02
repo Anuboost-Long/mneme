@@ -1,79 +1,18 @@
 import { desktop, sql, type Values } from "@chain/sdk";
 
-import { savePositions } from "../../../shared/lib/db/positions";
-import type { HighlightRow } from "../../../shared/lib/db/schema/highlight";
-import type { PageRow } from "../../../shared/lib/db/schema/page";
-import { CompletionStatus } from "./completion-status";
-import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
-import { reconcileHighlights, syncPageHighlights } from "./highlights";
-import { deletePageAudios } from "../../audiobook/lib/pageAudio";
-import { copyImage, deleteImage, storeInlineImages } from "./page-image";
-import { recordStudy } from "../../../shared/lib/studyDays";
-import { copyAttachments, deleteAttachments } from "./attachments";
-import { copyRecordings, deleteRecordings } from "./recordings";
-
-// Numeric, not string, values — see completion-status.ts for why.
-export enum PageType {
-  Lesson = 1,
-  Lecture = 2,
-  Exercise = 3,
-  Discussion = 4,
-  Assignment = 5,
-  Notes = 6,
-  Reading = 7,
-  Revision = 8,
-  Custom = 9
-}
-
-// A numeric enum's `Object.values()` also reverse-maps names to numbers,
-// so callers that need every type as a plain list (a `<select>`'s
-// options, for example) use this instead of `Object.values`.
-export const pageTypes: PageType[] = [
-  PageType.Lesson,
-  PageType.Lecture,
-  PageType.Exercise,
-  PageType.Discussion,
-  PageType.Assignment,
-  PageType.Notes,
-  PageType.Reading,
-  PageType.Revision,
-  PageType.Custom
-];
-
-export type Page = {
-  id: number;
-  module_id: number;
-  title: string;
-  type: PageType;
-  content: string | null;
-  status: CompletionStatus;
-  progress: number;
-  bookmarked: boolean;
-  icon: string | null;
-  cover: string | null;
-  position: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type PageInput = {
-  title: string;
-  type?: PageType;
-  icon?: string | null;
-  cover?: string | null;
-  content?: string | null;
-  status?: CompletionStatus;
-  progress?: number;
-  bookmarked?: boolean;
-};
-
-export type PageFilter = {
-  type?: PageType;
-  status?: CompletionStatus;
-  bookmarked?: boolean;
-  createdFrom?: string;
-  createdTo?: string;
-};
+import { savePositions } from "../../../../shared/lib/db/positions";
+import type { HighlightRow } from "../../../../shared/lib/db/schema/highlight";
+import type { PageRow } from "../../../../shared/lib/db/schema/page";
+import { recordStudy } from "../../../../shared/lib/studyDays";
+import { deletePageAudios } from "../../../audiobook/lib/pageAudio";
+import { copyAttachments, deleteAttachments } from "../attachments";
+import { CompletionStatus } from "../completion-status";
+import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "../course-image";
+import { reconcileHighlights, syncPageHighlights } from "../highlights";
+import { copyImage, deleteImage, storeInlineImages } from "../page-image";
+import { copyRecordings, deleteRecordings } from "../recordings";
+import { getPage, getPages, pageTable, toPage } from "./table";
+import { PageType, type PageInput } from "./types";
 
 function pageTitle(title: string) {
   if (!title.trim()) throw new Error("Enter a page title.");
@@ -82,24 +21,6 @@ function pageTitle(title: string) {
 
 function clampProgress(progress: number) {
   return Math.min(100, Math.max(0, Math.round(progress)));
-}
-
-export function pageContentPreview(html: string | null) {
-  return (html || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-const pageTable = () => desktop.storage.table<PageRow>("page");
-
-function toPage(row: PageRow): Page {
-  return {
-    ...row,
-    type: row.type as PageType,
-    status: row.status as CompletionStatus,
-    bookmarked: Boolean(row.bookmarked)
-  };
 }
 
 // The highlight table is a derived index of a page's own content, not the
@@ -128,87 +49,6 @@ function reconcileHighlightsSafely(
     console.error("Couldn't reconcile highlights before saving page", error);
     return nextContent;
   }
-}
-
-export async function getPages(moduleId: number, filter: PageFilter = {}) {
-  let query = pageTable().where({
-    module_id: moduleId,
-    deleted_at: null,
-    type: filter.type,
-    status: filter.status,
-    bookmarked: filter.bookmarked === undefined ? undefined : Number(filter.bookmarked)
-  });
-  if (filter.createdFrom !== undefined) query = query.where(sql`date(created_at) >= date(${filter.createdFrom})`);
-  if (filter.createdTo !== undefined) query = query.where(sql`date(created_at) <= date(${filter.createdTo})`);
-  const rows = await query.orderBy("position", "created_at", "id").all();
-  return rows.map(toPage);
-}
-
-export type PageProgress = { total: number; done: number };
-
-export function percentDone(progress: PageProgress | undefined) {
-  return progress?.total ? Math.round((progress.done / progress.total) * 100) : 0;
-}
-
-async function queryPageProgress(key: "id" | "course_id", where: string, params: number[]) {
-  const rows = await desktop.storage.query<{ key: number; total: number; done: number }>(
-    `SELECT module.${key} AS key, COUNT(*) AS total, SUM(page.status = ?) AS done
-     FROM page JOIN module ON module.id = page.module_id WHERE page.deleted_at IS NULL ${where} GROUP BY module.${key}`,
-    [CompletionStatus.Completed, ...params]
-  );
-  return new Map(
-    rows.map((row): [number, PageProgress] => [row.key, { total: row.total, done: row.done ?? 0 }])
-  );
-}
-
-export function getModulePageProgress(courseId: number) {
-  return queryPageProgress("id", "AND module.course_id = ?", [courseId]);
-}
-
-export function getCoursePageProgress() {
-  return queryPageProgress("course_id", "", []);
-}
-
-export async function searchPages(query: string) {
-  const trimmed = query.trim();
-  if (!trimmed) return [];
-  const like = `%${trimmed}%`;
-  const rows = await desktop.storage.query<Omit<PageRow, "content">>(
-    `SELECT id, module_id, title, type, status, progress, bookmarked, icon, cover, position, created_at, updated_at, opened_at, deleted_at
-     FROM page WHERE deleted_at IS NULL AND (title LIKE ? OR content LIKE ?) ORDER BY created_at, id`,
-    [like, like]
-  );
-  return rows.map((row) => {
-    const { content: _content, ...summary } = toPage({ ...row, content: null });
-    return summary;
-  });
-}
-
-export type PageLink = {
-  id: number;
-  title: string;
-  module_id: number;
-  module_name: string;
-  course_id: number;
-  in_title: number;
-};
-
-export function searchPageLinks(query: string, limit: number) {
-  const trimmed = query.trim().replace(/[\\%_]/g, "\\$&");
-  const like = `%${trimmed}%`;
-  return desktop.storage.query<PageLink>(
-    `SELECT page.id, page.title, page.module_id, module.name AS module_name, module.course_id,
-       page.title LIKE ? ESCAPE '\\' AS in_title
-     FROM page JOIN module ON module.id = page.module_id
-     WHERE page.deleted_at IS NULL AND (page.title LIKE ? ESCAPE '\\' OR page.content LIKE ? ESCAPE '\\')
-     ORDER BY in_title DESC, page.title LIKE ? ESCAPE '\\' DESC, page.title COLLATE NOCASE LIMIT ?`,
-    [like, like, like, `${trimmed}%`, limit]
-  );
-}
-
-export async function getPage(id: number) {
-  const row = await pageTable().where({ id, deleted_at: null }).first();
-  return row ? toPage(row) : undefined;
 }
 
 async function pageContent(content: string | null | undefined) {

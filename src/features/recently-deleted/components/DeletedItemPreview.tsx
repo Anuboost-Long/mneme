@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 
 import { Caption } from "../../../shared/ui/Typography";
-import { pageContentPreview } from "../../courses/lib/pages";
+import { pageContentPreview } from "../../courses/lib/page/types";
 import { getDeletedPages, type DeletedItem, type DeletedPage } from "../lib/recentlyDeleted";
 
 function groupByModule(pages: DeletedPage[]) {

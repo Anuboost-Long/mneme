@@ -7,7 +7,7 @@ import CourseActions from "../components/CourseActions";
 import { courseDetails, pinnedFirst, withGroupOrder, type Course } from "../lib/courses";
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import DragHandle from "../../../shared/ui/DragHandle";
-import { percentDone, type PageProgress } from "../lib/pages";
+import { percentDone, type PageProgress } from "../lib/page/types";
 
 type ListProps = {
   courses: Course[];

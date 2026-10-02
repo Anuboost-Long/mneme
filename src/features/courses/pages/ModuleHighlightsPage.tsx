@@ -5,8 +5,9 @@ import { BodyText, Caption, PageTitle, SectionTitle } from "../../../shared/ui/T
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import type { Course } from "../lib/courses";
 import type { Module } from "../lib/modules";
-import type { Page } from "../lib/pages";
-import { getPage, updatePage } from "../lib/pages";
+import type { Page } from "../lib/page/types";
+import { getPage } from "../lib/page/table";
+import { updatePage } from "../lib/page/actions";
 import { deleteHighlight, keepOrphanedHighlight, stripHighlight, type Highlight } from "../lib/highlights";
 
 export default function ModuleHighlightsPage({ course, module, moduleReady, pages, highlights, highlightsReady, onRemoveHighlight, onKeepHighlight }: Readonly<{

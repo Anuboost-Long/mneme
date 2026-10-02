@@ -1,6 +1,6 @@
 import { desktop } from "@chain/sdk";
 import type { AiActionRow } from "../../../shared/lib/db";
-import type { PageType } from "../../courses/lib/pages";
+import type { PageType } from "../../courses/lib/page/types";
 import { getConnections } from "../../agent-chat/lib/connections";
 
 // What content an action is given: the selection (or the whole page when

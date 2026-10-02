@@ -1,4 +1,4 @@
-import { PageType } from "./pages";
+import { PageType } from "./page/types";
 
 export type ParsedImport = {
   title: string;

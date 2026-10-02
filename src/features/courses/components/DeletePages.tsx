@@ -1,6 +1,6 @@
 import { useState } from "react";
 import clsx from "clsx";
-import { deletePages } from "../lib/pages";
+import { deletePages } from "../lib/page/actions";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
 

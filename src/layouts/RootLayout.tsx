@@ -12,7 +12,7 @@ import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import CourseForm from "../features/courses/components/CourseForm";
 import { storeInlineIcons } from "../features/courses/lib/course-image";
 import { getCourses } from "../features/courses/lib/courses";
-import { storeInlinePageImages } from "../features/courses/lib/pages";
+import { storeInlinePageImages } from "../features/courses/lib/page/actions";
 import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
 import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "../features/recently-deleted/lib/recentlyDeleted";

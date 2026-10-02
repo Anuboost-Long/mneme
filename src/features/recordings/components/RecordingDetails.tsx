@@ -9,7 +9,7 @@ import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
 import PlaybackDeck, { PlaybackKeys } from "../../../shared/ui/PlaybackDeck";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { escapeHtml } from "../../ai-actions/lib/editorHtml";
-import { appendToPage, deleteRecordingFromPage } from "../../courses/lib/pages";
+import { appendToPage, deleteRecordingFromPage } from "../../courses/lib/page/actions";
 import type { RecordingListItem } from "../../courses/lib/recordings";
 import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
 

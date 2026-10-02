@@ -98,15 +98,25 @@ This is the scaffold produced by `chain init`:
     (`initDb()`) also applies pending ones.
   - Never edit a shipped migration — the runner stores a checksum. Add
     the next one instead.
-  - `features/<feature>/lib/*.ts` maps a table's raw `Row` type onto an
-    app-facing type (e.g. `bookmarked` 0/1 -> `boolean`, numeric enum
-    columns -> their TS enum) and owns that table's queries — see
-    `features/courses/lib/courses.ts` for the pattern, and
-    `features/courses/lib/completion-status.ts` for why status/type
-    columns are numeric enums (smaller storage) rather than TEXT.
+  - Each table's data access is a folder, `features/<feature>/lib/<entity>/`,
+    split by what a reader is looking for (`features/courses/lib/page/`
+    is the reference):
+    - `types.ts` — the app-facing types and enums, plus pure helpers that
+      only read those shapes (`percentDone`, `pageContentPreview`).
+    - `table.ts` — reading the table: the typed `<entity>Table()`, the
+      mapping from the raw `Row` onto the app-facing type (e.g.
+      `bookmarked` 0/1 -> `boolean`, numeric enum columns -> their TS
+      enum), and the read queries.
+    - `actions.ts` — everything that changes it: create, update, delete,
+      with their validation and side effects (files, other tables).
+    Import from the file that holds the name; there's no `index.ts`.
+    Flat `lib/*.ts` files that predate this move into a folder when a
+    change touches them. See `features/courses/lib/completion-status.ts`
+    for why status/type columns are numeric enums (smaller storage)
+    rather than TEXT.
   - Typed queries are the default: `desktop.storage.table()` for reads
     and writes, `desktop.storage.transaction()` for multi-step writes
-    (`courses.ts` and `modules.ts` show both). When a change touches a
+    (`page/actions.ts` and `courses.ts` show both). When a change touches a
     `lib/*.ts` file that still uses raw `desktop.storage.query`/`execute`,
     move that whole file to `table()` in the same change, not just the
     query you came to edit. Raw SQL stays only where `table()` can't say

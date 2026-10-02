@@ -5,7 +5,7 @@ import type { ModuleRow } from "../../../shared/lib/db/schema/module";
 import type { PageRow } from "../../../shared/lib/db/schema/page";
 import { CompletionStatus, completionStatuses, completionStatusLabels } from "./completion-status";
 import { deleteIcon, deleteReplacedIcon, storeIcon } from "./course-image";
-import { deletionTime, erasePages } from "./pages";
+import { deletionTime, erasePages } from "./page/actions";
 
 export { CompletionStatus as ModuleStatus };
 export const moduleStatuses = completionStatuses;

@@ -6,7 +6,9 @@ const { database, writtenFiles } = useTestDesktop();
 const { initDb } = await import('../src/shared/lib/db/index.ts');
 const { createCourse, deleteCourse } = await import('../src/features/courses/lib/courses.ts');
 const { createModule, deleteModule } = await import('../src/features/courses/lib/modules.ts');
-const { createPage, getPages, getPage, updatePage, deletePage, storeInlinePageImages, PageType } = await import('../src/features/courses/lib/pages.ts');
+const { PageType } = await import('../src/features/courses/lib/page/types.ts');
+const { getPages, getPage } = await import('../src/features/courses/lib/page/table.ts');
+const { createPage, updatePage, deletePage, storeInlinePageImages } = await import('../src/features/courses/lib/page/actions.ts');
 await initDb();
 
 async function module() {

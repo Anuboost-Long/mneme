@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
 import { Caption } from "../../../shared/ui/Typography";
 import { typeGlyphs } from "../../courses/components/pageDisplay";
-import type { PageType } from "../../courses/lib/pages";
+import type { PageType } from "../../courses/lib/page/types";
 import type { WidgetSize } from "../lib/widgets";
 
 // How many 36px rows fit in a widget of this size.

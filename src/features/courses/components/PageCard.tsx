@@ -6,7 +6,7 @@ import { useFileUrl } from "../../../shared/lib/useFileUrl";
 import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { CompletionStatus, completionStatusLabels } from "../lib/completion-status";
-import { pageContentPreview } from "../lib/pages";
+import { pageContentPreview } from "../lib/page/types";
 import ItemMenu from "./ItemMenu";
 import { pageMeta, readingTime, typeGlyphs, type PageItemProps } from "./pageDisplay";
 import { pageTypeLabels } from "./PageForm";

@@ -25,7 +25,7 @@ import type { ActionLocation } from "../../../ai-actions/lib/useAiAction";
 import { createAttachment } from "../../lib/attachments";
 import { storePageFile } from "../../lib/page-files";
 import { hasInlineImages, pageImage, storeInlineImages } from "../../lib/page-image";
-import { updatePage } from "../../lib/pages";
+import { updatePage } from "../../lib/page/actions";
 import AiBlock from "./AiBlock";
 import AlignableImage from "./AlignableImage";
 import AttachmentBlock from "./AttachmentBlock";

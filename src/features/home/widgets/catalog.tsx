@@ -1,6 +1,6 @@
 import { CompletionStatus, completionStatusLabels } from "../../courses/lib/completion-status";
 import type { Course } from "../../courses/lib/courses";
-import { pageTypes } from "../../courses/lib/pages";
+import { pageTypes } from "../../courses/lib/page/types";
 import { pageTypeLabels } from "../../courses/components/PageForm";
 import { pageSorts } from "../lib/dashboard";
 import type { NewWidget, WidgetConfig } from "../lib/widgets";

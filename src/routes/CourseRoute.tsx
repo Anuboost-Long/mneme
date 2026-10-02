@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CoursePage from "../features/courses/pages/CoursePage";
 import { getModules, reorderModules, type Module } from "../features/courses/lib/modules";
-import { getModulePageProgress, type PageProgress } from "../features/courses/lib/pages";
+import type { PageProgress } from "../features/courses/lib/page/types";
+import { getModulePageProgress } from "../features/courses/lib/page/table";
 import { useCourses } from "../features/courses/lib/coursesState";
 
 export default function CourseRoute() {

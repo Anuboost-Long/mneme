@@ -11,7 +11,8 @@ let { database } = useTestDesktop(file);
 const { initDb } = await import('../src/shared/lib/db/index.ts');
 const { createCourse, getCourses, updateCourse, deleteCourse } = await import('../src/features/courses/lib/courses.ts');
 const { createModule, getModules, updateModule } = await import('../src/features/courses/lib/modules.ts');
-const { createPage, getPage, getPages, updatePage, deletePage } = await import('../src/features/courses/lib/pages.ts');
+const { getPage, getPages } = await import('../src/features/courses/lib/page/table.ts');
+const { createPage, updatePage, deletePage } = await import('../src/features/courses/lib/page/actions.ts');
 
 test.after(() => {
   database.close();
