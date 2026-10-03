@@ -9,7 +9,7 @@ export default function RecordingsRoute() {
   const { courses } = useCourses();
   const [recordings, setRecordings] = useState<RecordingListItem[] | null>(null);
 
-  useEffect(() => {
+  function load() {
     let active = true;
     getAllRecordings()
       .then((loaded) => active && setRecordings(loaded))
@@ -17,7 +17,9 @@ export default function RecordingsRoute() {
     return () => {
       active = false;
     };
-  }, []);
+  }
+
+  useEffect(load, []);
 
   return (
     <RecordingsPage
@@ -28,6 +30,7 @@ export default function RecordingsRoute() {
           (current) => current?.map((item) => (item.id === changed.id ? changed : item)) ?? null
         )
       }
+      onPlaced={() => void load()}
       onDelete={(id) =>
         setRecordings((current) => current?.filter((item) => item.id !== id) ?? null)
       }

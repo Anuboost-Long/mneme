@@ -18,7 +18,7 @@ const EXTENSIONS: Record<string, string> = {
   "audio/wav": "wav"
 };
 
-export async function createRecording(pageId: number, audio: Blob, durationMs: number) {
+export async function createRecording(pageId: number | null, audio: Blob, durationMs: number) {
   const mimeType = audio.type.split(";")[0].trim() || "audio/mp4";
   const reference = await desktop.files.write(new Uint8Array(await audio.arrayBuffer()), {
     extension: EXTENSIONS[mimeType] ?? "m4a"
@@ -62,6 +62,10 @@ export async function copyRecordings(content: string, pageId: number) {
     copied = copied.split(`data-recording-id="${id}"`).join(`data-recording-id="${copy.id}"`);
   }
   return copied;
+}
+
+export async function setRecordingPage(id: number, pageId: number) {
+  await updateRecordingColumns(id, { page_id: pageId });
 }
 
 export async function renameRecording(id: number, name: string) {

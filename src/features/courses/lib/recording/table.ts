@@ -21,9 +21,9 @@ export function getAllRecordings() {
   return desktop.storage.query<RecordingListItem>(
     `SELECT recording.*, page.title AS page_title, page.module_id, module.name AS module_name,
        module.course_id, course.name AS course_name, course.color AS course_color
-     FROM recording JOIN page ON page.id = recording.page_id JOIN module ON module.id = page.module_id
-     JOIN course ON course.id = module.course_id
-     WHERE page.deleted_at IS NULL
+     FROM recording LEFT JOIN page ON page.id = recording.page_id
+     LEFT JOIN module ON module.id = page.module_id LEFT JOIN course ON course.id = module.course_id
+     WHERE recording.page_id IS NULL OR page.deleted_at IS NULL
      ORDER BY recording.created_at DESC, recording.id DESC`,
     []
   );
@@ -31,7 +31,7 @@ export function getAllRecordings() {
 
 export function insertRecording(
   values: Values<RecordingRow> & {
-    page_id: number;
+    page_id: number | null;
     name: string;
     file_reference: string;
     mime_type: string;

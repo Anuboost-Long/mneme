@@ -175,3 +175,21 @@ test("a new page counts as opened when it was made, however it was inserted", as
   assert.equal(restored.opened_at, "2025-05-05 10:00:00");
   await deletePage(created.id);
 });
+
+test("addRecordingToPage puts a page-less recording on the page, with its transcript when asked", async () => {
+  const { addRecordingToPage } = await import("../src/features/courses/lib/page/actions.ts");
+  const { createRecording, getRecording, updateTranscriptText } =
+    await import("../src/features/courses/lib/recording/actions.ts");
+  const { id: moduleId } = await module();
+  const page = await createPage(moduleId, { title: "Week 3", content: "<p>Notes</p>" });
+  const { id } = await createRecording(null, new Blob(["audio"], { type: "audio/mp4" }), 900);
+  await updateTranscriptText(id, "First point\n\n Second <point> ");
+
+  await addRecordingToPage(await getRecording(id), page.id, true);
+
+  assert.equal((await getRecording(id)).page_id, page.id);
+  assert.equal(
+    (await getPage(page.id)).content,
+    `<p>Notes</p><div data-recording-id="${id}"></div><p>First point</p><p>Second &lt;point&gt;</p>`
+  );
+});

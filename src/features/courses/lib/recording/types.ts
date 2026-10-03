@@ -1,12 +1,22 @@
 import type { RecordingRow } from "../../../../shared/lib/db/schema/recording";
+import { escapeHtml } from "../import-sanitize";
 
 export type Recording = RecordingRow;
 
 export type RecordingListItem = Recording & {
-  page_title: string;
-  module_id: number;
-  module_name: string;
-  course_id: number;
-  course_name: string;
+  page_title: string | null;
+  module_id: number | null;
+  module_name: string | null;
+  course_id: number | null;
+  course_name: string | null;
   course_color: string | null;
 };
+
+export function transcriptHtml(transcript: string) {
+  return transcript
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join("");
+}

@@ -8,10 +8,10 @@ import { usePlayback } from "../../../shared/lib/usePlayback";
 import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
 import PlaybackDeck, { PlaybackKeys } from "../../../shared/ui/PlaybackDeck";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { escapeHtml } from "../../ai-actions/lib/editorHtml";
 import { appendToPage, deleteRecordingFromPage } from "../../courses/lib/page/actions";
-import type { RecordingListItem } from "../../courses/lib/recording/types";
+import { transcriptHtml, type RecordingListItem } from "../../courses/lib/recording/types";
 import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
+import AddToPageDialog from "./AddToPageDialog";
 
 const button = clsx(
   "h-8 rounded-md px-3 text-sm",
@@ -27,10 +27,12 @@ export const recordingPageLink = (recording: RecordingListItem) =>
 export default function RecordingDetails({
   recording,
   onTranscribed,
+  onPlaced,
   onDeleted
 }: Readonly<{
   recording: RecordingListItem;
   onTranscribed: (transcript: string) => void;
+  onPlaced: () => void;
   onDeleted: () => void;
 }>) {
   const src = useFileUrl(recording.file_reference);
@@ -40,6 +42,7 @@ export default function RecordingDetails({
   const [added, setAdded] = useState(false);
   const [silent, setSilent] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [placing, setPlacing] = useState(false);
 
   async function transcribe() {
     setError(null);
@@ -58,16 +61,10 @@ export default function RecordingDetails({
     }
   }
 
-  async function addToPage() {
-    const lines = (recording.transcript ?? "")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+  async function addTranscriptToPage() {
+    if (recording.page_id === null) return;
     try {
-      await appendToPage(
-        recording.page_id,
-        lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
-      );
+      await appendToPage(recording.page_id, transcriptHtml(recording.transcript ?? ""));
       setAdded(true);
     } catch (error_) {
       setError(errorMessage(error_, "Couldn’t add the transcript to the page. Try again."));
@@ -146,22 +143,35 @@ export default function RecordingDetails({
         >
           {recording.transcript ? "Transcribe again" : "Transcribe"}
         </button>
-        {recording.transcript && (
+        {recording.page_id === null ? (
           <button
             type="button"
-            disabled={progress !== null || added}
-            onClick={() => void addToPage()}
+            disabled={progress !== null}
+            onClick={() => setPlacing(true)}
             className={button}
           >
-            Add transcript to page
+            Add to page…
           </button>
+        ) : (
+          <>
+            {recording.transcript && (
+              <button
+                type="button"
+                disabled={progress !== null || added}
+                onClick={() => void addTranscriptToPage()}
+                className={button}
+              >
+                Add transcript to page
+              </button>
+            )}
+            <Link
+              to={recordingPageLink(recording)}
+              className={clsx(button, "inline-flex items-center")}
+            >
+              Open page
+            </Link>
+          </>
         )}
-        <Link
-          to={recordingPageLink(recording)}
-          className={clsx(button, "inline-flex items-center")}
-        >
-          Open page
-        </Link>
         <button
           type="button"
           onClick={() => setDeleting(true)}
@@ -177,12 +187,26 @@ export default function RecordingDetails({
       {deleting && (
         <ConfirmDeleteDialog
           title="Delete recording?"
-          message={`“${recording.name}” and its transcript will be permanently deleted, and removed from “${recording.page_title}”. This can’t be undone.`}
+          message={
+            recording.page_title === null
+              ? `“${recording.name}” and its transcript will be permanently deleted. This can’t be undone.`
+              : `“${recording.name}” and its transcript will be permanently deleted, and removed from “${recording.page_title}”. This can’t be undone.`
+          }
           confirmLabel="Delete recording"
           failure="Couldn’t delete this recording. Try again."
           onConfirm={() => deleteRecordingFromPage(recording.id, recording.page_id)}
           onClose={() => setDeleting(false)}
           onDeleted={onDeleted}
+        />
+      )}
+      {placing && (
+        <AddToPageDialog
+          recording={recording}
+          onAdded={() => {
+            setPlacing(false);
+            onPlaced();
+          }}
+          onClose={() => setPlacing(false)}
         />
       )}
     </div>

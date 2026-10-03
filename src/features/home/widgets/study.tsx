@@ -95,18 +95,21 @@ export function RecordingsList({
 }: Readonly<{ limit: number; refreshKey?: number }>) {
   const recordings = useWidgetData(() => getRecentRecordings(limit), `${limit}-${refreshKey}`);
   if (!recordings) return null;
-  if (recordings.length === 0)
-    return <WidgetNote>Recordings you make on pages show up here.</WidgetNote>;
+  if (recordings.length === 0) return <WidgetNote>Recordings you make show up here.</WidgetNote>;
   return (
     <Rows>
       {recordings.map((recording) => (
         <RowLink
           key={recording.id}
-          to={pageLink({
-            id: recording.page_id,
-            module_id: recording.module_id,
-            course_id: recording.course_id
-          })}
+          to={
+            recording.page_id === null
+              ? "/recordings"
+              : pageLink({
+                  id: recording.page_id,
+                  module_id: recording.module_id ?? 0,
+                  course_id: recording.course_id ?? 0
+                })
+          }
         >
           <svg
             className={clsx("size-4 shrink-0 text-muted")}
@@ -123,7 +126,10 @@ export function RecordingsList({
           </svg>
           <span className={clsx("min-w-0 flex-1 truncate")}>
             <span className={clsx("font-medium")}>{recording.name}</span>
-            <span className={clsx("text-muted")}> · {recording.page_title}</span>
+            <span className={clsx("text-muted")}>
+              {" "}
+              · {recording.page_title ?? "Recordings only"}
+            </span>
           </span>
           <Caption as="span" tone="muted" className={clsx("shrink-0 tabular-nums")}>
             {formatDuration(recording.duration_ms)}

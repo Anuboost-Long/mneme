@@ -4,6 +4,7 @@ import JSZip from "jszip";
 import { isFileReference } from "../../../../shared/lib/fileReference";
 import {
   getBackupRows,
+  hasRecording,
   insertAttachmentRow,
   insertIfMissing,
   insertRecordingRow,
@@ -224,6 +225,20 @@ export async function restoreBackup(backup: Backup) {
       widgets: layout.widgets,
       created_at: layout.created_at,
       updated_at: layout.updated_at
+    });
+  }
+  for (const recording of backup.recordings ?? []) {
+    if (recording.page_id !== null || !files.has(recording.file_reference)) continue;
+    if (await hasRecording(recording.name, recording.created_at)) continue;
+    await insertRecordingRow({
+      page_id: null,
+      name: recording.name,
+      file_reference: await files.restore(recording.file_reference),
+      mime_type: recording.mime_type,
+      duration_ms: recording.duration_ms,
+      transcript: recording.transcript,
+      segments: recording.segments,
+      created_at: recording.created_at
     });
   }
   if (backup.widgets?.length && !(await hasHomeWidgets())) await insertHomeWidgets(backup.widgets);

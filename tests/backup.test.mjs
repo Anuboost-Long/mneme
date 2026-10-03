@@ -178,3 +178,24 @@ test('Home widgets and saved layouts are backed up, without overwriting an exist
   assert.deepEqual((await getWidgets([])).map((widget) => widget.kind), ['continue']);
   assert.equal((await getLayouts()).length, 1);
 });
+
+test("a recording kept only in Recordings is backed up and restored once, still without a page", async () => {
+  const { deleteRecording } = await import("../src/features/courses/lib/recording/actions.ts");
+  const { id } = await createRecording(
+    null,
+    new Blob([Buffer.from("loose audio")], { type: "audio/mp4" }),
+    2500
+  );
+  const backup = await readBackupFile(new File([await backupArchive(await createBackup())], "b.zip"));
+  assert.ok(backup.recordings.some((row) => row.id === id && row.page_id === null));
+  await deleteRecording(id);
+
+  await restoreBackup(backup);
+  await restoreBackup(backup);
+  const restored = database
+    .prepare("SELECT page_id, file_reference, duration_ms FROM recording WHERE page_id IS NULL")
+    .all();
+  assert.equal(restored.length, 1);
+  assert.equal(restored[0].duration_ms, 2500);
+  assert.equal(Buffer.from(writtenFiles.get(restored[0].file_reference)).toString(), "loose audio");
+});

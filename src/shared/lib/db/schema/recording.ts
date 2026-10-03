@@ -9,7 +9,7 @@ export class Recording {
 
   @ForeignKey(() => Page, { onDelete: "cascade" })
   @Index({ name: "recording_page" })
-  page_id!: number;
+  page_id!: number | null;
 
   name!: string;
 

@@ -42,10 +42,10 @@ export type RecentRecording = {
   name: string;
   duration_ms: number;
   created_at: string;
-  page_id: number;
-  page_title: string;
-  module_id: number;
-  course_id: number;
+  page_id: number | null;
+  page_title: string | null;
+  module_id: number | null;
+  course_id: number | null;
 };
 
 export type RecentHighlight = {

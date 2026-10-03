@@ -8,7 +8,13 @@ import { CompletionStatus } from "../completion-status";
 import { reconcileHighlights, syncPageHighlights } from "../highlight/actions";
 import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "../icon/actions";
 import { copyImage, deleteImage, storeInlineImages } from "../page-image";
-import { copyRecordings, deleteRecording, deleteRecordings } from "../recording/actions";
+import {
+  copyRecordings,
+  deleteRecording,
+  deleteRecordings,
+  setRecordingPage
+} from "../recording/actions";
+import { transcriptHtml, type Recording } from "../recording/types";
 import {
   deletePageRows,
   getPage,
@@ -160,8 +166,19 @@ export async function insertBlocks(id: number, html: string, where: { after?: st
   return updatePage(id, { content: doc.body.innerHTML });
 }
 
-export async function deleteRecordingFromPage(recordingId: number, pageId: number) {
+export async function addRecordingToPage(
+  recording: Pick<Recording, "id" | "transcript">,
+  pageId: number,
+  withTranscript: boolean
+) {
+  const transcript = withTranscript ? transcriptHtml(recording.transcript ?? "") : "";
+  await appendToPage(pageId, `<div data-recording-id="${recording.id}"></div>${transcript}`);
+  await setRecordingPage(recording.id, pageId);
+}
+
+export async function deleteRecordingFromPage(recordingId: number, pageId: number | null) {
   await deleteRecording(recordingId);
+  if (pageId === null) return;
   const page = await getPage(pageId);
   const content = page?.content?.replace(
     new RegExp(`<div data-recording-id="${recordingId}"[^>]*></div>`, "g"),

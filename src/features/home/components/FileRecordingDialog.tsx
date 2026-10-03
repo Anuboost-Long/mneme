@@ -7,32 +7,33 @@ import { formatDuration } from "../../../shared/lib/formatDuration";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";
-import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
-import { escapeHtml } from "../../ai-actions/lib/editorHtml";
+import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { getModuleDestinations } from "../../courses/lib/module/actions";
-import {
-  searchPageLinks,
-  appendToPage,
-  createPage,
-  erasePage
-} from "../../courses/lib/page/actions";
+import { appendToPage, createPage, erasePage } from "../../courses/lib/page/actions";
 import { PageType } from "../../courses/lib/page/types";
 import { createRecording, renameRecording } from "../../courses/lib/recording/actions";
+import { transcriptHtml } from "../../courses/lib/recording/types";
 import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
-import { getPages } from "../lib/dashboard/actions";
 import { useWidgetData } from "../lib/useWidgetData";
 import { pageLink } from "../widgets/parts";
+import PagePicker, { type PageTarget } from "./PagePicker";
 
 export type Take = { audio: Blob; durationMs: number };
 
-type Target = { id: number; title: string; module_id: number; course_id: number; where: string };
+type Destination = "existing" | "new" | "recordings";
 
 type Stage =
   | { name: "choosing" }
   | { name: "saving" }
   | { name: "transcribing"; progress: number }
-  | { name: "done"; page: Target; transcript: "none" | "added" | "silent" }
-  | { name: "failed"; page: Target; message: string };
+  | { name: "done"; page: PageTarget | null; transcript: "none" | "added" | "silent" }
+  | { name: "failed"; page: PageTarget | null; message: string };
+
+const destinationLabels: Record<Destination, string> = {
+  existing: "Existing page",
+  new: "New page",
+  recordings: "Recordings only"
+};
 
 const defaultName = () =>
   `Recording ${new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
@@ -50,45 +51,23 @@ export default function FileRecordingDialog({
   onFiled: () => void;
   onClose: () => void;
 }>) {
-  const [destination, setDestination] = useState<"existing" | "new">("existing");
+  const [destination, setDestination] = useState<Destination>("existing");
   const [moduleId, setModuleId] = useState(0);
   const [pageTitle, setPageTitle] = useState("");
   const modules = useWidgetData(getModuleDestinations, "modules");
-  const [query, setQuery] = useState("");
-  const [target, setTarget] = useState<Target | null>(null);
+  const [target, setTarget] = useState<PageTarget | null>(null);
   const [name, setName] = useState(defaultName);
   const [stage, setStage] = useState<Stage>({ name: "choosing" });
   const [error, setError] = useState<string | null>(null);
 
-  const matches = useWidgetData(async (): Promise<Target[]> => {
-    if (query.trim()) {
-      const pages = await searchPageLinks(query, 8);
-      return pages.map((page) => ({
-        id: page.id,
-        title: page.title,
-        module_id: page.module_id,
-        course_id: page.course_id,
-        where: page.module_name
-      }));
-    }
-    const recent = await getPages({}, "opened", 6);
-    return recent.map((page) => ({
-      id: page.id,
-      title: page.title,
-      module_id: page.module_id,
-      course_id: page.course_id,
-      where: `${page.course_name} · ${page.module_name}`
-    }));
-  }, query);
-  const chosen = target ?? (query.trim() ? null : matches?.[0]) ?? null;
   // A new page goes in the module of the page opened last, unless changed.
   const module =
     modules?.find((item) => item.id === moduleId) ??
-    modules?.find((item) => item.id === matches?.[0]?.module_id) ??
+    modules?.find((item) => item.id === target?.module_id) ??
     modules?.[0];
 
-  async function destinationPage(): Promise<Target | null> {
-    if (destination === "existing") return chosen;
+  async function destinationPage(): Promise<PageTarget | null> {
+    if (destination === "existing") return target;
     if (!module) return null;
     const page = await createPage(module.id, {
       title: pageTitle.trim() || name.trim() || defaultName(),
@@ -104,7 +83,7 @@ export default function FileRecordingDialog({
   }
 
   async function file(transcribe: boolean) {
-    if (destination === "existing" ? !chosen : !module) {
+    if (destination === "existing" ? !target : destination === "new" && !module) {
       setError(
         destination === "existing"
           ? "Choose the page to save this recording on."
@@ -114,15 +93,17 @@ export default function FileRecordingDialog({
     }
     setError(null);
     setStage({ name: "saving" });
-    let page: Target | null = null;
+    let page: PageTarget | null = null;
     let recordingId: number | null = null;
     try {
-      page = await destinationPage();
-      if (!page) throw new Error("Couldn’t find where to save the recording.");
-      const recording = await createRecording(page.id, take.audio, take.durationMs);
+      if (destination !== "recordings") {
+        page = await destinationPage();
+        if (!page) throw new Error("Couldn’t find where to save the recording.");
+      }
+      const recording = await createRecording(page?.id ?? null, take.audio, take.durationMs);
       recordingId = recording.id;
       if (name.trim() && name.trim() !== recording.name) await renameRecording(recording.id, name);
-      await appendToPage(page.id, `<div data-recording-id="${recording.id}"></div>`);
+      if (page) await appendToPage(page.id, `<div data-recording-id="${recording.id}"></div>`);
       onFiled();
       if (!transcribe) {
         setStage({ name: "done", page, transcript: "none" });
@@ -132,18 +113,11 @@ export default function FileRecordingDialog({
       const text = await transcribeRecording(recording, (progress) =>
         setStage({ name: "transcribing", progress })
       );
-      const paragraphs = text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
-      if (paragraphs.length)
-        await appendToPage(
-          page.id,
-          paragraphs.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
-        );
-      setStage({ name: "done", page, transcript: paragraphs.length > 0 ? "added" : "silent" });
+      const paragraphs = transcriptHtml(text);
+      if (page && paragraphs) await appendToPage(page.id, paragraphs);
+      setStage({ name: "done", page, transcript: paragraphs ? "added" : "silent" });
     } catch (error_) {
-      if (recordingId !== null && page) {
+      if (recordingId !== null) {
         setStage({ name: "failed", page, message: transcribeError(error_) });
         return;
       }
@@ -166,21 +140,31 @@ export default function FileRecordingDialog({
               <div className={clsx("space-y-4")}>
                 <BodyText>
                   {stage.name === "done" && stage.transcript === "added" && (
-                    <>Saved on “{stage.page.title}”, with its transcript underneath.</>
+                    <>
+                      {stage.page
+                        ? `Saved on “${stage.page.title}”, with its transcript underneath.`
+                        : "Saved to Recordings, with its transcript."}
+                    </>
                   )}
                   {stage.name === "done" && stage.transcript === "silent" && (
                     <>
-                      Saved on “{stage.page.title}”. No speech was found in it, so there’s no
-                      transcript.
+                      {stage.page ? `Saved on “${stage.page.title}”.` : "Saved to Recordings."} No
+                      speech was found in it, so there’s no transcript.
                     </>
                   )}
                   {stage.name === "done" && stage.transcript === "none" && (
-                    <>Saved on “{stage.page.title}”.</>
+                    <>
+                      {stage.page
+                        ? `Saved on “${stage.page.title}”.`
+                        : "Saved to Recordings. You can add it to a page from there any time."}
+                    </>
                   )}
                   {stage.name === "failed" && (
                     <>
-                      The recording is saved on “{stage.page.title}”, but it couldn’t be
-                      transcribed: {stage.message} You can transcribe it from the page.
+                      The recording is saved{" "}
+                      {stage.page ? `on “${stage.page.title}”` : "to Recordings"}, but it couldn’t
+                      be transcribed: {stage.message} You can transcribe it from{" "}
+                      {stage.page ? "the page" : "Recordings"}.
                     </>
                   )}
                 </BodyText>
@@ -196,13 +180,13 @@ export default function FileRecordingDialog({
                     Close
                   </button>
                   <Link
-                    to={pageLink(stage.page)}
+                    to={stage.page ? pageLink(stage.page) : "/recordings"}
                     className={clsx(
                       "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
                       "hover:bg-action/85"
                     )}
                   >
-                    Open page
+                    {stage.page ? "Open page" : "Open Recordings"}
                   </Link>
                 </div>
               </div>
@@ -234,17 +218,17 @@ export default function FileRecordingDialog({
             return (
               <div className={clsx("space-y-5")}>
                 <BodyText tone="muted">
-                  {formatDuration(take.durationMs)} recorded. Add it to the end of a page, or start
-                  a new page with it.
+                  {formatDuration(take.durationMs)} recorded. Add it to the end of a page, start a
+                  new page with it, or keep it in Recordings and add it to a page later.
                 </BodyText>
                 <TextInput
                   label="Name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                 />
-                <fieldset className={clsx("flex gap-1")}>
+                <fieldset className={clsx("flex flex-wrap gap-1")}>
                   <legend className={clsx("sr-only")}>Save to</legend>
-                  {(["existing", "new"] as const).map((option) => (
+                  {(["existing", "new", "recordings"] as const).map((option) => (
                     <label
                       key={option}
                       className={clsx(
@@ -263,7 +247,7 @@ export default function FileRecordingDialog({
                         onChange={() => setDestination(option)}
                         className={clsx("sr-only")}
                       />
-                      {option === "existing" ? "Existing page" : "New page"}
+                      {destinationLabels[option]}
                     </label>
                   ))}
                 </fieldset>
@@ -293,79 +277,15 @@ export default function FileRecordingDialog({
                     />
                   </div>
                 ) : (
-                  <fieldset className={clsx("min-w-0 space-y-2")}>
-                    <legend>
-                      <Typography as="span" variant="label">
-                        Page
-                      </Typography>
-                    </legend>
-                    <input
-                      type="search"
-                      value={query}
-                      placeholder="Search pages…"
-                      aria-label="Search pages"
-                      onChange={(event) => {
-                        setQuery(event.target.value);
-                        setTarget(null);
-                      }}
-                      className={clsx(
-                        "h-9 w-full rounded-md",
-                        "border border-ink/20 bg-surface",
-                        "px-3 text-sm placeholder:text-muted",
-                        "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                      )}
-                    />
-                    {!query.trim() && <Caption tone="muted">Recently opened</Caption>}
-                    <ul className={clsx("max-h-64 space-y-0.5 overflow-y-auto")}>
-                      {matches?.length === 0 && (
-                        <li className={clsx("px-3 py-2 text-sm text-muted")}>No pages match.</li>
-                      )}
-                      {matches?.map((page) => {
-                        const selected = chosen?.id === page.id;
-                        return (
-                          <li key={page.id}>
-                            <label
-                              className={clsx(
-                                "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2",
-                                selected ? "bg-ink/7" : "hover:bg-ink/4",
-                                "has-focus-visible:outline-1 has-focus-visible:-outline-offset-1 has-focus-visible:outline-ink"
-                              )}
-                            >
-                              <input
-                                type="radio"
-                                name="recording-page"
-                                checked={selected}
-                                onChange={() => setTarget(page)}
-                                className={clsx("sr-only")}
-                              />
-                              <span className={clsx("min-w-0 flex-1")}>
-                                <span className={clsx("block truncate text-sm font-medium")}>
-                                  {page.title}
-                                </span>
-                                <Caption as="span" tone="muted" className={clsx("block truncate")}>
-                                  {page.where}
-                                </Caption>
-                              </span>
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                                className={clsx("shrink-0", !selected && "invisible")}
-                              >
-                                <path d="m3.5 8.5 3 3 6-7" />
-                              </svg>
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </fieldset>
+                  destination === "existing" && (
+                    <PagePicker selected={target} onSelect={setTarget} />
+                  )
+                )}
+                {destination === "recordings" && (
+                  <Caption tone="muted">
+                    It goes on the Recordings screen, where you can play it, transcribe it, and add
+                    it to a page whenever you like.
+                  </Caption>
                 )}
                 {error && (
                   <BodyText role="alert" tone="error">
@@ -393,7 +313,7 @@ export default function FileRecordingDialog({
                       "hover:bg-ink/5"
                     )}
                   >
-                    Save to page
+                    {destination === "recordings" ? "Save" : "Save to page"}
                   </button>
                   <button
                     type="button"
@@ -403,7 +323,7 @@ export default function FileRecordingDialog({
                       "hover:bg-action/85"
                     )}
                   >
-                    Transcribe into page
+                    {destination === "recordings" ? "Save and transcribe" : "Transcribe into page"}
                   </button>
                 </div>
               </div>

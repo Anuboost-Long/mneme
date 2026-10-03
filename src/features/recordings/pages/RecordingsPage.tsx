@@ -24,9 +24,9 @@ const SORTS: SortOption<RecordingListItem, SortKey>[] = [
 function matches(recording: RecordingListItem, query: string) {
   return [
     recording.name,
-    recording.page_title,
-    recording.module_name,
-    recording.course_name,
+    recording.page_title ?? "",
+    recording.module_name ?? "",
+    recording.course_name ?? "",
     recording.transcript ?? ""
   ].some((text) => text.toLowerCase().includes(query));
 }
@@ -39,11 +39,13 @@ export default function RecordingsPage({
   recordings,
   courses,
   onChange,
+  onPlaced,
   onDelete
 }: Readonly<{
   recordings: RecordingListItem[] | null;
   courses: Course[];
   onChange: (recording: RecordingListItem) => void;
+  onPlaced: () => void;
   onDelete: (id: number) => void;
 }>) {
   const [courseFilter, setCourseFilter] = useState("all");
@@ -54,7 +56,11 @@ export default function RecordingsPage({
   );
   const [openId, setOpenId] = useState<number | null>(null);
   const filtered = (recordings ?? []).filter(
-    (recording) => courseFilter === "all" || String(recording.course_id) === courseFilter
+    (recording) =>
+      courseFilter === "all" ||
+      (courseFilter === "none"
+        ? recording.page_id === null
+        : String(recording.course_id) === courseFilter)
   );
   const { query, setQuery, sortValue, setSortValue, visible } = useListView(
     filtered,
@@ -90,6 +96,7 @@ export default function RecordingsPage({
             onFilterChange={setCourseFilter}
             filterOptions={[
               { value: "all", label: "All courses" },
+              { value: "none", label: "Not on a page" },
               ...courses.map((course) => ({ value: String(course.id), label: course.name }))
             ]}
             sortValue={sortValue}
@@ -144,8 +151,9 @@ export default function RecordingsPage({
                                 {recording.name}
                               </span>
                               <Caption as="span" tone="muted" className={clsx("block truncate")}>
-                                {recording.page_title} · {recording.course_name} ›{" "}
-                                {recording.module_name}
+                                {recording.page_title === null
+                                  ? "Not on a page yet"
+                                  : `${recording.page_title} · ${recording.course_name} › ${recording.module_name}`}
                               </Caption>
                             </span>
                             {recording.transcript && (
@@ -191,6 +199,7 @@ export default function RecordingsPage({
                             <RecordingDetails
                               recording={recording}
                               onTranscribed={(transcript) => onChange({ ...recording, transcript })}
+                              onPlaced={onPlaced}
                               onDeleted={() => {
                                 setOpenId(null);
                                 onDelete(recording.id);

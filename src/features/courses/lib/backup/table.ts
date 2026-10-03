@@ -16,7 +16,11 @@ export function getBackupRows() {
     desktop.storage.table<ModuleRow>("module").where({ deleted_at: null }).orderBy("id").all(),
     desktop.storage.table<PageRow>("page").where({ deleted_at: null }).orderBy("id").all(),
     desktop.storage.table<AttachmentRow>("attachment").where(livePageIds).orderBy("id").all(),
-    desktop.storage.table<RecordingRow>("recording").where(livePageIds).orderBy("id").all(),
+    desktop.storage
+      .table<RecordingRow>("recording")
+      .where(sql`page_id IS NULL OR ${livePageIds}`)
+      .orderBy("id")
+      .all(),
     desktop.storage.table<HomeWidgetRow>("home_widget").orderBy("position", "id").all(),
     desktop.storage.table<HomeLayoutRow>("home_layout").orderBy("id").all()
   ]);
@@ -54,6 +58,13 @@ export async function insertAttachmentRow(
   values: Values<AttachmentRow> & Pick<AttachmentRow, "page_id" | "file_name" | "file_path">
 ) {
   return (await desktop.storage.table<AttachmentRow>("attachment").insert(values)).id;
+}
+
+export async function hasRecording(name: string, createdAt: string) {
+  return !!(await desktop.storage
+    .table<RecordingRow>("recording")
+    .where({ name, created_at: createdAt })
+    .first());
 }
 
 export async function insertRecordingRow(

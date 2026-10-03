@@ -105,7 +105,7 @@ export async function getLibraryCounts() {
   }>(
     `SELECT (SELECT COUNT(*) FROM course WHERE deleted_at IS NULL) AS courses, (SELECT COUNT(*) FROM module WHERE deleted_at IS NULL) AS modules,
        (SELECT COUNT(*) FROM page WHERE deleted_at IS NULL) AS pages,
-       (SELECT COUNT(*) FROM recording JOIN page ON page.id = recording.page_id WHERE page.deleted_at IS NULL) AS recordings,
+       (SELECT COUNT(*) FROM recording LEFT JOIN page ON page.id = recording.page_id WHERE recording.page_id IS NULL OR page.deleted_at IS NULL) AS recordings,
        (SELECT COUNT(*) FROM attachment JOIN page ON page.id = attachment.page_id WHERE page.deleted_at IS NULL) AS attachments`
   );
   return row;
@@ -115,8 +115,8 @@ export function getRecentRecordings(limit: number) {
   return desktop.storage.query<RecentRecording>(
     `SELECT recording.id, recording.name, recording.duration_ms, recording.created_at, page.id AS page_id, page.title AS page_title,
        page.module_id, module.course_id
-     FROM recording JOIN page ON page.id = recording.page_id JOIN module ON module.id = page.module_id
-     WHERE page.deleted_at IS NULL ORDER BY recording.created_at DESC LIMIT ?`,
+     FROM recording LEFT JOIN page ON page.id = recording.page_id LEFT JOIN module ON module.id = page.module_id
+     WHERE recording.page_id IS NULL OR page.deleted_at IS NULL ORDER BY recording.created_at DESC LIMIT ?`,
     [limit]
   );
 }

@@ -13,7 +13,7 @@ import type { WidgetProps } from "./types";
 
 const control = clsx("grid size-9 shrink-0 place-items-center rounded-full", "border border-ink/20 bg-surface", "hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink");
 
-// Record from Home, then file the take on a page, optionally transcribed.
+// Record from Home, then file the take on a page or in Recordings, optionally transcribed.
 // A take that isn't filed yet stays (see pendingTake) until it is, or is
 // discarded.
 export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
@@ -46,7 +46,7 @@ export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
         <div className={clsx("flex w-full items-center gap-3", !roomy && "flex-col items-stretch gap-2")}>
           <div className={clsx("min-w-0 flex-1")}>
             <p className={clsx("text-sm font-medium tabular-nums")}>{formatDuration(take.durationMs)} recorded</p>
-            <Caption tone="muted">Not saved to a page yet</Caption>
+            <Caption tone="muted">Not saved yet</Caption>
           </div>
           <div className={clsx("flex gap-2")}>
             <button type="button" onClick={() => setTake(null)} className={clsx("h-8 rounded-md px-3 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}>Discard</button>
@@ -93,7 +93,7 @@ export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
         </button>
         <div className={clsx("min-w-0")}>
           <p className={clsx("text-sm font-medium")}>Record</p>
-          <Caption tone="muted" className={clsx(!roomy && "hidden")}>A lecture or a thought. Save it to a page after, transcribed if you like.</Caption>
+          <Caption tone="muted" className={clsx(!roomy && "hidden")}>A lecture or a thought. Save it to a page or just to Recordings, transcribed if you like.</Caption>
         </div>
       </div>
     );
