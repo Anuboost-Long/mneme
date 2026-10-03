@@ -512,18 +512,26 @@ The application should extract the learning material and create structured pages
 - [x] Extract lists.
 - [x] Extract links.
 - [x] Extract images.
-- [ ] Extract exercise names.
-- [ ] Extract discussion names.
-- [ ] Extract assignment names.
+- [x] Extract exercise names.
+- [x] Extract discussion names.
+- [x] Extract assignment names.
 
-> The last three were tied to the multi-item split below, which real
-> testing showed was the wrong shape (see next note) — a single imported
-> page's type is still guessed from its title (`detectType` in
-> `lms-import.ts`), but there's no per-item name extraction inside one
-> page's content anymore.
+> **3 October 2026:** `findActivities` (`import-sanitize.ts`) finds
+> named exercises, discussions, assignments, activities, quizzes, labs,
+> tutorials, worksheets, homework and projects inside the one imported
+> page. It reads headings, links and bold text, plus list items and
+> paragraphs that carry a number ("Assignment 2"). It skips prose like
+> "Exercise caution…" and drops duplicates. Works for URL and file
+> imports alike. The page's type is still guessed from its title.
 
 ## Import Preview
 
+> **3 October 2026:** detected items came back without splitting: the
+> preview lists the activities found, and the ticked ones become a
+> checklist at the top of the single page. Importing also shows
+> progress (named stages, and "Saving pictures 3 of 12" when it
+> downloads a page's pictures) instead of a frozen dialog.
+>
 > **Deliberately not built this way.** Live testing showed the
 > checklist-of-detected-items shape below made one URL/file explode into
 > many small, confusing pages (a real MDN import once produced 14 of
@@ -551,8 +559,8 @@ Module 1
 
 Steps:
 
-- [ ] ~~Show detected items.~~ (superseded — see note above)
-- [ ] ~~Allow users to uncheck items.~~ (superseded)
+- [x] Show detected items. (The preview lists "Activities found in this page", all ticked.)
+- [x] Allow users to uncheck items. (Ticked ones become an "Activities" checklist at the top of the one imported page; nothing is split into separate pages.)
 - [x] Allow users to rename items. (the one imported page's title is editable before saving)
 - [x] Select destination course. (implicit — import happens from within the target module)
 - [x] Select destination module. (implicit — import happens from within the target module)

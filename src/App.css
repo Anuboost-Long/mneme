@@ -169,12 +169,48 @@
   z-index: 40;
   pointer-events: none;
   border-radius: 10px;
-  box-shadow: 0 0 0 2px var(--action), 0 0 0 100vmax rgb(0 0 0 / 0.45);
-  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+  box-shadow:
+    0 0 0 2px var(--action),
+    0 0 0 100vmax rgb(0 0 0 / 0.45);
+  transition:
+    left 200ms ease,
+    top 200ms ease,
+    width 200ms ease,
+    height 200ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tour-spotlight {
+    transition: none;
+  }
+}
+
+.import-progress {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--action);
+}
+
+.import-progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+.import-progress::-webkit-progress-value {
+  background: var(--action);
+  border-radius: 999px;
+  transition: width 250ms linear;
+}
+
+.import-progress::-moz-progress-bar {
+  background: var(--action);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .import-progress::-webkit-progress-value {
     transition: none;
   }
 }

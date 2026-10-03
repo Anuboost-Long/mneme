@@ -1,7 +1,7 @@
-import { downloadImage } from "../../../shared/lib/downloadImage";
-import { pageImage } from "./page-image";
 import { apiGet } from "../../../shared/lib/api";
+import { downloadImage } from "../../../shared/lib/downloadImage";
 import { detectType, sanitizeChildren, type ParsedImport } from "./import-sanitize";
+import { pageImage } from "./page-image";
 
 export type { ParsedImport };
 
@@ -25,7 +25,7 @@ const JS_RENDERED_HOSTS: [RegExp, string][] = [
   [/(^|\.)docs\.google\.com$/i, "Google Docs"],
   [/(^|\.)coda\.io$/i, "Coda"],
   [/(^|\.)airtable\.com$/i, "Airtable"],
-  [/(^|\.)figma\.com$/i, "Figma"],
+  [/(^|\.)figma\.com$/i, "Figma"]
 ];
 
 function knownJsRenderedHost(url: string): string | undefined {
@@ -38,7 +38,9 @@ export async function fetchLmsPage(url: string): Promise<string> {
   if (!isValidHttpUrl(trimmed)) throw new Error("Enter a valid http:// or https:// URL.");
   const jsRenderedHost = knownJsRenderedHost(trimmed);
   if (jsRenderedHost) {
-    throw new Error(`${jsRenderedHost} pages load their content with JavaScript after the page opens, so this import can’t read them. Copy the content into the editor directly instead.`);
+    throw new Error(
+      `${jsRenderedHost} pages load their content with JavaScript after the page opens, so this import can’t read them. Copy the content into the editor directly instead.`
+    );
   }
   return (await apiGet(trimmed)).body;
 }
@@ -56,12 +58,17 @@ function contentRoot(doc: Document): Element {
 // Downloads the page's pictures and stores them like pasted ones, so the
 // page works offline and its pictures can reach an AI agent. A picture
 // that can't be downloaded (a login-walled site) keeps its web address.
-export async function storePageImages(html: string): Promise<string> {
+export async function storePageImages(
+  html: string,
+  onProgress?: (saved: number, total: number) => void
+): Promise<string> {
   const document = new DOMParser().parseFromString(html, "text/html");
-  for (const image of Array.from(document.querySelectorAll("img"))) {
-    const src = image.getAttribute("src");
-    if (!src || !/^https?:/i.test(src)) continue;
-    const file = await downloadImage(src);
+  const images = Array.from(document.querySelectorAll("img")).filter((image) =>
+    /^https?:/i.test(image.getAttribute("src") ?? "")
+  );
+  for (const [index, image] of images.entries()) {
+    onProgress?.(index, images.length);
+    const file = await downloadImage(image.getAttribute("src") ?? "");
     const stored = file ? await pageImage(file).catch(() => null) : null;
     if (stored) image.setAttribute("src", stored);
   }

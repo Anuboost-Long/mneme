@@ -8,9 +8,9 @@ import { claimSetting } from "../../../shared/lib/settings/actions";
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
 import Dialog from "../../../shared/ui/Dialog";
-import Tour, { type TourStep } from "../../../shared/ui/Tour";
 import DragHandle from "../../../shared/ui/DragHandle";
 import { rowAction } from "../../../shared/ui/rowAction";
+import Tour, { type TourStep } from "../../../shared/ui/Tour";
 import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
 import {
   deleteAction,
@@ -492,7 +492,7 @@ export default function ActionSettings() {
           </BodyText>
         )}
         <ActionRows actions={actions.filter((action) => action.packId === null)} {...rowHandlers} />
-        <div className={clsx("mt-4 flex flex-wrap gap-2")}>
+        <div className={clsx("mt-4 flex flex-wrap items-center gap-2")}>
           <button
             type="button"
             disabled={busy}
@@ -518,7 +518,10 @@ export default function ActionSettings() {
             disabled={busy}
             data-tour="import-pack"
             onClick={() => setDialog({ kind: "import" })}
-            className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}
+            className={clsx(
+              "px-2 py-2 text-sm text-muted underline underline-offset-4",
+              "hover:text-ink"
+            )}
           >
             Import pack
           </button>
@@ -527,7 +530,10 @@ export default function ActionSettings() {
             disabled={busy}
             data-tour="export-actions"
             onClick={() => void saveExport(exportStandaloneActions)}
-            className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}
+            className={clsx(
+              "px-2 py-2 text-sm text-muted underline underline-offset-4",
+              "hover:text-ink"
+            )}
           >
             Export my actions
           </button>
