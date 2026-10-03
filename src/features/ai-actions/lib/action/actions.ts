@@ -1,9 +1,15 @@
 import { getSettingId, putSetting } from "../../../../shared/lib/settings/actions";
 import { getConnections } from "../../../agent-chat/lib/connection/actions";
-import { deleteActionRow, insertAction, saveActionPositions, updateActionColumns } from "./table";
+import {
+  deleteActionRow,
+  insertAction,
+  saveActionPositions,
+  setActionEnabledColumn,
+  updateActionColumns
+} from "./table";
 import { ActionScope, type ActionInput, type AiAction } from "./types";
 
-export { getActions } from "./table";
+export { getActions, getEnabledActions } from "./table";
 
 const connectionKey = "ai-actions.connection-id";
 
@@ -33,6 +39,10 @@ export async function updateAction(id: number, input: ActionInput) {
 
 export async function duplicateAction(action: AiAction) {
   await createAction({ ...action, name: `${action.name} (copy)` });
+}
+
+export async function setActionEnabled(id: number, enabled: boolean) {
+  await setActionEnabledColumn(id, enabled);
 }
 
 export async function deleteAction(id: number) {

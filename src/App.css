@@ -164,6 +164,21 @@
   }
 }
 
+.tour-spotlight {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px var(--action), 0 0 0 100vmax rgb(0 0 0 / 0.45);
+  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight {
+    transition: none;
+  }
+}
+
 /* Quick on purpose: a dialog is something the user asked for, so it
    appears at once and fades in over 180ms; closing (160ms) matches the
    timer in Dialog.tsx. Opacity only, and no backdrop blur: a blur of the

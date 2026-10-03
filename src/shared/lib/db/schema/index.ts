@@ -1,5 +1,6 @@
 // The database schema: one @Table class per table. Edit a class, then run
 // `chain migration add <name>` to generate the migration for the change.
+export { ActionPack, type ActionPackRow } from "./action-pack";
 export { AgentConnection, type AgentConnectionRow } from "./agent-connection";
 export { AgentConversation, type AgentConversationRow } from "./agent-conversation";
 export { AgentMessage, type AgentMessageRow } from "./agent-message";

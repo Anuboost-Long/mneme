@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import CourseIcon from "../../../shared/ui/CourseIcon";
 import { Caption } from "../../../shared/ui/Typography";
 import ActionIcon from "../../ai-actions/components/ActionIcon";
-import { getActionConnection, getActions } from "../../ai-actions/lib/action/actions";
+import { getActionConnection, getEnabledActions } from "../../ai-actions/lib/action/actions";
 import { typeGlyphs } from "../../courses/components/pageDisplay";
 import { pageTypeLabels } from "../../courses/components/PageForm";
 import type { Course } from "../../courses/lib/course/types";
@@ -100,7 +100,7 @@ export function QuickActionsWidget({ widget }: Readonly<WidgetProps>) {
   const navigate = useNavigate();
   const data = useWidgetData(async () => {
     const [actions, connection, [page]] = await Promise.all([
-      getActions(),
+      getEnabledActions(),
       getActionConnection(),
       getPages({}, "opened", 1)
     ]);

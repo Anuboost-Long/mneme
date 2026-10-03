@@ -1269,6 +1269,13 @@ Always allow this action.
 
 Bundle useful AI actions together.
 
+> **Mneme — 3 October 2026:** implemented, see
+> [AI action packs](features/29-ai-action-packs.md). The built-in
+> catalogue goes well beyond the three examples below: 28 packs across
+> study skills, maths and data, natural sciences, health, engineering,
+> humanities, social sciences, business, languages and writing, arts,
+> and teaching.
+
 Example:
 
 ### Programming Pack
@@ -1304,12 +1311,12 @@ Generate References
 
 ## Development Steps
 
-- [ ] Create Action Pack format.
-- [ ] Install pack.
-- [ ] Remove pack.
-- [ ] Enable/disable individual actions.
-- [ ] Export pack.
-- [ ] Import pack.
+- [x] Create Action Pack format.
+- [x] Install pack.
+- [x] Remove pack.
+- [x] Enable/disable individual actions.
+- [x] Export pack.
+- [x] Import pack.
 
 ---
 

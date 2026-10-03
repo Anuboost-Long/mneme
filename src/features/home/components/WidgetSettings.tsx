@@ -6,7 +6,7 @@ import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";
 import { Caption, Typography } from "../../../shared/ui/Typography";
-import { getActions } from "../../ai-actions/lib/action/actions";
+import { getEnabledActions } from "../../ai-actions/lib/action/actions";
 import type { Course } from "../../courses/lib/course/types";
 import { searchPageLinks } from "../../courses/lib/page/actions";
 import { getPagesByIds } from "../lib/dashboard/actions";
@@ -154,7 +154,7 @@ function ActionsField({
   value,
   onChange
 }: Readonly<{ label: string; value: number[]; onChange: (value: number[]) => void }>) {
-  const actions = useWidgetData(getActions, "actions");
+  const actions = useWidgetData(getEnabledActions, "actions");
   return (
     <fieldset className={clsx("min-w-0 space-y-2")}>
       <legend>

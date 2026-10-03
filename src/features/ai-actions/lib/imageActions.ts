@@ -6,6 +6,8 @@ const builtIn = {
   scope: ActionScope.Page,
   output: ActionOutput.Preview,
   pageTypes: null,
+  packId: null,
+  enabled: true,
   position: 0,
   created_at: "",
   updated_at: ""

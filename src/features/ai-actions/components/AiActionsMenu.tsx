@@ -9,8 +9,14 @@ import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { getConnections } from "../../agent-chat/lib/connection/actions";
 import type { AgentConnection } from "../../agent-chat/lib/connection/types";
 import ProfilePicker, { type CourseProfile } from "../../ai-profiles/components/ProfilePicker";
-import { getActionConnectionId, getActions, setActionConnectionId } from "../lib/action/actions";
+import {
+  getActionConnectionId,
+  getEnabledActions,
+  setActionConnectionId
+} from "../lib/action/actions";
 import { ActionScope, type AiAction } from "../lib/action/types";
+import { getPacks } from "../lib/pack/actions";
+import type { ActionPack } from "../lib/pack/types";
 import ActionIcon from "./ActionIcon";
 
 const scopeTags: Partial<Record<ActionScope, string>> = {
@@ -31,6 +37,7 @@ export default function AiActionsMenu({
   const [open, setOpen] = useState(false);
   const [onSelection, setOnSelection] = useState(false);
   const [actions, setActions] = useState<AiAction[]>([]);
+  const [packs, setPacks] = useState<ActionPack[]>([]);
   const [connections, setConnections] = useState<AgentConnection[]>([]);
   const [connectionId, setConnectionId] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -59,12 +66,14 @@ export default function AiActionsMenu({
     setOpen(true);
     setError("");
     try {
-      const [loadedActions, loadedConnections, savedId] = await Promise.all([
-        getActions(),
+      const [loadedActions, loadedPacks, loadedConnections, savedId] = await Promise.all([
+        getEnabledActions(),
+        getPacks(),
         getConnections(),
         getActionConnectionId()
       ]);
       setActions(loadedActions);
+      setPacks(loadedPacks);
       setConnections(loadedConnections);
       setConnectionId(
         loadedConnections.some((connection) => connection.id === savedId)
@@ -89,6 +98,15 @@ export default function AiActionsMenu({
     setOpen(false);
     onRun(connection, action);
   }
+
+  const groups = [
+    { key: "own", name: null, actions: actions.filter((action) => action.packId === null) },
+    ...packs.map((pack) => ({
+      key: `pack-${pack.id}`,
+      name: pack.name,
+      actions: actions.filter((action) => action.packId === pack.id)
+    }))
+  ].filter((group) => group.actions.length > 0);
 
   return (
     <div ref={root} className={clsx("relative")}>
@@ -163,30 +181,41 @@ export default function AiActionsMenu({
               <ProfilePicker course={course} />
             </div>
           )}
-          <ul className={clsx("m-0 max-h-80 list-none overflow-y-auto p-0")}>
-            {actions.map((action) => (
-              <li key={action.id}>
-                <button
-                  type="button"
-                  disabled={connectionId === null}
-                  onClick={() => runAction(action)}
-                  className={clsx(
-                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left",
-                    "hover:bg-ink/7",
-                    "disabled:text-muted disabled:hover:bg-transparent"
-                  )}
-                >
-                  <ActionIcon icon={action.icon} />
-                  <span className={clsx("min-w-0 flex-1 truncate")}>{action.name}</span>
-                  {scopeTags[action.scope] && (
-                    <Caption as="span" tone="muted">
-                      {scopeTags[action.scope]}
-                    </Caption>
-                  )}
-                </button>
-              </li>
+          <div className={clsx("max-h-80 overflow-y-auto")}>
+            {groups.map((group) => (
+              <section key={group.key} aria-label={group.name ?? "Your actions"}>
+                {group.name && (
+                  <Caption as="h3" tone="muted" className={clsx("px-3 pt-3 pb-1 font-medium")}>
+                    {group.name}
+                  </Caption>
+                )}
+                <ul className={clsx("m-0 list-none p-0")}>
+                  {group.actions.map((action) => (
+                    <li key={action.id}>
+                      <button
+                        type="button"
+                        disabled={connectionId === null}
+                        onClick={() => runAction(action)}
+                        className={clsx(
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left",
+                          "hover:bg-ink/7",
+                          "disabled:text-muted disabled:hover:bg-transparent"
+                        )}
+                      >
+                        <ActionIcon icon={action.icon} />
+                        <span className={clsx("min-w-0 flex-1 truncate")}>{action.name}</span>
+                        {scopeTags[action.scope] && (
+                          <Caption as="span" tone="muted">
+                            {scopeTags[action.scope]}
+                          </Caption>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
           {loaded && (
             <div className={clsx("mt-1 border-t border-ink/10 px-2 pt-2 pb-2")}>
               <Link

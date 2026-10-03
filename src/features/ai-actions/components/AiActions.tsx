@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { addCommandSource } from "../../../shared/lib/commandSources";
 import { acceptsImages } from "../../agent-chat/lib/runTurn";
-import { getActionConnection, getActions } from "../lib/action/actions";
+import { getActionConnection, getEnabledActions } from "../lib/action/actions";
 import { ActionScope } from "../lib/action/types";
 import { imageActions } from "../lib/imageActions";
 import { useAiAction, type ActionLocation } from "../lib/useAiAction";
@@ -45,7 +45,7 @@ export default function AiActions({
 
   // Nothing to offer until an agent is chosen to run actions with.
   async function availableActions() {
-    const [actions, connection] = await Promise.all([getActions(), getActionConnection()]);
+    const [actions, connection] = await Promise.all([getEnabledActions(), getActionConnection()]);
     return connection ? actions.map((action) => ({ action, connection })) : [];
   }
 

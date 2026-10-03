@@ -13,8 +13,13 @@ export enum ActionOutput {
   NewPage = 3
 }
 
-export type AiAction = Omit<AiActionRow, "scope" | "output" | "page_types" | "icon"> & {
+export type AiAction = Omit<
+  AiActionRow,
+  "scope" | "output" | "page_types" | "icon" | "pack_id" | "enabled"
+> & {
   icon: string | null;
+  packId: number | null;
+  enabled: boolean;
   scope: ActionScope;
   output: ActionOutput;
   pageTypes: PageType[] | null;
