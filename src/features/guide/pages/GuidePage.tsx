@@ -110,7 +110,9 @@ export default function GuidePage({ topic }: Readonly<{ topic: GuideTopic }>) {
                   <div
                     className={clsx(
                       "grid min-w-0 gap-4 @min-3xl:col-span-2",
-                      step.screenshots.length > 1 ? "max-w-xl grid-cols-2" : "max-w-xs"
+                      step.screenshots.length > 1 && !step.screenshots[0].landscape && "max-w-xl grid-cols-2",
+                      step.screenshots.length > 1 && step.screenshots[0].landscape && "max-w-xl",
+                      step.screenshots.length === 1 && (step.screenshots[0].landscape ? "max-w-xl" : "max-w-xs")
                     )}
                   >
                     {step.screenshots.map((screenshot) => (

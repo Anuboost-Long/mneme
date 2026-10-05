@@ -600,10 +600,11 @@ Instead, use the user's authenticated browser session where permitted.
 
 # 14. Phase 12 — Smart Content Detection
 
-> **Built — 5 October 2026**, not yet tried in the running app. Every
-> import says what kind of page it looks like and lists its due dates,
-> activities and files; Ask AI classifies a page the rules can't place.
-> See [Smart Content Detection](features/12-smart-content-detection.md).
+> **Done — 5 October 2026**, run in the dev build on a PDF brief, a book
+> chapter and Moodle pages. Every import says what kind of page it looks
+> like and lists its due dates, activities and files; Ask AI classifies
+> a page the rules can't place. See
+> [Smart Content Detection](features/12-smart-content-detection.md).
 
 ## Goal
 
@@ -626,16 +627,16 @@ Resource
 
 ## Development Steps
 
-- [ ] Create rule-based content detection.
-- [ ] Detect common heading patterns.
-- [ ] Detect numbered activities.
-- [ ] Detect "Discussion".
-- [ ] Detect "Exercise".
-- [ ] Detect "Assignment".
-- [ ] Detect "Quiz".
-- [ ] Detect due dates.
-- [ ] Detect downloadable files.
-- [ ] Add AI classification as a later fallback.
+- [x] Create rule-based content detection. (Every import says what kind of page it looks like and sets the Type.)
+- [x] Detect common heading patterns. (Bold-only and “Week 3” lines; PDFs by font weight and size.)
+- [x] Detect numbered activities. (“Activity 2.1”, “Task 3b: …”, and Moodle/Canvas links named by kind.)
+- [x] Detect "Discussion".
+- [x] Detect "Exercise".
+- [x] Detect "Assignment".
+- [x] Detect "Quiz". (Quizzes import as Exercise pages.)
+- [x] Detect due dates. (Listed with their labels and read as dates; Moodle’s header dates kept.)
+- [x] Detect downloadable files. (Listed and linked; downloading them is Phase 40.)
+- [x] Add AI classification as a later fallback. (Ask AI in the import preview.)
 
 ---
 
@@ -1190,16 +1191,16 @@ Create Revision Notes page
 
 ## Development Steps
 
-- [ ] Create agent execution loop.
-- [ ] Allow tool calls.
-- [ ] Store execution history.
-- [ ] Display current agent action.
-- [ ] Display completed actions.
-- [ ] Add Stop button.
+- [x] Create agent execution loop. (The connected agent CLI runs the loop with mneme’s tools.)
+- [x] Allow tool calls. (Phase 25’s tools over the agent server.)
+- [x] Store execution history. (Each tool call is saved in the conversation’s transcript.)
+- [x] Display current agent action. (A card per tool call, “Running”.)
+- [x] Display completed actions. (“Finished” or “Failed”.)
+- [x] Add Stop button. (In the message box while the agent works.)
 - [ ] Add maximum tool-call limit.
 - [ ] Prevent infinite loops.
-- [ ] Add error recovery.
-- [ ] Add user approval system.
+- [x] Add error recovery. (A failed tool call is returned to the agent with its reason, so it can try another way.)
+- [x] Add user approval system. (Agent wants to make a change: Approve or Deny.)
 
 ---
 
@@ -1228,13 +1229,17 @@ AI may:
 - Generate summaries.
 - Process attachments.
 
+> **Done — 5 October 2026.** Each Chat conversation has an Ask / Agent
+> switch above the message box; new ones start in Ask. See
+> [Ask Mode and Agent Mode](features/27-ask-and-agent-mode.md).
+
 ## Development Steps
 
-- [ ] Add Ask mode.
-- [ ] Add Agent mode.
-- [ ] Show active mode clearly.
-- [ ] Restrict tool permissions based on mode.
-- [ ] Require confirmation for destructive operations.
+- [x] Add Ask mode. (Read tools only; a change is refused and described instead.)
+- [x] Add Agent mode. (All tools; the first change in a conversation asks.)
+- [x] Show active mode clearly. (The switch and a line on what it allows, above the message box.)
+- [x] Restrict tool permissions based on mode. (Ask mode isn't offered the tools that change pages.)
+- [x] Require confirmation for destructive operations. (Replacing a page's content asks every time.)
 
 ---
 
@@ -1274,10 +1279,10 @@ Always allow this action.
 ## Development Steps
 
 - [ ] Define permissions.
-- [ ] Categorize AI tools.
-- [ ] Add approval dialog.
+- [x] Categorize AI tools. (Read tools, tools that change pages, and changes that replace a page.)
+- [x] Add approval dialog.
 - [ ] Save trusted permissions.
-- [ ] Always confirm deletion.
+- [x] Always confirm deletion. (Agents have no delete tool; replacing a page’s content always asks.)
 - [ ] Create agent activity log.
 
 ---
@@ -1347,21 +1352,21 @@ Allow users and AI to find anything quickly.
 
 ## Development Steps
 
-- [ ] Search courses.
-- [ ] Search modules.
-- [ ] Search page titles.
-- [ ] Search page content.
-- [ ] Search transcripts.
+- [x] Search courses. (Command palette, ⌘P.)
+- [x] Search modules.
+- [x] Search page titles.
+- [x] Search page content. (Shown as “matches content”.)
+- [x] Search transcripts. (Recordings screen.)
 - [ ] Search attachments.
-- [ ] Add keyboard shortcut.
-- [ ] Highlight search results.
-- [ ] Open result directly.
+- [x] Add keyboard shortcut. (⌘P.)
+- [x] Highlight search results. (Find in page, ⌘F, highlights each match.)
+- [x] Open result directly.
 
 Later:
 
 - [ ] Semantic search.
 - [ ] Vector embeddings.
-- [ ] AI search.
+- [x] AI search. (⌘P → Ask: the assistant searches and reads your pages to answer.)
 
 ---
 
@@ -1424,8 +1429,8 @@ Cmd + S      Manual Save
 
 ## Workspace Customization
 
-- [ ] Light mode.
-- [ ] Dark mode.
+- [x] Light mode. (Settings → General → Appearance.)
+- [x] Dark mode.
 - [ ] Custom accent colour.
 - [ ] Sidebar width.
 - [ ] Editor width.
@@ -1435,10 +1440,10 @@ Cmd + S      Manual Save
 
 ## Course Customization
 
-- [ ] Icons.
-- [ ] Covers.
-- [ ] Colours.
-- [ ] Custom module icons.
+- [x] Icons. (122 icons in 8 groups, with search.)
+- [x] Covers. (Course and page covers.)
+- [x] Colours. (Course colours.)
+- [x] Custom module icons. (Icons, emoji or your own picture.)
 - [ ] Custom page types.
 
 ---

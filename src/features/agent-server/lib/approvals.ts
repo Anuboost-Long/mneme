@@ -1,4 +1,4 @@
-export type PendingApproval = { toolName: string; description: string };
+export type PendingApproval = { toolName: string; description: string; everyTime: boolean };
 
 // Matches chain-sdk's AGENT_SERVER_HANDLER_TIMEOUT (agent-server
 // CONTRACT.md's Errors section) — past this, native has already sent the
@@ -36,12 +36,17 @@ export function getPendingApproval() {
   return pending;
 }
 
-export function requestApproval(conversationId: number, toolName: string, description: string): Promise<boolean> {
-  if (approvedConversations.has(conversationId)) return Promise.resolve(true);
+export function requestApproval(
+  conversationId: number,
+  toolName: string,
+  description: string,
+  everyTime = false
+): Promise<boolean> {
+  if (!everyTime && approvedConversations.has(conversationId)) return Promise.resolve(true);
   return new Promise<boolean>((resolve) => {
-    pending = { toolName, description };
+    pending = { toolName, description, everyTime };
     resolvePending = (approved) => {
-      if (approved) approvedConversations.add(conversationId);
+      if (approved && !everyTime) approvedConversations.add(conversationId);
       resolve(approved);
     };
     timer = setTimeout(() => answerApproval(false), APPROVAL_TIMEOUT_MS);

@@ -11,7 +11,8 @@ import {
 } from "../../ai-profiles/lib/profile/types";
 import { formatAttachments, imageMediaType, type ChatAttachment } from "./attachments";
 import type { AgentConnection } from "./connection/types";
-import { updateConversationSessionId } from "./conversation/actions";
+import { getConversation, updateConversationSessionId } from "./conversation/actions";
+import { ConversationMode } from "./conversation/types";
 import { appendMessage } from "./message/actions";
 import type { KnownAgent } from "./presets";
 import { recordUsage } from "./usage/actions";
@@ -81,9 +82,16 @@ type StoredImage = { reference: string; mediaType: string; bytes: Uint8Array };
 // data — confirmed live with Codex. Only Claude and Codex get this: they're
 // the two invokers real chat traffic reaches (see AgentPicker.tsx), and
 // passthrough/custom commands must stay a literal, assumption-free pass-through.
-function framingInstructions(hasTools: boolean): string {
+const modeLines: Record<ConversationMode, string> = {
+  [ConversationMode.Ask]:
+    "This conversation is in Ask mode: read, search, explain and draft in your reply, but don't change the user's workspace. When a change would help, describe it and say they can switch to Agent mode for you to make it.",
+  [ConversationMode.Agent]:
+    "This conversation is in Agent mode: you may create and change the user's pages with the mneme tools. Each change may ask the user to approve it first."
+};
+
+function framingInstructions(hasTools: boolean, mode: ConversationMode): string {
   const toolsLine = hasTools
-    ? "You have tool access to the user's mneme data through the mcp__mneme__* tools — use those, not your own file or shell tools, to look up or act on anything about their courses, pages, or other mneme data."
+    ? `You have tool access to the user's mneme data through the mcp__mneme__* tools — use those, not your own file or shell tools, to look up or act on anything about their courses, pages, or other mneme data. ${modeLines[mode]}`
     : "You have no tool access to the user's mneme data in this session — answer from this conversation alone.";
   return `You are the assistant inside mneme's in-app chat feature, talking with the app's user about their own data (courses, pages, notes, etc.). This is not a request to read, search, or modify any files on this machine, including mneme's own source code repository — you are not being asked to do software engineering here. ${toolsLine}`;
 }
@@ -466,7 +474,7 @@ export async function runTurn(
     prompt,
     sessionId,
     mcpUrl,
-    framingInstructions(invoker.needsMcp),
+    framingInstructions(invoker.needsMcp, (await getConversation(conversationId))?.mode ?? ConversationMode.Ask),
     await getActiveProfile()
   );
   const command =

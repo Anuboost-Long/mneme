@@ -8,7 +8,7 @@ import {
   updateConversationColumns
 } from "./table";
 
-export { getConversation, getConversations } from "./table";
+export { getConversation, getConversations, updateConversationMode as setConversationMode } from "./table";
 
 const retentionKey = "agent-chat.retention-days";
 

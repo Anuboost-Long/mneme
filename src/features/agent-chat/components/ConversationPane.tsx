@@ -8,6 +8,7 @@ import Composer from "./Composer";
 import ChatMessage, { ToolMessage } from "./ChatMessage";
 import { AttachmentList } from "./AttachmentCard";
 import FileDropOverlay from "./FileDropOverlay";
+import ModeSwitch from "./ModeSwitch";
 import { useAttachments, useFileDrop } from "../lib/useAttachments";
 import { parseAttachments, type ChatAttachment } from "../lib/attachments";
 import ProfilePicker from "../../ai-profiles/components/ProfilePicker";
@@ -81,6 +82,11 @@ export default function ConversationPane({ chat, selectedId, context, emptyText,
         </div>
         {chat.turn?.error && !chat.messages.some((message) => message.role === "error" && message.content === chat.turn?.error) && <BodyText role="alert" tone="error" className={clsx("mb-3")}>{chat.turn.error}</BodyText>}
         {chat.notice && !chat.turn?.busy && <Caption tone="muted" className={clsx("mb-3")}>{chat.notice}</Caption>}
+        {connection?.kind !== "custom" && (
+          <div className={clsx("mb-3")}>
+            <ModeSwitch mode={conversation.mode} disabled={chat.turn?.busy ?? false} onChange={(mode) => void chat.setMode(conversation.id, mode)} />
+          </div>
+        )}
         <Composer key={conversation.id} files={files} busy={chat.turn?.busy ?? false} stopping={chat.turn?.stopping ?? false}
           supported={connection !== undefined} ready={chat.messagesLoaded && !chat.messageError}
           custom={connection?.kind === "custom"} modelCommand={supportsModelCommand(connection)} modelHint={modelCommandHint(connection)}

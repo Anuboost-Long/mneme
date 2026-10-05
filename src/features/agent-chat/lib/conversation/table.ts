@@ -1,8 +1,9 @@
 import { desktop, sql, type SqlFragment, type Values } from "@chain/sdk";
 
 import type { AgentConversationRow } from "../../../../shared/lib/db/schema/agent-conversation";
+import type { Conversation, ConversationMode } from "./types";
 
-const conversationTable = () => desktop.storage.table<AgentConversationRow>("agent_conversation");
+const conversationTable = () => desktop.storage.table<Conversation>("agent_conversation");
 
 export function getConversations() {
   return conversationTable().orderBy("updated_at desc", "id desc").all();
@@ -18,6 +19,10 @@ export function insertConversation(connectionId: number) {
 
 export async function updateConversationColumns(id: number, changes: Values<AgentConversationRow>) {
   await conversationTable().update(id, { ...changes, updated_at: sql`datetime('now')` });
+}
+
+export async function updateConversationMode(id: number, mode: ConversationMode) {
+  await conversationTable().update(id, { mode });
 }
 
 export async function getAttachedImageReferences(conversations: SqlFragment) {

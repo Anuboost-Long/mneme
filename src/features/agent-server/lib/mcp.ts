@@ -1,6 +1,8 @@
 import type { AgentServerRequest, AgentServerResponse } from "@chain/sdk";
 import { isToolContent, tools } from "./tools";
 import { requestApproval } from "./approvals";
+import { getConversation } from "../../agent-chat/lib/conversation/actions";
+import { ConversationMode } from "../../agent-chat/lib/conversation/types";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 
 const PROTOCOL_VERSION = "2024-11-05";
@@ -33,6 +35,14 @@ function conversationIdFromPath(path: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+async function modeOf(conversationId: number) {
+  if (conversationId === 0) return ConversationMode.Agent;
+  return (await getConversation(conversationId).catch(() => undefined))?.mode ?? ConversationMode.Ask;
+}
+
+const askModeRefusal =
+  "This conversation is in Ask mode, so it can't change the user's workspace. Describe the change in your reply instead; the user can switch to Agent mode to let you make it.";
+
 async function callTool(params: Record<string, unknown> | undefined, conversationId: number) {
   const name = params?.name;
   if (typeof name !== "string") throw new Error("tools/call requires a string \"name\".");
@@ -40,6 +50,8 @@ async function callTool(params: Record<string, unknown> | undefined, conversatio
   if (!tool) return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
 
   const args = (params?.arguments as Record<string, unknown> | undefined) ?? {};
+  if (tool.mutates && (await modeOf(conversationId)) === ConversationMode.Ask)
+    return { content: [{ type: "text", text: askModeRefusal }], isError: true };
   if (tool.mutates) {
     try {
       await tool.check?.(args);
@@ -47,7 +59,7 @@ async function callTool(params: Record<string, unknown> | undefined, conversatio
       return { content: [{ type: "text", text: errorMessage(error, String(error)) }], isError: true };
     }
     const description = tool.describeCall?.(args) ?? `Run ${tool.name}.`;
-    const approved = await requestApproval(conversationId, tool.name, description);
+    const approved = await requestApproval(conversationId, tool.name, description, tool.destructive?.(args) ?? false);
     if (!approved) return { content: [{ type: "text", text: "The user denied permission for this action." }], isError: true };
   }
   try {
@@ -63,8 +75,10 @@ async function dispatch(method: string, params: Record<string, unknown> | undefi
   switch (method) {
     case "initialize":
       return { protocolVersion: PROTOCOL_VERSION, capabilities: { tools: {} }, serverInfo: SERVER_INFO };
-    case "tools/list":
-      return { tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) };
+    case "tools/list": {
+      const offered = (await modeOf(conversationId)) === ConversationMode.Ask ? tools.filter((tool) => !tool.mutates) : tools;
+      return { tools: offered.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) };
+    }
     case "tools/call":
       return callTool(params, conversationId);
     default:

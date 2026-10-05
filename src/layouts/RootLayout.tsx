@@ -7,6 +7,7 @@ import CommandPalette from "../app/CommandPalette";
 import NavBar from "../app/NavBar";
 import Sidebar from "../app/Sidebar";
 import AgentChatPanel from "../features/agent-chat/components/AgentChatPanel";
+import { subscribeAssistant } from "../features/agent-chat/lib/assistant";
 import { cleanUpConversations } from "../features/agent-chat/lib/conversation/actions";
 import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
 import CourseForm from "../features/courses/components/CourseForm";
@@ -127,6 +128,17 @@ export default function RootLayout() {
       localStorage.setItem("mneme.ai-panel.open", String(!aiPanelOpen));
     } catch {}
   }
+
+  useEffect(
+    () =>
+      subscribeAssistant(() => {
+        setAiPanelOpen(true);
+        try {
+          localStorage.setItem("mneme.ai-panel.open", "true");
+        } catch {}
+      }),
+    []
+  );
 
   useShortcut("toggle-sidebar", toggleSidebar);
   useShortcut("toggle-agent-chat", toggleAiPanel);

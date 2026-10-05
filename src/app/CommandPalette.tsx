@@ -8,8 +8,9 @@ import {
   useState,
   type KeyboardEvent
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 
+import { askAssistant, openAssistant } from "../features/agent-chat/lib/assistant";
 import type { Course } from "../features/courses/lib/course/types";
 import { searchModuleLinks } from "../features/courses/lib/module/actions";
 import type { ModuleLink } from "../features/courses/lib/module/types";
@@ -69,6 +70,8 @@ function matches(text: string, query: string) {
 
 function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: () => void }>) {
   const navigate = useNavigate();
+  const chatRoute = useMatch("/agent-chat") !== null;
+  const openPage = useMatch("/courses/:courseId/modules/:moduleId/pages/:pageId");
   const dialog = useRef<HTMLDialogElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
@@ -137,7 +140,22 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
   const placeItems = places
     .filter((place) => matches(place.label, query))
     .map((place) => link(`go-${place.path}`, place.label, undefined, place.path));
+  const question = query.trim();
+  const openAssistantItem: Item = {
+    id: "assistant-open",
+    label: "Ask the assistant",
+    detail: "Opens beside this screen",
+    run: openAssistant
+  };
+  const askItem: Item = {
+    id: "assistant-ask",
+    label: `Ask: “${question}”`,
+    detail: "Ask mode · reads your pages to answer",
+    run: () => void askAssistant(question, openPage ? Number(openPage.params.pageId) : null)
+  };
+  const assistantItems: Item[] = chatRoute ? [] : [searching ? askItem : openAssistantItem];
   const available: Item[] = [
+    ...(chatRoute ? [] : [openAssistantItem]),
     ...commandGroups.flatMap((group) => group.commands),
     ...places.map((place) => link(`go-${place.path}`, place.label, undefined, place.path))
   ];
@@ -185,7 +203,8 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
         ]
       : [{ name: "Recent", items: recentItems }]),
     ...commandItems,
-    { name: "Go to", items: placeItems }
+    { name: "Go to", items: placeItems },
+    { name: "Assistant", items: assistantItems }
   ].filter((group) => group.items.length > 0);
   const items = groups.flatMap((group) => group.items);
   const activeIndex = Math.min(active, items.length - 1);
@@ -199,7 +218,7 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
   }, [activeIndex]);
 
   function run(item: Item) {
-    remember(item);
+    if (item !== askItem) remember(item);
     onClose();
     item.run();
   }

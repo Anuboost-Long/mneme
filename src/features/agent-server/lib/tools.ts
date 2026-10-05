@@ -38,6 +38,7 @@ export type Tool = {
   // run immediately. `describeCall` renders what the popup shows, from the
   // call's raw (not yet validated) arguments.
   mutates?: boolean;
+  destructive?: (args: Record<string, unknown>) => boolean;
   describeCall?: (args: Record<string, unknown>) => string;
   check?: (args: Record<string, unknown>) => Promise<unknown>;
   execute: (args: Record<string, unknown>) => Promise<unknown>;
@@ -396,6 +397,7 @@ export const tools: Tool[] = [
       required: ["id"]
     },
     mutates: true,
+    destructive: (args) => args.content !== undefined,
     describeCall: (args) => {
       const fields = (["title", "type", "content", "status"] as const).filter(
         (key) => args[key] !== undefined

@@ -117,3 +117,52 @@ test('a change that cannot work is refused before the user is asked to approve i
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /No page with id 99999/);
 });
+
+test('Ask mode offers only read tools and refuses changes; Agent mode offers them all', { timeout: 5000 }, async () => {
+  const { handleMcpRequest } = await import('../src/features/agent-server/lib/mcp.ts');
+  const { createConnection, getConnections } = await import('../src/features/agent-chat/lib/connection/actions.ts');
+  const { createConversation, setConversationMode } = await import('../src/features/agent-chat/lib/conversation/actions.ts');
+  const { ConversationMode } = await import('../src/features/agent-chat/lib/conversation/types.ts');
+  await createConnection({ name: 'Claude', kind: 'claude', command: 'claude', args: [] });
+  const [connection] = await getConnections();
+  const conversation = await createConversation(connection.id);
+  assert.equal(conversation.mode, ConversationMode.Ask);
+  const rpc = async (method, params) =>
+    JSON.parse(
+      (await handleMcpRequest({
+        method: 'POST',
+        path: `/mcp?conversation=${conversation.id}`,
+        headers: {},
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
+      })).body
+    ).result;
+  const offered = async () => (await rpc('tools/list')).tools.map((tool) => tool.name);
+
+  assert.ok((await offered()).includes('search_pages'));
+  assert.ok(!(await offered()).includes('create_page'));
+  const { course, first } = await library();
+  const refused = await rpc('tools/call', { name: 'create_page', arguments: { module_id: first.id, title: 'Notes' } });
+  assert.equal(refused.isError, true);
+  assert.match(refused.content[0].text, /Ask mode/);
+  assert.equal((await getPages(first.id)).length, 0);
+
+  await setConversationMode(conversation.id, ConversationMode.Agent);
+  assert.ok((await offered()).includes('create_page'));
+  await eraseCourse(course.id);
+});
+
+test('replacing a page asks every time; other changes ask once per conversation', async () => {
+  const { requestApproval, answerApproval, getPendingApproval } = await import('../src/features/agent-server/lib/approvals.ts');
+  const first = requestApproval(41, 'create_page', 'Create a page.');
+  assert.equal(getPendingApproval().everyTime, false);
+  answerApproval(true);
+  assert.equal(await first, true);
+  assert.equal(await requestApproval(41, 'create_page', 'Create another page.'), true);
+  assert.equal(getPendingApproval(), null);
+  const replace = requestApproval(41, 'update_page', 'Update page #1 (content).', true);
+  assert.equal(getPendingApproval().everyTime, true);
+  answerApproval(false);
+  assert.equal(await replace, false);
+  assert.equal(tools.find((tool) => tool.name === 'update_page').destructive({ id: 1, content: '<p>x</p>' }), true);
+  assert.equal(tools.find((tool) => tool.name === 'update_page').destructive({ id: 1, title: 'New' }), false);
+});

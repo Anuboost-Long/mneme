@@ -1,3 +1,6 @@
+import chatAgentApproval from "../assets/chat-agent-approval.jpg";
+import assistantAnswer from "../assets/assistant-answer.jpg";
+import chatAskMode from "../assets/chat-ask-mode.jpg";
 import iconPicker from "../assets/icon-picker.jpg";
 import iconSearch from "../assets/icon-search.jpg";
 import importAiAnswer from "../assets/import-ai-answer.jpg";
@@ -8,8 +11,9 @@ import importFileChosen from "../assets/import-file-chosen.jpg";
 import importFromUrl from "../assets/import-from-url.jpg";
 import importUnsure from "../assets/import-unsure.jpg";
 import moduleImportButton from "../assets/module-import-button.jpg";
+import paletteAsk from "../assets/palette-ask.jpg";
 
-export type GuideScreenshot = { src: string; alt: string };
+export type GuideScreenshot = { src: string; alt: string; landscape?: boolean };
 
 export type GuideStep = { title: string; body: string[]; screenshots: GuideScreenshot[] };
 
@@ -137,6 +141,60 @@ export const guideTopics: GuideTopic[] = [
           "Whatever you left ticked goes at the top of the new page: a Due dates list, an Activities checklist you tick off as you go, and a Files list of links back to the school’s copy."
         ],
         screenshots: []
+      }
+    ]
+  },
+  {
+    id: "ask-and-agent",
+    label: "Ask and Agent",
+    title: "Ask and Agent mode in Chat",
+    summary:
+      "Ask a question from anywhere and get an answer from your own pages, or let the agent create and change them.",
+    where: "⌘P → type a question, or Chat → the Ask / Agent switch above the message box",
+    place: { label: "Open Chat", path: "/agent-chat" },
+    steps: [
+      {
+        title: "Ask from anywhere with ⌘P",
+        body: [
+          "Press ⌘P, type your question and choose Ask. The assistant opens beside the screen you’re on and answers in Ask mode, using the agent your AI actions run with.",
+          "On a page, it knows which page you’re on, so “this page” means it. Without a question, Ask the assistant just opens it."
+        ],
+        screenshots: [
+          { src: paletteAsk, alt: "The command palette with Ask: What are the motives that drive an attacker?", landscape: true },
+          {
+            src: assistantAnswer,
+            alt: "The assistant beside the cyber threats page, answering in Ask mode",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Ask: find and explain your material",
+        body: [
+          "New conversations start in Ask. The agent searches and reads your courses, modules and pages and answers from them, without changing anything.",
+          "If you ask it to make a change, it describes the change instead and tells you to switch to Agent."
+        ],
+        screenshots: [
+          {
+            src: chatAskMode,
+            alt: "An Ask mode answer summarising a page, ending with a note that it didn't create the page",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Agent: let it make changes",
+        body: [
+          "Switch to Agent and the agent can create and change pages. It asks before its first change in a conversation, and every time it would replace what's on a page.",
+          "Deny keeps everything as it was. The mode is saved with the conversation."
+        ],
+        screenshots: [
+          {
+            src: chatAgentApproval,
+            alt: "Agent wants to make a change: Create a page titled Attacker types, with Deny and Approve",
+            landscape: true
+          }
+        ]
       }
     ]
   },

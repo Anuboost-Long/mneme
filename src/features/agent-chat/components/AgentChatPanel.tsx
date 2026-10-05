@@ -1,9 +1,10 @@
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Select from "../../../shared/ui/Select";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { getPage } from "../../courses/lib/page/actions";
+import { subscribeAssistant } from "../lib/assistant";
 import { useAgentChat } from "../lib/useAgentChat";
 import AgentPicker from "./AgentPicker";
 import ConversationPane from "./ConversationPane";
@@ -25,7 +26,21 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
   const [selectedId, setSelectedId] = useState(storedConversation);
   const [picking, setPicking] = useState(false);
   const [pageTitle, setPageTitle] = useState<string | null>(null);
+  const [assistantError, setAssistantError] = useState("");
   const chat = useAgentChat(selectedId);
+  const refreshConversations = useRef(chat.refreshConversations);
+  refreshConversations.current = chat.refreshConversations;
+
+  useEffect(
+    () =>
+      subscribeAssistant(({ conversationId, error }) => {
+        setAssistantError(error ?? "");
+        if (conversationId === null) return;
+        select(conversationId);
+        void refreshConversations.current();
+      }),
+    []
+  );
 
   useEffect(() => {
     setPageTitle(null);
@@ -102,6 +117,11 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
           </svg>
         </button>
       </div>
+      {assistantError && (
+        <BodyText role="alert" tone="error" className={clsx("shrink-0 border-b border-ink/10 px-3 py-2")}>
+          {assistantError}
+        </BodyText>
+      )}
       {pageTitle && (
         <Caption tone="muted" className={clsx("shrink-0 truncate border-b border-ink/10 px-3 py-1.5")}>
           Knows you’re on “{pageTitle}”

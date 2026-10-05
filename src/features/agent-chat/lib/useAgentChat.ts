@@ -8,9 +8,10 @@ import {
   createConversation,
   deleteConversation,
   getConversations,
-  renameConversation
+  renameConversation,
+  setConversationMode
 } from "./conversation/actions";
-import type { Conversation } from "./conversation/types";
+import type { Conversation, ConversationMode } from "./conversation/types";
 import { getMessages } from "./message/actions";
 import type { AgentMessage } from "./message/types";
 import { forgetTurn, getTurns, startTurn, stopTurn, subscribeTurns } from "./turns";
@@ -101,6 +102,15 @@ export function useAgentChat(selectedId: number | null) {
     setConversations(await getConversations());
   }
 
+  async function refreshConversations() {
+    setConversations(await getConversations());
+  }
+
+  async function setMode(id: number, mode: ConversationMode) {
+    await setConversationMode(id, mode);
+    setConversations((current) => current.map((item) => (item.id === id ? { ...item, mode } : item)));
+  }
+
   async function setModel(connectionId: number, model: string | null) {
     await updateConnectionModel(connectionId, model);
     setConnections(await getConnections());
@@ -134,6 +144,8 @@ export function useAgentChat(selectedId: number | null) {
     error,
     create,
     rename,
+    refreshConversations,
+    setMode,
     remove,
     runCommand,
     notice,
