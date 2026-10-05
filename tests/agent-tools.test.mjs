@@ -8,7 +8,7 @@ const { tools } = await import('../src/features/agent-server/lib/tools.ts');
 const { createCourse, eraseCourse } = await import('../src/features/courses/lib/course/actions.ts');
 const { createModule, deleteModule } = await import('../src/features/courses/lib/module/actions.ts');
 const { createPage, getPage, getPages, updatePage } = await import('../src/features/courses/lib/page/actions.ts');
-const { createRecording, saveTranscript } = await import('../src/features/courses/lib/recording/actions.ts');
+const { createRecording, saveTranscript, storeRecordedAudio } = await import('../src/features/courses/lib/recording/actions.ts');
 await initDb();
 
 const call = (name, args) => tools.find((tool) => tool.name === name).execute(args);
@@ -67,8 +67,8 @@ test('move_page moves a page to the end of another module and checks both ends',
 test('read_transcript returns a page’s recordings, or one recording, with null for untranscribed ones', async () => {
   const { course, first } = await library();
   const page = await createPage(first.id, { title: 'Lecture' });
-  const transcribed = await createRecording(page.id, new Blob([Buffer.from('a')], { type: 'audio/mp4' }), 60000);
-  await createRecording(page.id, new Blob([Buffer.from('b')], { type: 'audio/mp4' }), 30000);
+  const transcribed = await createRecording(page.id, await storeRecordedAudio(new Blob([Buffer.from('a')], { type: 'audio/mp4' }), 60000));
+  await createRecording(page.id, await storeRecordedAudio(new Blob([Buffer.from('b')], { type: 'audio/mp4' }), 30000));
   await saveTranscript(transcribed.id, { segments: [{ startMs: 0, endMs: 1000, text: ' Atoms are mostly empty space. ' }] });
   const onPage = await call('read_transcript', { page_id: page.id });
   assert.deepEqual(onPage.map((item) => item.transcript), ['Atoms are mostly empty space.', null]);

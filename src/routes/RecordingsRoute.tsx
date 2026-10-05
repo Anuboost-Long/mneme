@@ -30,7 +30,7 @@ export default function RecordingsRoute() {
           (current) => current?.map((item) => (item.id === changed.id ? changed : item)) ?? null
         )
       }
-      onPlaced={() => void load()}
+      onReload={() => void load()}
       onDelete={(id) =>
         setRecordings((current) => current?.filter((item) => item.id !== id) ?? null)
       }

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
 import type { Course } from "../../courses/lib/course/types";
@@ -18,10 +19,12 @@ const previewBoxes: Record<WidgetSize, string> = {
 };
 
 export default function WidgetGallery({
+  open,
   courses,
   onAdd,
   onClose
 }: Readonly<{
+  open: boolean;
   courses: Course[];
   onAdd: (widget: NewWidget) => void;
   onClose: () => void;
@@ -29,6 +32,10 @@ export default function WidgetGallery({
   const [selected, setSelected] = useState(widgetCatalog[0]);
   const [size, setSize] = useState<WidgetSize>(selected.defaultSize);
   const preview = { id: -1, ...newWidget(selected, size) };
+  useResetOnOpen(open, () => {
+    setSelected(widgetCatalog[0]);
+    setSize(widgetCatalog[0].defaultSize);
+  });
 
   function choose(kind: string) {
     const definition = widgetCatalog.find((item) => item.kind === kind);
@@ -38,7 +45,7 @@ export default function WidgetGallery({
   }
 
   return (
-    <Dialog title="Add a widget" wide onClose={onClose}>
+    <Dialog open={open} title="Add a widget" wide onClose={onClose}>
       {(close, complete) => (
         <div className={clsx("grid gap-6 sm:grid-cols-[13rem_minmax(0,1fr)]")}>
           <nav

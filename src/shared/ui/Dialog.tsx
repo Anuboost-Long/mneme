@@ -1,4 +1,6 @@
-import { useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createPortal } from "react-dom";
+import { useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { SectionTitle } from "./Typography";
 
@@ -18,10 +20,15 @@ function morphFrom(dialog: HTMLElement, origin: HTMLElement): Keyframe[] {
   ];
 }
 
-// How long closing takes before `onClose` runs; matches .app-dialog in App.css.
+// How long closing takes; matches .app-dialog in App.css.
 const CLOSE_MS = 160;
 
-export default function Dialog({ title, children, onClose, busy = false, origin, wide = false }: Readonly<{
+const complete = (callback: () => void) => callback();
+
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+export default function Dialog({ open, title, children, onClose, busy = false, origin, wide = false }: Readonly<{
+  open: boolean;
   title: string;
   children: (close: () => void, complete: (callback: () => void) => void) => ReactNode;
   onClose: () => void;
@@ -31,47 +38,66 @@ export default function Dialog({ title, children, onClose, busy = false, origin,
 }>) {
   const ref = useRef<HTMLDialogElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const completing = useRef(false);
   const [closing, setClosing] = useState(false);
   const titleId = useId();
+  const { pathname } = useLocation();
+  const openedAt = useRef(pathname);
 
   useLayoutEffect(() => {
     const dialog = ref.current;
-    dialog?.showModal();
-    dialog?.getBoundingClientRect();
-    if (dialog && origin?.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      dialog.animate(morphFrom(dialog, origin.current), { duration: 240, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+    if (!dialog) return;
+    clearTimeout(timer.current);
+    if (open) {
+      setClosing(false);
+      if (!dialog.open) dialog.showModal();
+      dialog.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+      dialog.dataset.visible = "true";
+      if (!reducedMotion()) {
+        if (origin?.current) dialog.animate(morphFrom(dialog, origin.current), { duration: 240, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+        else dialog.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: "cubic-bezier(0, 0, 0.2, 1)" });
+      }
+      return;
     }
-    const frame = requestAnimationFrame(() => { if (dialog && !completing.current) dialog.dataset.visible = "true"; });
-    return () => { cancelAnimationFrame(frame); clearTimeout(timer.current); dialog?.close(); };
-  }, []);
+    if (!dialog.open) return;
+    dialog.dataset.visible = "false";
+    if (reducedMotion()) {
+      dialog.close();
+      return;
+    }
+    if (origin) {
+      const frames = origin.current ? morphFrom(dialog, origin.current).reverse() : [{ opacity: 1 }, { opacity: 0 }];
+      dialog.animate(frames, { duration: CLOSE_MS, easing: "cubic-bezier(0.3, 0, 1, 1)" });
+    }
+    setClosing(true);
+    timer.current = setTimeout(() => {
+      dialog.close();
+      setClosing(false);
+    }, CLOSE_MS);
+  }, [open]);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  useEffect(() => {
+    if (open) openedAt.current = pathname;
+  }, [open]);
+
+  useEffect(() => {
+    if (open && pathname !== openedAt.current) onClose();
+  }, [pathname]);
 
   function close() {
     if (busy || closing) return;
-    complete(onClose);
+    onClose();
   }
 
-  function complete(callback: () => void) {
-    if (completing.current) return;
-    completing.current = true;
-    const dialog = ref.current;
-    if (!dialog || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { callback(); return; }
-    dialog.dataset.visible = "false";
-    if (origin) {
-      const frames = origin.current ? morphFrom(dialog, origin.current).reverse() : [{ opacity: 1 }, { opacity: 0 }];
-      dialog.animate(frames, { duration: CLOSE_MS, easing: "cubic-bezier(0.3, 0, 1, 1)", fill: "forwards" });
-    }
-    setClosing(true);
-    timer.current = setTimeout(callback, CLOSE_MS);
-  }
-
-  return (
-    <dialog ref={ref} aria-labelledby={titleId} inert={closing} data-closing={closing} data-morph={origin ? "true" : undefined} onCancel={(event) => { event.preventDefault(); close(); }} className={clsx("app-dialog fixed inset-0 m-auto max-h-11/12 max-w-11/12 overflow-y-auto", wide ? "w-4xl" : "w-lg", "rounded-xl border border-ink/15 bg-surface text-ink p-6 sm:p-8", "backdrop:bg-chain-navy/72")}>
+  return createPortal(
+    <dialog ref={ref} aria-labelledby={titleId} inert={!open} data-closing={closing} data-morph={origin ? "true" : undefined} onCancel={(event) => { event.preventDefault(); close(); }} className={clsx("app-dialog fixed inset-0 m-auto max-h-11/12 max-w-11/12 overflow-y-auto", wide ? "w-4xl" : "w-lg", "rounded-xl border border-ink/15 bg-surface text-ink p-6 sm:p-8", "backdrop:bg-chain-navy/72")}>
       <div className={clsx("mb-6 flex items-center justify-between gap-4")}>
         <SectionTitle id={titleId}>{title}</SectionTitle>
         <button type="button" onClick={close} disabled={busy || closing} aria-label="Close dialog" className={clsx("size-8 rounded-md text-xl text-muted", "hover:bg-ink/5")}>×</button>
       </div>
       {children(close, complete)}
-    </dialog>
+    </dialog>,
+    document.body
   );
 }

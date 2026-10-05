@@ -103,11 +103,23 @@ function resolveUrl(
   }
 }
 
+const SECTION_LINE = /^(?:week|module|topic|lesson|lecture|unit|session|part|section|chapter)\s+(?:\d+|[ivx]+|[a-z])\b/i;
+const MAX_HEADING_LINE = 80;
+
+function isHeadingLine(element: Element) {
+  if (element.tagName.toLowerCase() !== "p" || element.closest("li, td, th")) return false;
+  const text = (element.textContent ?? "").replace(/\s+/g, " ").trim();
+  if (!text || text.length > MAX_HEADING_LINE || /[.!?,;]$/.test(text)) return false;
+  if (SECTION_LINE.test(text)) return true;
+  const bold = Array.from(element.querySelectorAll("strong, b"), (part) => part.textContent ?? "").join("");
+  return bold.replace(/\s+/g, " ").trim() === text;
+}
+
 export function sanitizeNode(node: Node, baseUrl?: string, stored?: ReadonlySet<string>): string {
   if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.textContent ?? "");
   if (node.nodeType !== Node.ELEMENT_NODE) return "";
   const element = node as Element;
-  const tag = element.tagName.toLowerCase();
+  const tag = isHeadingLine(element) ? "h3" : element.tagName.toLowerCase();
   if (SKIPPED_TAGS.has(tag)) return "";
   const children = Array.from(element.childNodes)
     .map((child) => sanitizeNode(child, baseUrl, stored))
@@ -137,8 +149,27 @@ export function sanitizeChildren(
     .trim();
 }
 
-const ACTIVITY_NAME =
-  /^(exercise|discussion|assignment|activity|quiz|lab|practical|tutorial|worksheet|homework|project)s?\b\s*([\d.]+[a-z]?)?\s*([:.\-–—]\s*\S.*)?$/i;
+const ACTIVITY_WORDS = [
+  "exercise",
+  "discussion",
+  "assignment",
+  "assessment",
+  "activity",
+  "quiz",
+  "lab",
+  "practical",
+  "tutorial",
+  "worksheet",
+  "homework",
+  "project",
+  "task",
+  "challenge",
+  "case study",
+  "reflection",
+  "problem set",
+  "knowledge check"
+].join("|");
+const ACTIVITY_NAME = new RegExp(String.raw`^(${ACTIVITY_WORDS})s?\b\s*([\d.]+[a-z]?)?\s*([:.\-–—]\s*\S.*)?$`, "i");
 const NAMED_BY_MARKUP = "h1, h2, h3, h4, h5, h6, a, strong, b";
 const MAX_ACTIVITY_LENGTH = 100;
 const MAX_ACTIVITIES = 30;

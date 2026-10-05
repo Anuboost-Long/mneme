@@ -11,8 +11,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 // ends a line in the source PDF, its vertical position (`transform`'s
 // translateY), and its rendered size (a stand-in for font size — headings
 // are reliably bigger than body text even when nothing else marks them as
-// headings).
-export type PdfTextRun = { str: string; hasEOL: boolean; height: number; width: number; transform: number[] };
+// headings). `font` is the embedded font's name ("DINNextLTPro-Bold"), known
+// once the page's operator list has been read.
+export type PdfTextRun = { str: string; hasEOL: boolean; height: number; width: number; transform: number[]; fontName?: string; font?: string };
 
 // pdf.js's own `getTextContent()` reads its internal stream via
 // `for await (const value of readableStream)`, which some WebKit builds —
@@ -28,13 +29,23 @@ function isTextRun(item: unknown): item is PdfTextRun {
   return typeof item === "object" && item !== null && typeof (item as { str?: unknown }).str === "string";
 }
 
+function fontName(page: pdfjsLib.PDFPageProxy, id: string | undefined) {
+  if (!id || !page.commonObjs.has(id)) return "";
+  return (page.commonObjs.get(id) as { name?: string }).name ?? "";
+}
+
 async function readTextContent(page: pdfjsLib.PDFPageProxy): Promise<PdfTextRun[]> {
   const reader = (page.streamTextContent({}) as ReadableStream<PdfTextContentChunk>).getReader();
+  const [left, bottom, right, top] = page.view;
   const items: PdfTextRun[] = [];
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
-    for (const item of value.items) if (isTextRun(item)) items.push(item);
+    for (const item of value.items) {
+      if (!isTextRun(item)) continue;
+      const [, , , , x, y] = item.transform;
+      if (x >= left - 1 && x <= right && y >= bottom - 1 && y <= top) items.push({ ...item, font: fontName(page, item.fontName) });
+    }
   }
   return items;
 }

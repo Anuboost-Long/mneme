@@ -33,3 +33,13 @@ Accepted 28 September 2026: sherpa-onnx's TTS-enabled build links
 **espeak-ng (GPL-3.0), piper-phonemize and ucd**. A distributed
 mneme build must be offered under GPL-3-compatible terms, including
 source availability.
+
+## Echo cancellation (chain-sdk request 33)
+
+Vendored at `chain-sdk/crates/core/vendor/speexdsp` (license in `COPYING`)
+and compiled into `chain-core`; used to remove the speakers' echo when
+recording the microphone and computer audio together.
+
+| Component      | License      | Source                                |
+| -------------- | ------------ | ------------------------------------- |
+| SpeexDSP 1.2.1 | BSD-3-Clause | https://gitlab.xiph.org/xiph/speexdsp |

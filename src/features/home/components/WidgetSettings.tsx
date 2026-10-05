@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import CourseIcon from "../../../shared/ui/CourseIcon";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
@@ -17,25 +18,28 @@ import { quickLinks, type QuickLink } from "../widgets/tools";
 import type { WidgetDefinition, WidgetField } from "../widgets/types";
 
 export default function WidgetSettings({
+  open,
   widget,
   definition,
   courses,
   onSave,
   onClose
 }: Readonly<{
-  widget: Widget;
-  definition: WidgetDefinition;
+  open: boolean;
+  widget: Widget | null;
+  definition: WidgetDefinition | undefined;
   courses: Course[];
   onSave: (widget: Widget) => void;
   onClose: () => void;
 }>) {
-  const [config, setConfig] = useState<WidgetConfig>(widget.config);
+  const [config, setConfig] = useState<WidgetConfig>(widget?.config ?? {});
+  useResetOnOpen(open, () => setConfig(widget?.config ?? {}));
   const set = (key: string, value: unknown) =>
     setConfig((current) => ({ ...current, [key]: value }));
 
   return (
-    <Dialog title={`${definition.name} settings`} onClose={onClose}>
-      {(close, complete) => (
+    <Dialog open={open} title={`${definition?.name ?? "Widget"} settings`} onClose={onClose}>
+      {(close, complete) => widget && definition && (
         <form
           onSubmit={(event) => {
             event.preventDefault();

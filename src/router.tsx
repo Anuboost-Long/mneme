@@ -5,6 +5,7 @@ import AboutRoute from "./routes/AboutRoute";
 import AgentChatRoute from "./routes/AgentChatRoute";
 import CourseRoute from "./routes/CourseRoute";
 import CoursesRoute from "./routes/CoursesRoute";
+import GuideRoute from "./routes/GuideRoute";
 import HomeRoute from "./routes/HomeRoute";
 import ModuleHighlightsRoute from "./routes/ModuleHighlightsRoute";
 import ModuleRoute from "./routes/ModuleRoute";
@@ -36,6 +37,8 @@ export const router = createBrowserRouter([
       { path: "agent-chat", element: <AgentChatRoute /> },
       { path: "recordings", element: <RecordingsRoute /> },
       { path: "recently-deleted", element: <RecentlyDeletedRoute /> },
+      { path: "guide", element: <GuideRoute /> },
+      { path: "guide/:topicId", element: <GuideRoute /> },
       { path: "about", element: <AboutRoute /> }
     ]
   }

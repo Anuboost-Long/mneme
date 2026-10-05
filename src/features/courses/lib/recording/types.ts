@@ -3,6 +3,8 @@ import { escapeHtml } from "../import-sanitize";
 
 export type Recording = RecordingRow;
 
+export type RecordedAudio = { file: string; mimeType: string; durationMs: number };
+
 export type RecordingListItem = Recording & {
   page_title: string | null;
   module_id: number | null;

@@ -5,10 +5,9 @@ import { Link } from "react-router-dom";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { useFileUrl } from "../../../shared/lib/useFileUrl";
 import { usePlayback } from "../../../shared/lib/usePlayback";
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
 import PlaybackDeck, { PlaybackKeys } from "../../../shared/ui/PlaybackDeck";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { appendToPage, deleteRecordingFromPage } from "../../courses/lib/page/actions";
+import { appendToPage } from "../../courses/lib/page/actions";
 import { transcriptHtml, type RecordingListItem } from "../../courses/lib/recording/types";
 import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
 import AddToPageDialog from "./AddToPageDialog";
@@ -27,13 +26,11 @@ export const recordingPageLink = (recording: RecordingListItem) =>
 export default function RecordingDetails({
   recording,
   onTranscribed,
-  onPlaced,
-  onDeleted
+  onPlaced
 }: Readonly<{
   recording: RecordingListItem;
   onTranscribed: (transcript: string) => void;
   onPlaced: () => void;
-  onDeleted: () => void;
 }>) {
   const src = useFileUrl(recording.file_reference);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +38,6 @@ export default function RecordingDetails({
   const [progress, setProgress] = useState<number | null>(null);
   const [added, setAdded] = useState(false);
   const [silent, setSilent] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [placing, setPlacing] = useState(false);
 
   async function transcribe() {
@@ -172,43 +168,17 @@ export default function RecordingDetails({
             </Link>
           </>
         )}
-        <button
-          type="button"
-          onClick={() => setDeleting(true)}
-          className={clsx(
-            "ml-auto h-8 rounded-md px-3 text-sm text-danger",
-            "hover:bg-danger/10 focus-visible:outline-1 focus-visible:outline-danger"
-          )}
-        >
-          Delete
-        </button>
       </div>
 
-      {deleting && (
-        <ConfirmDeleteDialog
-          title="Delete recording?"
-          message={
-            recording.page_title === null
-              ? `“${recording.name}” and its transcript will be permanently deleted. This can’t be undone.`
-              : `“${recording.name}” and its transcript will be permanently deleted, and removed from “${recording.page_title}”. This can’t be undone.`
-          }
-          confirmLabel="Delete recording"
-          failure="Couldn’t delete this recording. Try again."
-          onConfirm={() => deleteRecordingFromPage(recording.id, recording.page_id)}
-          onClose={() => setDeleting(false)}
-          onDeleted={onDeleted}
-        />
-      )}
-      {placing && (
-        <AddToPageDialog
-          recording={recording}
-          onAdded={() => {
-            setPlacing(false);
-            onPlaced();
-          }}
-          onClose={() => setPlacing(false)}
-        />
-      )}
+      <AddToPageDialog
+        open={placing}
+        recording={recording}
+        onAdded={() => {
+          setPlacing(false);
+          onPlaced();
+        }}
+        onClose={() => setPlacing(false)}
+      />
     </div>
   );
 }

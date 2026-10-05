@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { PageType, pageTypes, type Page } from "../lib/page/types";
 import { createPage, updatePage } from "../lib/page/actions";
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";
@@ -23,10 +24,11 @@ export const pageTypeLabels: Record<PageType, string> = {
 };
 
 // `courseColor` tints the icon choices, as the page's icon is shown.
-export default function PageForm({ moduleId, courseColor, page, onSave, onClose }: Readonly<{
+export default function PageForm({ open, moduleId, courseColor, page, onSave, onClose }: Readonly<{
+  open: boolean;
   moduleId: number;
   courseColor: string | null;
-  page?: Page;
+  page?: Page | null;
   onSave: (page: Page) => void;
   onClose: () => void;
 }>) {
@@ -38,6 +40,16 @@ export default function PageForm({ moduleId, courseColor, page, onSave, onClose 
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setTitle(page?.title ?? "");
+    setType(page?.type ?? PageType.Lesson);
+    setStatus(page?.status ?? CompletionStatus.NotStarted);
+    setIcon(page?.icon ?? null);
+    setCover({ reference: page?.cover ?? null, file: null });
+    setUploading(false);
+    setBusy(false);
+    setError("");
+  });
 
   async function save(event: FormEvent<HTMLFormElement>, complete: (callback: () => void) => void) {
     event.preventDefault();
@@ -58,11 +70,11 @@ export default function PageForm({ moduleId, courseColor, page, onSave, onClose 
   }
 
   return (
-    <Dialog title={page ? "Edit page" : "Create page"} onClose={onClose} busy={busy || uploading}>
+    <Dialog open={open} title={page ? "Edit page" : "Create page"} onClose={onClose} busy={busy || uploading}>
       {(close, complete) => <>
       <form onSubmit={(event) => save(event, complete)}>
         <fieldset disabled={busy || uploading} className={clsx("space-y-5")}>
-          <TextInput label="Page title" autoFocus required name="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Introduction" />
+          <TextInput label="Page title" data-autofocus required name="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Introduction" />
           <Select label="Type" value={type} onChange={setType} options={pageTypes.map((value) => ({ value, label: pageTypeLabels[value] }))} />
           <Select label="Status" value={status} onChange={setStatus} options={completionStatuses.map((value) => ({ value, label: completionStatusLabels[value] }))} />
           <IconPicker value={icon} onChange={setIcon} color={courseColor} allowNone onBusyChange={setUploading} />

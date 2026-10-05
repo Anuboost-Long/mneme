@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import Select from "../../../shared/ui/Select";
@@ -11,11 +12,13 @@ import { movePage } from "../lib/page/actions";
 import type { Page } from "../lib/page/types";
 
 export default function MovePageDialog({
+  open,
   page,
   onClose,
   onMoved
 }: Readonly<{
-  page: Page;
+  open: boolean;
+  page: Page | null;
   onClose: () => void;
   onMoved: (page: Page) => void;
 }>) {
@@ -23,8 +26,14 @@ export default function MovePageDialog({
   const [target, setTarget] = useState<number>(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setDestinations(null);
+    setBusy(false);
+    setError("");
+  });
 
   useEffect(() => {
+    if (!open || !page) return;
     getModuleDestinations()
       .then((modules) => {
         const others = modules.filter((module) => module.id !== page.module_id);
@@ -32,10 +41,10 @@ export default function MovePageDialog({
         setTarget(others[0]?.id ?? 0);
       })
       .catch((error_) => setError(errorMessage(error_, "Couldn’t load your modules. Try again.")));
-  }, [page.module_id]);
+  }, [open, page]);
 
   async function move(complete: (callback: () => void) => void) {
-    if (busy || !target) return;
+    if (busy || !target || !page) return;
     setBusy(true);
     setError("");
     try {
@@ -48,11 +57,11 @@ export default function MovePageDialog({
   }
 
   return (
-    <Dialog title="Move page" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Move page" busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>
-            “{page.title}” moves to the end of the module you choose, with its recordings and
+            “{page?.title}” moves to the end of the module you choose, with its recordings and
             highlights.
           </BodyText>
           {destinations?.length === 0 && (
@@ -60,16 +69,19 @@ export default function MovePageDialog({
               There’s no other module to move it to yet. Create one first.
             </BodyText>
           )}
-          {destinations && destinations.length > 0 && (
+          {destinations?.length !== 0 && (
             <div className={clsx("mt-6")}>
               <Select
                 label="Move to"
                 value={target}
                 onChange={setTarget}
-                options={destinations.map((module) => ({
-                  value: module.id,
-                  label: `${module.course_name} › ${module.name}`
-                }))}
+                disabled={destinations === null}
+                options={
+                  destinations?.map((module) => ({
+                    value: module.id,
+                    label: `${module.course_name} › ${module.name}`
+                  })) ?? [{ value: 0, label: "Loading modules…" }]
+                }
               />
             </div>
           )}

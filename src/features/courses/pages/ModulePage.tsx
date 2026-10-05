@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { addCommandSource } from "../../../shared/lib/commandSources";
 import { DATE_GROUP_VALUES, groupByDate, groupItems } from "../../../shared/lib/dateGroups";
+import { useLastValue } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import { useListView, type SortOption } from "../../../shared/lib/useListView";
@@ -101,6 +102,8 @@ export default function ModulePage({
   const [doneError, setDoneError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const reader = useReadAloud();
+  const pageTarget = useLastValue(typeof pageDialog === "object" ? pageDialog?.page : null);
+  const bulkDeleteIds = useLastValue(selectedPageIds);
 
   useEffect(() => {
     if (!module || !pagesReady) return;
@@ -622,88 +625,79 @@ export default function ModulePage({
         )}
       </section>
       <ReadAloudBar reader={reader} />
-      {dialog === "edit" && (
-        <ModuleForm
-          key={module.id}
-          courseId={course.id}
-          courseColor={course.color}
-          module={module}
-          onClose={() => setDialog(null)}
-          onSave={(updated) => {
-            onSaveModule(updated);
-            setDialog(null);
-          }}
-        />
-      )}
-      {dialog === "delete" && (
-        <DeleteModule module={module} onClose={() => setDialog(null)} onDelete={onDeleteModule} />
-      )}
-      {pageDialog === "create" && (
-        <PageForm
-          courseColor={course.color}
-          moduleId={module.id}
-          onClose={() => setPageDialog(null)}
-          onSave={(page) => {
-            onSavePage(page);
-            setPageDialog(null);
-          }}
-        />
-      )}
-      {(pageDialog === "import" || pageDialog === "import-file") && (
-        <LmsImportForm
-          moduleId={module.id}
-          initialSource={pageDialog === "import-file" ? "file" : "url"}
-          onClose={() => setPageDialog(null)}
-          onImported={(pages) => {
-            pages.forEach(onSavePage);
-            setPageDialog(null);
-          }}
-        />
-      )}
-      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "edit" && (
-        <PageForm
-          courseColor={course.color}
-          key={pageDialog.page.id}
-          moduleId={module.id}
-          page={pageDialog.page}
-          onClose={() => setPageDialog(null)}
-          onSave={(page) => {
-            onSavePage(page);
-            setPageDialog(null);
-          }}
-        />
-      )}
-      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "move" && (
-        <MovePageDialog
-          page={pageDialog.page}
-          onClose={() => setPageDialog(null)}
-          onMoved={(moved) => {
-            onDeletePage(moved.id);
-            setPageDialog(null);
-          }}
-        />
-      )}
-      {pageDialog && typeof pageDialog === "object" && pageDialog.type === "delete" && (
-        <DeletePage
-          page={pageDialog.page}
-          onClose={() => setPageDialog(null)}
-          onDelete={() => {
-            onDeletePage(pageDialog.page.id);
-            setPageDialog(null);
-          }}
-        />
-      )}
-      {bulkDeleteOpen && selectedPageIds && (
-        <DeletePages
-          pageIds={[...selectedPageIds]}
-          onClose={() => setBulkDeleteOpen(false)}
-          onDelete={() => {
-            selectedPageIds.forEach(onDeletePage);
-            setBulkDeleteOpen(false);
-            setSelectedPageIds(null);
-          }}
-        />
-      )}
+      <ModuleForm
+        open={dialog === "edit"}
+        courseId={course.id}
+        courseColor={course.color}
+        module={module}
+        onClose={() => setDialog(null)}
+        onSave={(updated) => {
+          onSaveModule(updated);
+          setDialog(null);
+        }}
+      />
+      <DeleteModule
+        open={dialog === "delete"}
+        module={module}
+        onClose={() => setDialog(null)}
+        onDelete={onDeleteModule}
+      />
+      <PageForm
+        open={pageDialog === "create"}
+        courseColor={course.color}
+        moduleId={module.id}
+        onClose={() => setPageDialog(null)}
+        onSave={(page) => {
+          onSavePage(page);
+          setPageDialog(null);
+        }}
+      />
+      <LmsImportForm
+        open={pageDialog === "import" || pageDialog === "import-file"}
+        moduleId={module.id}
+        initialSource={pageDialog === "import-file" ? "file" : "url"}
+        onClose={() => setPageDialog(null)}
+        onImported={(pages) => pages.forEach(onSavePage)}
+      />
+      <PageForm
+        open={typeof pageDialog === "object" && pageDialog?.type === "edit"}
+        courseColor={course.color}
+        moduleId={module.id}
+        page={pageTarget}
+        onClose={() => setPageDialog(null)}
+        onSave={(page) => {
+          onSavePage(page);
+          setPageDialog(null);
+        }}
+      />
+      <MovePageDialog
+        open={typeof pageDialog === "object" && pageDialog?.type === "move"}
+        page={pageTarget}
+        onClose={() => setPageDialog(null)}
+        onMoved={(moved) => {
+          onDeletePage(moved.id);
+          setPageDialog(null);
+        }}
+      />
+      <DeletePage
+        open={typeof pageDialog === "object" && pageDialog?.type === "delete"}
+        page={pageTarget}
+        onClose={() => setPageDialog(null)}
+        onDelete={() => {
+          if (pageTarget) onDeletePage(pageTarget.id);
+          setPageDialog(null);
+        }}
+      />
+      <DeletePages
+        open={bulkDeleteOpen && selectedPageIds !== null}
+        pageIds={[...(bulkDeleteIds ?? [])]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onDelete={() => {
+          selectedPageIds?.forEach(onDeletePage);
+          setBulkDeleteOpen(false);
+          setSelectedPageIds(null);
+        }}
+      />
     </div>
   );
 }

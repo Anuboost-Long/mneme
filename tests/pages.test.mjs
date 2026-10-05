@@ -178,11 +178,11 @@ test("a new page counts as opened when it was made, however it was inserted", as
 
 test("addRecordingToPage puts a page-less recording on the page, with its transcript when asked", async () => {
   const { addRecordingToPage } = await import("../src/features/courses/lib/page/actions.ts");
-  const { createRecording, getRecording, updateTranscriptText } =
+  const { createRecording, getRecording, storeRecordedAudio, updateTranscriptText } =
     await import("../src/features/courses/lib/recording/actions.ts");
   const { id: moduleId } = await module();
   const page = await createPage(moduleId, { title: "Week 3", content: "<p>Notes</p>" });
-  const { id } = await createRecording(null, new Blob(["audio"], { type: "audio/mp4" }), 900);
+  const { id } = await createRecording(null, await storeRecordedAudio(new Blob(["audio"], { type: "audio/mp4" }), 900));
   await updateTranscriptText(id, "First point\n\n Second <point> ");
 
   await addRecordingToPage(await getRecording(id), page.id, true);

@@ -2,19 +2,25 @@ import { useState } from "react";
 import clsx from "clsx";
 import type { Page } from "../lib/page/types";
 import { deletePage } from "../lib/page/actions";
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
 
-export default function DeletePage({ page, onClose, onDelete }: Readonly<{
-  page: Page;
+export default function DeletePage({ open, page, onClose, onDelete }: Readonly<{
+  open: boolean;
+  page: Page | null;
   onClose: () => void;
   onDelete: () => void;
 }>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirmDelete(complete: (callback: () => void) => void) {
-    if (busy) return;
+    if (busy || !page) return;
     setBusy(true);
     setError("");
     try {
@@ -27,12 +33,12 @@ export default function DeletePage({ page, onClose, onDelete }: Readonly<{
   }
 
   return (
-    <Dialog title="Delete page?" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Delete page?" busy={busy} onClose={onClose}>
       {(close, complete) => <>
-      <BodyText tone="muted" className={clsx("wrap-anywhere")}>“{page.title}” moves to Recently deleted. You can restore it from there for 30 days.</BodyText>
+      <BodyText tone="muted" className={clsx("wrap-anywhere")}>“{page?.title}” moves to Recently deleted. You can restore it from there for 30 days.</BodyText>
       {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
       <div className={clsx("mt-8 flex justify-end gap-3")}>
-        <button type="button" autoFocus disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}>Cancel</button>
+        <button type="button" data-autofocus disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}>Cancel</button>
         <button type="button" disabled={busy} onClick={() => confirmDelete(complete)} className={clsx("rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white", "hover:bg-red-800")}>{busy ? "Deleting…" : "Delete page"}</button>
       </div>
       </>}

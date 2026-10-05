@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
@@ -9,14 +10,21 @@ import type { RecordingListItem } from "../../courses/lib/recording/types";
 import PagePicker, { type PageTarget } from "../../home/components/PagePicker";
 
 export default function AddToPageDialog({
+  open,
   recording,
   onAdded,
   onClose
-}: Readonly<{ recording: RecordingListItem; onAdded: () => void; onClose: () => void }>) {
+}: Readonly<{ open: boolean; recording: RecordingListItem; onAdded: () => void; onClose: () => void }>) {
   const [page, setPage] = useState<PageTarget | null>(null);
   const [withTranscript, setWithTranscript] = useState(!!recording.transcript);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setPage(null);
+    setWithTranscript(!!recording.transcript);
+    setBusy(false);
+    setError("");
+  });
 
   async function add(complete: (callback: () => void) => void) {
     if (!page) {
@@ -35,7 +43,7 @@ export default function AddToPageDialog({
   }
 
   return (
-    <Dialog title="Add to page" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Add to page" busy={busy} onClose={onClose}>
       {(close, complete) => (
         <div className={clsx("space-y-5")}>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>

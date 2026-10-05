@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { desktop } from "@chain/sdk";
 import clsx from "clsx";
+import { useOpenedOnce } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { describeAttachment, fileExtension, imageMediaType, type AttachmentInfo, type ChatAttachment } from "../lib/attachments";
@@ -28,6 +29,7 @@ function useImageSrc(file: CardFile): string | null | undefined {
 
 export default function AttachmentCard({ file, onRemove }: Readonly<{ file: CardFile; onRemove?: () => void }>) {
   const [previewing, setPreviewing] = useState(false);
+  const previewUsed = useOpenedOnce(previewing);
   const card = useRef<HTMLButtonElement>(null);
   const extension = fileExtension(file.name) || "file";
   const imageSrc = useImageSrc(file);
@@ -58,7 +60,7 @@ export default function AttachmentCard({ file, onRemove }: Readonly<{ file: Card
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" className={clsx("size-3.5")}><path d="m6 6 8 8M14 6l-8 8" /></svg>
       </button>}
     </div>
-    {previewing && <Dialog title={file.name} origin={card} onClose={() => setPreviewing(false)}>
+    {previewUsed && <Dialog open={previewing} title={file.name} origin={card} onClose={() => setPreviewing(false)}>
       {() => <>
         <Caption tone="muted" className={clsx("-mt-4 mb-4")}>{extension.toUpperCase()} · {describeAttachment(file)}</Caption>
         {file.kind === "image" && imageSrc && <img src={imageSrc} alt={file.name} className={clsx("max-h-96 w-full rounded-md bg-ink/4 object-contain")} />}

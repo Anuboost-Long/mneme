@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
@@ -8,12 +9,14 @@ import { BodyText } from "../../../shared/ui/Typography";
 import type { Conversation } from "../lib/conversation/types";
 
 export default function ConversationForm({
+  open,
   action,
   conversation,
   onRename,
   onDelete,
   onClose
 }: Readonly<{
+  open: boolean;
   action: "rename" | "delete";
   conversation?: Conversation;
   onRename: (id: number, title: string) => Promise<void>;
@@ -23,6 +26,11 @@ export default function ConversationForm({
   const [title, setTitle] = useState(conversation?.title ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setTitle(conversation?.title ?? "");
+    setBusy(false);
+    setError("");
+  });
   const labels = { rename: "Rename conversation", delete: "Delete conversation" };
 
   async function save(complete: (callback: () => void) => void) {
@@ -46,7 +54,7 @@ export default function ConversationForm({
   }
 
   return (
-    <Dialog title={labels[action]} onClose={onClose} busy={busy}>
+    <Dialog open={open} title={labels[action]} onClose={onClose} busy={busy}>
       {(close, complete) => (
         <form
           onSubmit={(event) => {
@@ -58,7 +66,7 @@ export default function ConversationForm({
             <TextInput
               label="Conversation title"
               required
-              autoFocus
+              data-autofocus
               value={title}
               disabled={busy}
               onChange={(event) => setTitle(event.target.value)}

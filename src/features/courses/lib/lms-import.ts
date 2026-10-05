@@ -1,6 +1,6 @@
 import { apiGet } from "../../../shared/lib/api";
 import { downloadImage } from "../../../shared/lib/downloadImage";
-import { detectType, sanitizeChildren, type ParsedImport } from "./import-sanitize";
+import { detectType, escapeHtml, sanitizeChildren, type ParsedImport } from "./import-sanitize";
 import { pageImage } from "./page-image";
 
 export type { ParsedImport };
@@ -60,7 +60,8 @@ function contentRoot(doc: Document): Element {
 // that can't be downloaded (a login-walled site) keeps its web address.
 export async function storePageImages(
   html: string,
-  onProgress?: (saved: number, total: number) => void
+  onProgress?: (saved: number, total: number) => void,
+  download: (url: string) => Promise<File | null> = downloadImage
 ): Promise<string> {
   const document = new DOMParser().parseFromString(html, "text/html");
   const images = Array.from(document.querySelectorAll("img")).filter((image) =>
@@ -68,16 +69,33 @@ export async function storePageImages(
   );
   for (const [index, image] of images.entries()) {
     onProgress?.(index, images.length);
-    const file = await downloadImage(image.getAttribute("src") ?? "");
+    const file = await download(image.getAttribute("src") ?? "");
     const stored = file ? await pageImage(file).catch(() => null) : null;
     if (stored) image.setAttribute("src", stored);
   }
   return document.body.innerHTML;
 }
 
+export function isSignInPage(html: string) {
+  return new DOMParser().parseFromString(html, "text/html").querySelector("input[type='password']") !== null;
+}
+
+function pageTitle(doc: Document): string {
+  const parts = doc.title.trim().split(" | ");
+  return (parts.length > 1 ? parts.slice(0, -1).join(" | ") : parts[0]) || "Imported page";
+}
+
+function headerDates(doc: Document, root: Element): string {
+  return Array.from(doc.querySelectorAll('[data-region="activity-dates"] .date-item'))
+    .filter((item) => !root.contains(item))
+    .map((item) => `<p>${escapeHtml((item.textContent ?? "").replace(/\s+/g, " ").trim())}</p>`)
+    .join("");
+}
+
 export function parseLmsPage(html: string, sourceUrl: string): ParsedImport {
   const doc = new DOMParser().parseFromString(html, "text/html");
-  const title = doc.title.trim() || "Imported page";
-  const pageHtml = sanitizeChildren(contentRoot(doc), sourceUrl);
+  const title = pageTitle(doc);
+  const root = contentRoot(doc);
+  const pageHtml = headerDates(doc, root) + sanitizeChildren(root, sourceUrl);
   return { title, type: detectType(title), html: pageHtml };
 }

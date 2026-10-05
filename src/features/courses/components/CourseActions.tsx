@@ -3,6 +3,7 @@ import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom";
 import { useMatch, useNavigate } from "react-router-dom";
 
+import { useOpenedOnce } from "../../../shared/lib/dialogState";
 import { updateCourse } from "../lib/course/actions";
 import type { Course } from "../lib/course/types";
 import CourseForm from "./CourseForm";
@@ -21,6 +22,7 @@ export default function CourseActions({
 }>) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
+  const dialogUsed = useOpenedOnce(dialog !== null);
   const menu = useRef<HTMLMenuElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -237,27 +239,29 @@ export default function CourseActions({
           </menu>,
           document.body
         )}
-      {dialog === "edit" && (
-        <CourseForm
-          course={course}
-          onClose={() => setDialog(null)}
-          onSave={(updated) => {
-            onSave(updated);
-            setDialog(null);
-          }}
-        />
-      )}
-      {dialog === "delete" && (
-        <DeleteCourse
-          course={course}
-          onClose={() => setDialog(null)}
-          onDelete={() => {
-            onDelete(course.id);
-            setDialog(null);
-            if (currentCourse?.params.courseId === String(course.id))
-              navigate("/courses", { replace: true });
-          }}
-        />
+      {dialogUsed && (
+        <>
+          <CourseForm
+            open={dialog === "edit"}
+            course={course}
+            onClose={() => setDialog(null)}
+            onSave={(updated) => {
+              onSave(updated);
+              setDialog(null);
+            }}
+          />
+          <DeleteCourse
+            open={dialog === "delete"}
+            course={course}
+            onClose={() => setDialog(null)}
+            onDelete={() => {
+              onDelete(course.id);
+              setDialog(null);
+              if (currentCourse?.params.courseId === String(course.id))
+                navigate("/courses", { replace: true });
+            }}
+          />
+        </>
       )}
     </div>
   );

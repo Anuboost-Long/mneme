@@ -2,6 +2,7 @@ import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
 import clsx from "clsx";
 import { useEffect, useRef, useState, type SubmitEvent } from "react";
 
+import { useOpenedOnce } from "../../../../shared/lib/dialogState";
 import { errorMessage } from "../../../../shared/lib/errorMessage";
 import { formatSize } from "../../../../shared/lib/formatSize";
 import { pickFiles } from "../../../../shared/lib/pickFiles";
@@ -34,6 +35,7 @@ export default function AttachmentNodeView({
   const attachmentId = node.attrs.attachmentId as number | null;
   const [attachment, setAttachment] = useState<Attachment | null | undefined>();
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
+  const deleteUsed = useOpenedOnce(mode === "delete");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const nameInput = useRef<HTMLInputElement>(null);
@@ -213,8 +215,9 @@ export default function AttachmentNodeView({
           {error}
         </Caption>
       )}
-      {mode === "delete" && (
+      {deleteUsed && (
         <ConfirmDeleteDialog
+          open={mode === "delete"}
           title="Delete file?"
           message={`“${attachment.file_name}” will be permanently deleted from this page. This can’t be undone.`}
           confirmLabel="Delete file"

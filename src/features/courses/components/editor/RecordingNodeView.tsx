@@ -3,6 +3,7 @@ import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
+import { useOpenedOnce } from "../../../../shared/lib/dialogState";
 import { errorMessage } from "../../../../shared/lib/errorMessage";
 import { formatDuration } from "../../../../shared/lib/formatDuration";
 import { usePlayback } from "../../../../shared/lib/usePlayback";
@@ -14,6 +15,7 @@ import CassetteDeck, {
 import ConfirmDeleteDialog from "../../../../shared/ui/ConfirmDeleteDialog";
 import PlaybackDeck, { PlaybackKeys } from "../../../../shared/ui/PlaybackDeck";
 import { Caption } from "../../../../shared/ui/Typography";
+import SoundSettingsButton from "../../../recordings/components/SoundSettingsButton";
 import {
   createRecording,
   deleteRecording,
@@ -24,6 +26,8 @@ import type { Recording } from "../../lib/recording/types";
 import { useAudioRecorder, type RecorderStatus } from "../../lib/useAudioRecorder";
 import { insertParagraphs } from "./insertParagraphs";
 import MicrophoneAccessDialog from "./MicrophoneAccessDialog";
+import MicrophoneNotice from "./MicrophoneNotice";
+import RecordingSourcePicker from "./RecordingSourcePicker";
 import TranscriptPanel from "./TranscriptPanel";
 import Waveform from "./Waveform";
 
@@ -98,6 +102,7 @@ function Recorder({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showingAccessHelp, setShowingAccessHelp] = useState(false);
+  const accessHelpUsed = useOpenedOnce(showingAccessHelp);
 
   useEffect(() => {
     if (!startNow) return;
@@ -111,7 +116,7 @@ function Recorder({
     setSaving(true);
     setSaveError(null);
     try {
-      const recording = await createRecording(pageId, result.audio, result.durationMs);
+      const recording = await createRecording(pageId, result);
       onSaved(recording.id);
     } catch (error) {
       setSaveError(errorMessage(error, "Couldn’t save this recording. Try again."));
@@ -138,6 +143,14 @@ function Recorder({
           >
             <span className={clsx("size-3 rounded-full bg-red-600")} />
           </DeckKey>
+          <RecordingSourcePicker
+            sources={recorder.sources}
+            source={recorder.source}
+            echoCancellation={recorder.echoCancellation}
+            onChange={recorder.setSource}
+            className={clsx("w-48 max-w-full")}
+          />
+          <SoundSettingsButton />
           <span className={clsx("flex-1")} />
           <DeckKey label="Remove" tone="danger" onClick={onDiscard}>
             <DeckIcon name="trash" />
@@ -177,10 +190,16 @@ function Recorder({
         tape={<Waveform values={recorder.waveform} live={recorder.status === "recording"} />}
         controls={renderKeys()}
       />
+      <MicrophoneNotice
+        microphone={recorder.status === "idle" ? null : recorder.microphone}
+        notice={recorder.notice}
+        onUseAutomatic={recorder.useAutomaticMicrophone}
+        className={clsx("mt-2")}
+      />
       {error && (
         <Caption role="alert" tone="error" className={clsx("mt-2")}>
           {error}
-          {recorder.accessDenied && (
+          {recorder.deniedAccess && (
             <>
               {" "}
               <button
@@ -197,8 +216,10 @@ function Recorder({
           )}
         </Caption>
       )}
-      {showingAccessHelp && (
+      {accessHelpUsed && (
         <MicrophoneAccessDialog
+          open={showingAccessHelp}
+          access={recorder.deniedAccess}
           onRetry={() => {
             setShowingAccessHelp(false);
             void recorder.start();
@@ -222,6 +243,7 @@ function Player({
   const [recording, setRecording] = useState<Recording | null | undefined>(undefined);
   const [src, setSrc] = useState<string>();
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
+  const deleteUsed = useOpenedOnce(mode === "delete");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const nameInput = useRef<HTMLInputElement>(null);
@@ -351,8 +373,9 @@ function Player({
         playback={playback}
         controls={renderKeys()}
       />
-      {mode === "delete" && (
+      {deleteUsed && (
         <ConfirmDeleteDialog
+          open={mode === "delete"}
           title="Delete recording?"
           message={`“${savedName}” and its transcript will be permanently deleted. This can’t be undone.`}
           confirmLabel="Delete recording"

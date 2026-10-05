@@ -19,6 +19,7 @@ import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentS
 import { useAgentServer } from "../../agent-server/lib/useAgentServer";
 import ActionSettings from "../../ai-actions/components/ActionSettings";
 import ProfileSettings from "../../ai-profiles/components/ProfileSettings";
+import SchoolSiteSettings from "../../courses/components/SchoolSiteSettings";
 import {
   createBackup,
   readBackupFile,
@@ -26,6 +27,7 @@ import {
   saveBackup
 } from "../../courses/lib/backup/actions";
 import ExtensionSettings from "../../extensions/components/ExtensionSettings";
+import RecordingSoundSettings from "../../recordings/components/RecordingSoundSettings";
 import ShortcutSettings from "../components/ShortcutSettings";
 
 export const settingsSections = [
@@ -396,7 +398,7 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                       <div>
                         <SectionTitle id="recordings-title">Recordings</SectionTitle>
                         <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>
-                          Choose how far the back and forward keys jump when you play a recording.
+                          Choose how far the back and forward keys jump when you play a recording, and how recordings sound.
                         </BodyText>
                       </div>
                       <div className={clsx("min-w-0 w-full max-w-xl @min-3xl:col-span-2")}>
@@ -431,11 +433,13 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                             ))}
                           </div>
                         </fieldset>
+                        <RecordingSoundSettings className={clsx("mt-6")} />
                         <Caption tone="muted" className={clsx("mt-4")}>
-                          Your choice is saved on this device.
+                          Your choices are saved on this device.
                         </Caption>
                       </div>
                     </section>
+                    <SchoolSiteSettings />
                   </>
                 );
               case "keyboard":

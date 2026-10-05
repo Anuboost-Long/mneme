@@ -1,25 +1,32 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
 import { deleteModule } from "../lib/module/actions";
 import type { Module } from "../lib/module/types";
 
 export default function DeleteModule({
+  open,
   module,
   onClose,
   onDelete
 }: Readonly<{
-  module: Module;
+  open: boolean;
+  module: Module | null;
   onClose: () => void;
   onDelete: () => void;
 }>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirmDelete(complete: (callback: () => void) => void) {
-    if (busy) return;
+    if (busy || !module) return;
     setBusy(true);
     setError("");
     try {
@@ -32,11 +39,11 @@ export default function DeleteModule({
   }
 
   return (
-    <Dialog title="Delete module?" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Delete module?" busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>
-            “{module.name}” moves to Recently deleted. You can restore it from there for 30 days.
+            “{module?.name}” moves to Recently deleted. You can restore it from there for 30 days.
           </BodyText>
           {error && (
             <BodyText role="alert" tone="error" className={clsx("mt-4")}>
@@ -46,7 +53,7 @@ export default function DeleteModule({
           <div className={clsx("mt-8 flex justify-end gap-3")}>
             <button
               type="button"
-              autoFocus
+              data-autofocus
               disabled={busy}
               onClick={close}
               className={clsx(

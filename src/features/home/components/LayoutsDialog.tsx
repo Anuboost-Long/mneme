@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState, type SubmitEvent } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
@@ -47,10 +48,12 @@ function LayoutRow({
 }
 
 export default function LayoutsDialog({
+  open,
   current,
   onApply,
   onClose
 }: Readonly<{
+  open: boolean;
   current: NewWidget[];
   onApply: (name: string, widgets: NewWidget[]) => void;
   onClose: () => void;
@@ -60,8 +63,15 @@ export default function LayoutsDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
+  useResetOnOpen(open, () => {
+    setName("");
+    setSaving(false);
+    setError("");
+    setSaved("");
+  });
 
   useEffect(() => {
+    if (!open) return;
     let active = true;
     getLayouts()
       .then((loaded) => active && setLayouts(loaded))
@@ -69,7 +79,7 @@ export default function LayoutsDialog({
     return () => {
       active = false;
     };
-  }, []);
+  }, [open]);
 
   async function save(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,7 +110,7 @@ export default function LayoutsDialog({
   }
 
   return (
-    <Dialog title="Layouts" onClose={onClose} busy={saving}>
+    <Dialog open={open} title="Layouts" onClose={onClose} busy={saving}>
       {(_close, complete) => {
         const apply = (layoutName: string, widgets: NewWidget[]) => {
           onApply(layoutName, widgets);

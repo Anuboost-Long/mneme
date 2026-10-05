@@ -2,6 +2,7 @@ import type { RecognizedDocument } from "@chain/sdk";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
+import { useResetOnOpen } from "../../../../shared/lib/dialogState";
 import { extractTables } from "../../../../shared/lib/ocr";
 import Dialog from "../../../../shared/ui/Dialog";
 import { BodyText, Caption } from "../../../../shared/ui/Typography";
@@ -11,10 +12,12 @@ import type { ExtractPlacement } from "./ExtractTextDialog";
 type Table = RecognizedDocument["tables"][number];
 
 export default function ExtractTableDialog({
+  open,
   imageSrc,
   onInsert,
   onClose
 }: Readonly<{
+  open: boolean;
   imageSrc: string;
   onInsert: (html: string, placement: ExtractPlacement) => void;
   onClose: () => void;
@@ -22,7 +25,13 @@ export default function ExtractTableDialog({
   const [tables, setTables] = useState<Table[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useResetOnOpen(open, () => {
+    setTables(null);
+    setError(null);
+  });
+
   useEffect(() => {
+    if (!open) return;
     let active = true;
     extractTables(imageSrc)
       .then((found) => active && setTables(found))
@@ -30,12 +39,12 @@ export default function ExtractTableDialog({
     return () => {
       active = false;
     };
-  }, [imageSrc]);
+  }, [open, imageSrc]);
 
   const found = tables !== null && tables.length > 0;
 
   return (
-    <Dialog title="Extract table" onClose={onClose}>
+    <Dialog open={open} title="Extract table" onClose={onClose}>
       {(close, complete) => (
         <>
           {tables === null && !error && (

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
@@ -13,10 +14,12 @@ import CoverPicker, { saveWithCover, type CoverChoice } from "./CoverPicker";
 import IconPicker from "./IconPicker";
 
 export default function CourseForm({
+  open,
   course,
   onSave,
   onClose
 }: Readonly<{
+  open: boolean;
   course?: Course;
   onSave: (course: Course) => void;
   onClose: () => void;
@@ -38,10 +41,28 @@ export default function CourseForm({
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setName(course?.name ?? "");
+    setDescription(course?.description ?? "");
+    setIcon(course?.icon ?? "book");
+    setColor(course?.color ?? courseColors[0].value);
+    setAiProfileId(course?.ai_profile_id ?? null);
+    setCover({ reference: course?.cover ?? null, file: null });
+    setDetails({
+      code: course?.code ?? "",
+      semester: course?.semester ?? "",
+      school: course?.school ?? "",
+      instructor: course?.instructor ?? ""
+    });
+    setRgbDraft({});
+    setBusy(false);
+    setUploading(false);
+    setError("");
+  });
 
   useEffect(() => {
-    getProfiles().then(setProfiles, () => setProfiles([]));
-  }, []);
+    if (open) getProfiles().then(setProfiles, () => setProfiles([]));
+  }, [open]);
 
   function chooseColor(value: string) {
     setColor(value);
@@ -79,6 +100,7 @@ export default function CourseForm({
 
   return (
     <Dialog
+      open={open}
       title={course ? "Edit course" : "Create course"}
       onClose={onClose}
       busy={busy || uploading}
@@ -93,7 +115,7 @@ export default function CourseForm({
               </div>
               <TextInput
                 label="Course name"
-                autoFocus
+                data-autofocus
                 required
                 name="name"
                 value={name}

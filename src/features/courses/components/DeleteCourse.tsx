@@ -1,22 +1,29 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { BodyText } from "../../../shared/ui/Typography";
 import { deleteCourse } from "../lib/course/actions";
 import type { Course } from "../lib/course/types";
 
 export default function DeleteCourse({
+  open,
   course,
   onClose,
   onDelete
 }: Readonly<{
+  open: boolean;
   course: Course;
   onClose: () => void;
   onDelete: () => void;
 }>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirmDelete(complete: (callback: () => void) => void) {
     if (busy) return;
@@ -32,7 +39,7 @@ export default function DeleteCourse({
   }
 
   return (
-    <Dialog title="Delete course?" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Delete course?" busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>
@@ -46,7 +53,7 @@ export default function DeleteCourse({
           <div className={clsx("mt-8 flex justify-end gap-3")}>
             <button
               type="button"
-              autoFocus
+              data-autofocus
               disabled={busy}
               onClick={close}
               className={clsx(

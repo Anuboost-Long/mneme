@@ -1,11 +1,13 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useResetOnOpen } from "../lib/dialogState";
 import { errorMessage } from "../lib/errorMessage";
 import Dialog from "./Dialog";
 import { BodyText } from "./Typography";
 
 export default function ConfirmDeleteDialog({
+  open,
   title,
   message,
   confirmLabel,
@@ -14,6 +16,7 @@ export default function ConfirmDeleteDialog({
   onClose,
   onDeleted
 }: Readonly<{
+  open: boolean;
   title: string;
   message: string;
   confirmLabel: string;
@@ -25,6 +28,10 @@ export default function ConfirmDeleteDialog({
 }>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirm(complete: (callback: () => void) => void) {
     if (busy) return;
@@ -40,7 +47,7 @@ export default function ConfirmDeleteDialog({
   }
 
   return (
-    <Dialog title={title} busy={busy} onClose={onClose}>
+    <Dialog open={open} title={title} busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>

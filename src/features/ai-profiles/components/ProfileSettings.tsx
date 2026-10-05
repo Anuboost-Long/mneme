@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
+import { useLastValue, useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { rowAction } from "../../../shared/ui/rowAction";
@@ -36,14 +37,20 @@ type DialogState =
   | null;
 
 function DeleteProfile({
+  open,
   profile,
   onClose,
   onDelete
-}: Readonly<{ profile: AiProfile; onClose: () => void; onDelete: () => void }>) {
+}: Readonly<{ open: boolean; profile: AiProfile | null; onClose: () => void; onDelete: () => void }>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirmDelete(complete: (callback: () => void) => void) {
+    if (!profile) return;
     setBusy(true);
     try {
       await deleteProfile(profile.id);
@@ -55,11 +62,11 @@ function DeleteProfile({
   }
 
   return (
-    <Dialog title="Delete profile?" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Delete profile?" busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>
-            Courses using “{profile.name}” will switch to the default profile. Your pages aren’t
+            Courses using “{profile?.name}” will switch to the default profile. Your pages aren’t
             affected.
           </BodyText>
           {error && (
@@ -106,6 +113,7 @@ export default function ProfileSettings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
+  const dialogProfile = useLastValue(dialog && "profile" in dialog ? dialog.profile : null);
 
   async function load() {
     try {
@@ -244,13 +252,19 @@ export default function ProfileSettings() {
           )}
         </div>
       </div>
-      {dialog?.kind === "create" && <ProfileForm onClose={() => setDialog(null)} onSave={saved} />}
-      {dialog?.kind === "edit" && (
-        <ProfileForm profile={dialog.profile} onClose={() => setDialog(null)} onSave={saved} />
-      )}
-      {dialog?.kind === "delete" && (
-        <DeleteProfile profile={dialog.profile} onClose={() => setDialog(null)} onDelete={saved} />
-      )}
+      <ProfileForm open={dialog?.kind === "create"} onClose={() => setDialog(null)} onSave={saved} />
+      <ProfileForm
+        open={dialog?.kind === "edit"}
+        profile={dialogProfile}
+        onClose={() => setDialog(null)}
+        onSave={saved}
+      />
+      <DeleteProfile
+        open={dialog?.kind === "delete"}
+        profile={dialogProfile}
+        onClose={() => setDialog(null)}
+        onDelete={saved}
+      />
     </section>
   );
 }

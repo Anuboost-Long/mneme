@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 
 import { isFileReference } from "../lib/fileReference";
 import { useFileUrl } from "../lib/useFileUrl";
+import { iconChoices } from "./iconCatalogue";
 
 export const courseColors = [
   { name: "Navy", value: "#171b24" },
@@ -12,17 +13,6 @@ export const courseColors = [
   { name: "Ochre", value: "#956b2f" },
   { name: "Rose", value: "#a35b70" },
 ] as const;
-
-export const courseIcons = ["book", "science", "code", "globe", "art", "music"] as const;
-
-const paths: Record<string, string> = {
-  book: "M12 5C9 3 5 3 3 4v15c3-1 6-1 9 1m0-15c3-2 7-2 9-1v15c-3-1-6-1-9 1V5Z",
-  science: "M9 3h6M10 3v7l-6 9a1 1 0 0 0 1 2h14a1 1 0 0 0 1-2l-6-9V3M7 15h10",
-  code: "m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16",
-  globe: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z",
-  art: "M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-4 2 2 0 0 1 1-4h3a3 3 0 0 0 3-3c0-4-4-7-9-7ZM7 9h.01M11 6h.01M16 7h.01M6 14h.01",
-  music: "M9 18V5l11-2v13M9 8l11-2M9 18a3 2 0 1 1-6 0 3 2 0 0 1 6 0Zm11-2a3 2 0 1 1-6 0 3 2 0 0 1 6 0Z",
-};
 
 const sizes = {
   small: { box: "size-6", text: "text-sm", glyph: "size-3.5" },
@@ -43,12 +33,9 @@ export default function CourseIcon({ icon, color, large = false, small = false }
   function glyph() {
     if (picture) return <img src={picture} alt="" className={clsx("size-full rounded-md object-contain")} />;
     if (isFileReference(icon)) return null;
-    if (icon && !paths[icon]) return <span className={clsx("truncate", sizes[size].text)}>{icon}</span>;
-    return (
-      <svg className={clsx(sizes[size].glyph)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d={paths[icon || "book"]} />
-      </svg>
-    );
+    const choice = iconChoices.get(icon || "book");
+    if (!choice) return <span className={clsx("truncate", sizes[size].text)}>{icon}</span>;
+    return <choice.Icon className={clsx(sizes[size].glyph)} strokeWidth={1.6} aria-hidden="true" />;
   }
 
   return (

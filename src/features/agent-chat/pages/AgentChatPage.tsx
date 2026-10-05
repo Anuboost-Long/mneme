@@ -169,18 +169,17 @@ export default function AgentChatPage({
           />
         </div>
       )}
-      {action === "create" && (
-        <AgentPicker
-          onClose={() => setAction(null)}
-          onStart={async (id) => onSelect(await chat.create(id))}
-          onResume={() => {
-            setAction(null);
-            list.setQuery("");
-            conversationsRef.current?.focus();
-            conversationsRef.current?.scrollIntoView({ block: "start" });
-          }}
-        />
-      )}
+      <AgentPicker
+        open={action === "create"}
+        onClose={() => setAction(null)}
+        onStart={async (id) => onSelect(await chat.create(id))}
+        onResume={() => {
+          setAction(null);
+          list.setQuery("");
+          conversationsRef.current?.focus();
+          conversationsRef.current?.scrollIntoView({ block: "start" });
+        }}
+      />
     </div>
   );
 }

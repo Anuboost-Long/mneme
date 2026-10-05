@@ -13,7 +13,8 @@ function spans({ rowSpan, colSpan }: Cell) {
 }
 
 function cellHtml(tag: "th" | "td", cell: Cell) {
-  return `<${tag}${spans(cell)}>${escapeHtml(cell.text)}</${tag}>`;
+  const lines = cell.text.split("\n").map(escapeHtml).join("<br>");
+  return `<${tag}${spans(cell)}>${lines}</${tag}>`;
 }
 
 function listHtml(items: string[]) {

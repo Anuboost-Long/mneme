@@ -1,5 +1,5 @@
 // The icon an action shows in the AI actions menu — a fixed set, the same
-// approach as shared/ui/CourseIcon's courseIcons. Stored by key in
+// approach as shared/ui/iconCatalogue's course icons. Stored by key in
 // ai_action.icon; an unknown or null key renders nothing.
 const paths: Record<string, string> = {
   sparkle: "M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1",

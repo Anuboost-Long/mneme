@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
+import { useLastValue, useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { pickFiles } from "../../../shared/lib/pickFiles";
 import { claimSetting } from "../../../shared/lib/settings/actions";
@@ -88,14 +89,20 @@ type DialogState =
   | null;
 
 function DeleteAction({
+  open,
   action,
   onClose,
   onDelete
-}: Readonly<{ action: AiAction; onClose: () => void; onDelete: () => void }>) {
+}: Readonly<{ open: boolean; action: AiAction | null; onClose: () => void; onDelete: () => void }>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirmDelete(complete: (callback: () => void) => void) {
+    if (!action) return;
     setBusy(true);
     try {
       await deleteAction(action.id);
@@ -107,11 +114,11 @@ function DeleteAction({
   }
 
   return (
-    <Dialog title="Delete action?" busy={busy} onClose={onClose}>
+    <Dialog open={open} title="Delete action?" busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted" className={clsx("wrap-anywhere")}>
-            “{action.name}” will be removed from the AI actions menu. Your pages aren’t affected.
+            “{action?.name}” will be removed from the AI actions menu. Your pages aren’t affected.
           </BodyText>
           {error && (
             <BodyText role="alert" tone="error" className={clsx("mt-4")}>
@@ -149,15 +156,22 @@ function DeleteAction({
 }
 
 function ImportPack({
+  open,
   onClose,
   onInstall
 }: Readonly<{
+  open: boolean;
   onClose: () => void;
   onInstall: () => void;
 }>) {
   const [pack, setPack] = useState<PackContent | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setPack(null);
+    setBusy(false);
+    setError("");
+  });
 
   async function chooseFile() {
     setError("");
@@ -184,7 +198,7 @@ function ImportPack({
   }
 
   return (
-    <Dialog title={pack ? `Install “${pack.name}”?` : "Import pack"} busy={busy} onClose={onClose}>
+    <Dialog open={open} title={pack ? `Install “${pack.name}”?` : "Import pack"} busy={busy} onClose={onClose}>
       {(close, complete) => (
         <>
           {pack ? (
@@ -369,6 +383,8 @@ export default function ActionSettings() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
+  const dialogAction = useLastValue(dialog && "action" in dialog ? dialog.action : null);
+  const removing = useLastValue(dialog?.kind === "remove" ? dialog : null);
   const [touring, setTouring] = useState(false);
 
   async function load() {
@@ -602,47 +618,47 @@ export default function ActionSettings() {
           );
         })}
       </div>
-      {dialog?.kind === "create" && (
-        <ActionForm onClose={() => setDialog(null)} onSave={closeAndReload} />
-      )}
-      {dialog?.kind === "edit" && (
-        <ActionForm
-          action={dialog.action}
-          onClose={() => setDialog(null)}
-          onSave={closeAndReload}
-        />
-      )}
-      {dialog?.kind === "delete" && (
-        <DeleteAction
-          action={dialog.action}
-          onClose={() => setDialog(null)}
-          onDelete={closeAndReload}
-        />
-      )}
-      {dialog?.kind === "browse" && (
-        <PackBrowser
-          installedKeys={
-            new Set(packs.flatMap((pack) => (pack.catalogKey ? [pack.catalogKey] : [])))
-          }
-          onInstalled={() => void load()}
-          onClose={() => setDialog(null)}
-        />
-      )}
-      {dialog?.kind === "import" && (
-        <ImportPack onClose={() => setDialog(null)} onInstall={closeAndReload} />
-      )}
+      <ActionForm open={dialog?.kind === "create"} onClose={() => setDialog(null)} onSave={closeAndReload} />
+      <ActionForm
+        open={dialog?.kind === "edit"}
+        action={dialogAction}
+        onClose={() => setDialog(null)}
+        onSave={closeAndReload}
+      />
+      <DeleteAction
+        open={dialog?.kind === "delete"}
+        action={dialogAction}
+        onClose={() => setDialog(null)}
+        onDelete={closeAndReload}
+      />
+      <PackBrowser
+        open={dialog?.kind === "browse"}
+        installedKeys={
+          new Set(packs.flatMap((pack) => (pack.catalogKey ? [pack.catalogKey] : [])))
+        }
+        onInstalled={() => void load()}
+        onClose={() => setDialog(null)}
+      />
+      <ImportPack
+        open={dialog?.kind === "import"}
+        onClose={() => setDialog(null)}
+        onInstall={closeAndReload}
+      />
       {touring && <Tour steps={tourSteps} onClose={() => setTouring(false)} />}
-      {dialog?.kind === "remove" && (
-        <ConfirmDeleteDialog
-          title="Remove pack?"
-          message={`“${dialog.pack.name}” and its ${dialog.count} actions will be removed from the AI actions menu. Your pages aren’t affected.`}
-          confirmLabel="Remove pack"
-          failure="Couldn’t remove the pack. Try again."
-          onConfirm={() => removePack(dialog.pack.id)}
-          onClose={() => setDialog(null)}
-          onDeleted={closeAndReload}
-        />
-      )}
+      <ConfirmDeleteDialog
+        open={dialog?.kind === "remove"}
+        title="Remove pack?"
+        message={
+          removing ? `“${removing.pack.name}” and its ${removing.count} actions will be removed from the AI actions menu. Your pages aren’t affected.` : ""
+        }
+        confirmLabel="Remove pack"
+        failure="Couldn’t remove the pack. Try again."
+        onConfirm={async () => {
+          if (removing) await removePack(removing.pack.id);
+        }}
+        onClose={() => setDialog(null)}
+        onDeleted={closeAndReload}
+      />
     </section>
   );
 }

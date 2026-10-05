@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { addCommandSource } from "../../../shared/lib/commandSources";
 import { DATE_GROUP_VALUES, groupByDate } from "../../../shared/lib/dateGroups";
+import { useLastValue } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import { useFileUrl } from "../../../shared/lib/useFileUrl";
@@ -95,6 +96,7 @@ export default function CoursePage({
   }, [course]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [statusError, setStatusError] = useState<string | null>(null);
+  const moduleTarget = useLastValue(typeof moduleDialog === "object" ? moduleDialog?.module : null);
   const [groupBy, setGroupBy] = useStoredChoice("mneme.modules.group", DATE_GROUP_VALUES, "none");
 
   const statusFilteredModules = useMemo(
@@ -416,61 +418,54 @@ export default function CoursePage({
           </>
         )}
       </section>
-      {dialog === "edit" && (
-        <CourseForm
-          key={course.id}
-          course={course}
-          onClose={() => setDialog(null)}
-          onSave={(updated) => {
-            onSaveCourse(updated);
-            setDialog(null);
-          }}
-        />
-      )}
-      {dialog === "delete" && (
-        <DeleteCourse
-          course={course}
-          onClose={() => setDialog(null)}
-          onDelete={() => {
-            onDeleteCourse(course.id);
-            setDialog(null);
-          }}
-        />
-      )}
-      {moduleDialog === "create" && (
-        <ModuleForm
-          courseId={course.id}
-          courseColor={course.color}
-          onClose={() => setModuleDialog(null)}
-          onSave={(module) => {
-            onSaveModule(module);
-            setModuleDialog(null);
-          }}
-        />
-      )}
-      {moduleDialog && moduleDialog !== "create" && moduleDialog.type === "edit" && (
-        <ModuleForm
-          key={moduleDialog.module.id}
-          courseId={course.id}
-          courseColor={course.color}
-          module={moduleDialog.module}
-          onClose={() => setModuleDialog(null)}
-          onSave={(module) => {
-            onSaveModule(module);
-            setModuleDialog(null);
-          }}
-        />
-      )}
-      {moduleDialog && moduleDialog !== "create" && moduleDialog.type === "delete" && (
-        <DeleteModule
-          module={moduleDialog.module}
-          onClose={() => setModuleDialog(null)}
-          onDelete={() => {
-            onDeleteModule(moduleDialog.module.id);
-            setModuleDialog(null);
-          }}
-        />
-      )}
+      <CourseForm
+        open={dialog === "edit"}
+        course={course}
+        onClose={() => setDialog(null)}
+        onSave={(updated) => {
+          onSaveCourse(updated);
+          setDialog(null);
+        }}
+      />
+      <DeleteCourse
+        open={dialog === "delete"}
+        course={course}
+        onClose={() => setDialog(null)}
+        onDelete={() => {
+          onDeleteCourse(course.id);
+          setDialog(null);
+        }}
+      />
+      <ModuleForm
+        open={moduleDialog === "create"}
+        courseId={course.id}
+        courseColor={course.color}
+        onClose={() => setModuleDialog(null)}
+        onSave={(module) => {
+          onSaveModule(module);
+          setModuleDialog(null);
+        }}
+      />
+      <ModuleForm
+        open={typeof moduleDialog === "object" && moduleDialog?.type === "edit"}
+        courseId={course.id}
+        courseColor={course.color}
+        module={moduleTarget}
+        onClose={() => setModuleDialog(null)}
+        onSave={(module) => {
+          onSaveModule(module);
+          setModuleDialog(null);
+        }}
+      />
+      <DeleteModule
+        open={typeof moduleDialog === "object" && moduleDialog?.type === "delete"}
+        module={moduleTarget}
+        onClose={() => setModuleDialog(null)}
+        onDelete={() => {
+          if (moduleTarget) onDeleteModule(moduleTarget.id);
+          setModuleDialog(null);
+        }}
+      />
     </div>
   );
 }

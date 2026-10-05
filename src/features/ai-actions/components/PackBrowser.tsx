@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useId, useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import Select from "../../../shared/ui/Select";
@@ -51,10 +52,12 @@ function matches(pack: CatalogPack, area: number, search: string) {
 }
 
 export default function PackBrowser({
+  open,
   installedKeys,
   onInstalled,
   onClose
 }: Readonly<{
+  open: boolean;
   installedKeys: ReadonlySet<string>;
   onInstalled: () => void;
   onClose: () => void;
@@ -64,6 +67,11 @@ export default function PackBrowser({
   const [search, setSearch] = useState("");
   const [installing, setInstalling] = useState<string | null>(null);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setArea(0);
+    setSearch("");
+    setError("");
+  });
   const packs = packCatalog.filter((pack) => matches(pack, area, search));
 
   async function install(pack: CatalogPack) {
@@ -80,7 +88,7 @@ export default function PackBrowser({
   }
 
   return (
-    <Dialog title="Browse packs" wide busy={installing !== null} onClose={onClose}>
+    <Dialog open={open} title="Browse packs" wide busy={installing !== null} onClose={onClose}>
       {(close) => (
         <>
           <BodyText tone="muted">

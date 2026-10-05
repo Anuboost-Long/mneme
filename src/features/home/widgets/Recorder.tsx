@@ -1,11 +1,16 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useLastValue } from "../../../shared/lib/dialogState";
 import { formatDuration } from "../../../shared/lib/formatDuration";
 import { Caption } from "../../../shared/ui/Typography";
 import MicrophoneAccessDialog from "../../courses/components/editor/MicrophoneAccessDialog";
+import MicrophoneNotice from "../../courses/components/editor/MicrophoneNotice";
+import RecordingSourcePicker from "../../courses/components/editor/RecordingSourcePicker";
 import Waveform from "../../courses/components/editor/Waveform";
+import { discardRecordedAudio } from "../../courses/lib/recording/actions";
 import { useAudioRecorder } from "../../courses/lib/useAudioRecorder";
+import SoundSettingsButton from "../../recordings/components/SoundSettingsButton";
 import FileRecordingDialog, { type Take } from "../components/FileRecordingDialog";
 import { getPendingTake, setPendingTake } from "../lib/pendingTake";
 import { RecordingsList } from "./study";
@@ -24,6 +29,7 @@ export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
     setTakeState(next);
   };
   const [filing, setFiling] = useState<Take | null>(null);
+  const filingTake = useLastValue(filing);
   const [filedCount, setFiledCount] = useState(0);
   const [accessHelp, setAccessHelp] = useState(false);
   const live = recorder.status === "recording" || recorder.status === "paused" || recorder.status === "starting";
@@ -49,7 +55,13 @@ export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
             <Caption tone="muted">Not saved yet</Caption>
           </div>
           <div className={clsx("flex gap-2")}>
-            <button type="button" onClick={() => setTake(null)} className={clsx("h-8 rounded-md px-3 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}>Discard</button>
+            <button
+              type="button"
+              onClick={() => {
+                void discardRecordedAudio(take).catch(() => undefined);
+                setTake(null);
+              }}
+              className={clsx("h-8 rounded-md px-3 text-sm text-muted", "hover:bg-ink/5 hover:text-ink")}>Discard</button>
             <button type="button" onClick={() => setFiling(take)} className={clsx("h-8 flex-1 rounded-md", "bg-action text-on-action", "px-3 text-sm font-medium", "hover:bg-action/85")}>Save…</button>
           </div>
         </div>
@@ -94,6 +106,7 @@ export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
         <div className={clsx("min-w-0")}>
           <p className={clsx("text-sm font-medium")}>Record</p>
           <Caption tone="muted" className={clsx(!roomy && "hidden")}>A lecture or a thought. Save it to a page or just to Recordings, transcribed if you like.</Caption>
+          <div className={clsx("mt-2 flex items-start gap-1")}><RecordingSourcePicker sources={recorder.sources} source={recorder.source} echoCancellation={recorder.echoCancellation} onChange={recorder.setSource} className={clsx("w-48 max-w-full")} /><SoundSettingsButton /></div>
         </div>
       </div>
     );
@@ -102,32 +115,32 @@ export function RecorderWidget({ widget }: Readonly<WidgetProps>) {
   return (
     <div className={clsx("flex h-full flex-col")}>
       <div className={clsx("flex px-3 pb-3", widget.size === "large" ? "border-b border-ink/10" : "flex-1 items-end")}>{renderControls()}</div>
-      {recorder.error && !recorder.accessDenied && <Caption tone="error" className={clsx("px-3 pb-2")}>{recorder.error}</Caption>}
-      {recorder.accessDenied && (
+      <MicrophoneNotice microphone={live ? recorder.microphone : null} notice={recorder.notice} onUseAutomatic={recorder.useAutomaticMicrophone} className={clsx("px-3 pb-2")} />
+      {recorder.error && !recorder.deniedAccess && <Caption tone="error" className={clsx("px-3 pb-2")}>{recorder.error}</Caption>}
+      {recorder.deniedAccess && (
         <button type="button" onClick={() => setAccessHelp(true)} className={clsx("px-3 pb-2 text-left text-xs text-danger underline underline-offset-2")}>
-          Microphone access is off. How to turn it on
+          {recorder.deniedAccess === "system" ? "Computer audio recording is off." : "Microphone access is off."} How to turn it on
         </button>
       )}
       {widget.size === "large" && <RecordingsList limit={5} refreshKey={filedCount} />}
-      {filing && (
-        <FileRecordingDialog
-          take={filing}
-          onFiled={() => {
-            setTake(null);
-            setFiledCount((count) => count + 1);
-          }}
-          onClose={() => setFiling(null)}
-        />
-      )}
-      {accessHelp && (
-        <MicrophoneAccessDialog
-          onRetry={() => {
-            setAccessHelp(false);
-            void start();
-          }}
-          onClose={() => setAccessHelp(false)}
-        />
-      )}
+      <FileRecordingDialog
+        open={filing !== null}
+        take={filingTake}
+        onFiled={() => {
+          setTake(null);
+          setFiledCount((count) => count + 1);
+        }}
+        onClose={() => setFiling(null)}
+      />
+      <MicrophoneAccessDialog
+        open={accessHelp}
+        access={recorder.deniedAccess}
+        onRetry={() => {
+          setAccessHelp(false);
+          void start();
+        }}
+        onClose={() => setAccessHelp(false)}
+      />
     </div>
   );
 }

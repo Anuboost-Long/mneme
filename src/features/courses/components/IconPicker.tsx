@@ -4,15 +4,26 @@ import { useState } from "react";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { isFileReference } from "../../../shared/lib/fileReference";
 import { IMAGE_EXTENSIONS, pickFiles } from "../../../shared/lib/pickFiles";
-import CourseIcon, { courseIcons } from "../../../shared/ui/CourseIcon";
+import CourseIcon from "../../../shared/ui/CourseIcon";
+import { iconChoices, iconGroups } from "../../../shared/ui/iconCatalogue";
 import { TextInput } from "../../../shared/ui/Input";
-import { BodyText, Typography } from "../../../shared/ui/Typography";
+import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
 import { courseImage } from "../lib/icon/actions";
 
 const isPicture = (icon: string | null) =>
   (icon?.startsWith("data:image/") ?? false) || isFileReference(icon);
-const isPreset = (icon: string | null) =>
-  (courseIcons as readonly (string | null)[]).includes(icon);
+const isPreset = (icon: string | null) => icon !== null && iconChoices.has(icon);
+
+function matchingGroups(search: string) {
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+  const matches = (text: string) => words.every((word) => text.toLowerCase().includes(word));
+  return iconGroups
+    .map((group) => ({
+      ...group,
+      icons: group.icons.filter(({ key, label }) => matches(`${label} ${key} ${group.name}`))
+    }))
+    .filter((group) => group.icons.length > 0);
+}
 
 // A preset, an emoji or symbol, or an uploaded picture. With `allowNone`
 // (modules), clearing a choice means no icon rather than the book preset.
@@ -32,6 +43,8 @@ export default function IconPicker({
 }>) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const groups = matchingGroups(search);
   const fallback = allowNone ? null : "book";
 
   async function upload(file: File | undefined) {
@@ -55,7 +68,15 @@ export default function IconPicker({
         <Typography as="legend" variant="label" className={clsx("mb-2")}>
           Icon
         </Typography>
-        <div className={clsx("flex flex-wrap gap-2")}>
+        <TextInput
+          label="Search icons"
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          onKeyDown={(event) => event.key === "Enter" && event.preventDefault()}
+          placeholder="Biology, law, music…"
+        />
+        <div className={clsx("mt-3 max-h-72 space-y-4 overflow-y-auto p-1")}>
           {allowNone && (
             <label
               className={clsx(
@@ -76,26 +97,39 @@ export default function IconPicker({
               <span>None</span>
             </label>
           )}
-          {courseIcons.map((preset) => (
-            <label
-              key={preset}
-              className={clsx(
-                "relative flex cursor-pointer items-center justify-center rounded-md p-1",
-                "has-checked:ring-2 has-checked:ring-ink has-focus-visible:outline-1 has-focus-visible:outline-offset-4"
-              )}
-            >
-              <input
-                type="radio"
-                name="icon"
-                value={preset}
-                checked={value === preset}
-                onChange={() => onChange(preset)}
-                className={clsx("sr-only")}
-                aria-label={preset[0].toUpperCase() + preset.slice(1)}
-              />
-              <CourseIcon icon={preset} color={color} />
-            </label>
+          {groups.map((group) => (
+            <div key={group.name}>
+              <Caption tone="muted" className={clsx("mb-1.5")}>
+                {group.name}
+              </Caption>
+              <div className={clsx("flex flex-wrap gap-1")}>
+                {group.icons.map(({ key, label }) => (
+                  <label
+                    key={key}
+                    title={label}
+                    className={clsx(
+                      "relative flex cursor-pointer items-center justify-center rounded-md p-1",
+                      "has-checked:ring-2 has-checked:ring-ink has-focus-visible:outline-1 has-focus-visible:outline-offset-4"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="icon"
+                      value={key}
+                      checked={value === key}
+                      onChange={() => onChange(key)}
+                      className={clsx("sr-only")}
+                      aria-label={label}
+                    />
+                    <CourseIcon icon={key} color={color} />
+                  </label>
+                ))}
+              </div>
+            </div>
           ))}
+          {groups.length === 0 && (
+            <BodyText tone="muted">No icons match “{search.trim()}”. Paste an emoji or symbol below instead.</BodyText>
+          )}
         </div>
       </fieldset>
       <div className={clsx("space-y-3")}>

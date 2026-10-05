@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
@@ -91,10 +92,12 @@ function AgentIcon({ kind }: Readonly<{ kind: KnownAgent | "custom" }>) {
 }
 
 export default function AgentPicker({
+  open,
   onStart,
   onResume,
   onClose
 }: Readonly<{
+  open: boolean;
   onStart: (connectionId: number) => Promise<void>;
   onResume: () => void;
   onClose: () => void;
@@ -109,8 +112,16 @@ export default function AgentPicker({
   const [command, setCommand] = useState("");
   const [args, setArgs] = useState("[]");
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setCustom(false);
+    setName("");
+    setCommand("");
+    setArgs("[]");
+  });
 
   useEffect(() => {
+    if (!open) return;
     let active = true;
     setLoading(true);
     setError("");
@@ -131,7 +142,7 @@ export default function AgentPicker({
     return () => {
       active = false;
     };
-  }, [attempt]);
+  }, [open, attempt]);
 
   async function start(id: number, complete: (callback: () => void) => void) {
     setBusy(true);
@@ -191,7 +202,7 @@ export default function AgentPicker({
   }
 
   return (
-    <Dialog title="Choose an agent" onClose={onClose} busy={busy}>
+    <Dialog open={open} title="Choose an agent" onClose={onClose} busy={busy}>
       {(_close, complete) => (
         <>
           <BodyText tone="muted">Pick which coding agent to start.</BodyText>

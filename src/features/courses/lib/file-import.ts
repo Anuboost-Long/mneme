@@ -69,7 +69,7 @@ async function parsePdfFile(file: File): Promise<ParsedImport> {
     images: true,
     recognize: recognizeDocument
   });
-  const html = pdfPagesToHtml(
+  const { html, title: headingTitle } = pdfPagesToHtml(
     await Promise.all(
       pages.map(async ({ images, ...page }) => ({
         ...page,
@@ -83,8 +83,12 @@ async function parsePdfFile(file: File): Promise<ParsedImport> {
       }))
     )
   );
-  const title = metaTitle || titleFromFilename(file.name);
+  const title = headingTitle || (isPlaceholderTitle(metaTitle) ? "" : metaTitle) || titleFromFilename(file.name);
   return { title, type: detectType(title), html };
+}
+
+function isPlaceholderTitle(title: string | undefined): boolean {
+  return !title || !/\s/.test(title.trim()) || /^microsoft \w+ - /i.test(title);
 }
 
 export async function parseImportFile(file: File): Promise<ParsedImport> {

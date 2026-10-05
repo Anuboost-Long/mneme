@@ -12,7 +12,7 @@ const { getPage, getPages, createPage, updatePage } =
   await import("../src/features/courses/lib/page/actions.ts");
 const { createAttachment, getAttachment } =
   await import("../src/features/courses/lib/attachment/actions.ts");
-const { createRecording, getRecording } =
+const { createRecording, getRecording, storeRecordedAudio } =
   await import("../src/features/courses/lib/recording/actions.ts");
 const { backupArchive, createBackup, readBackupFile, restoreBackup } =
   await import("../src/features/courses/lib/backup/actions.ts");
@@ -34,11 +34,7 @@ test("a backup carries every file its pages use, and a restore brings them back 
     page.id,
     new File([Buffer.from("slides")], "slides.pdf", { type: "application/pdf" })
   );
-  const { id: recordingId } = await createRecording(
-    page.id,
-    new Blob([Buffer.from("audio")], { type: "audio/mp4" }),
-    1000
-  );
+  const { id: recordingId } = await createRecording(page.id, await storeRecordedAudio(new Blob([Buffer.from("audio")], { type: "audio/mp4" }), 1000));
   const imageSrc = (await getPage(page.id)).content.match(/src="([^"]+)"/)[1];
   await updatePage(page.id, {
     content: `<p>Skull</p><img src="${imageSrc}"><div data-attachment-id="${attachmentId}"></div><div data-recording-id="${recordingId}"></div>`
@@ -181,11 +177,7 @@ test('Home widgets and saved layouts are backed up, without overwriting an exist
 
 test("a recording kept only in Recordings is backed up and restored once, still without a page", async () => {
   const { deleteRecording } = await import("../src/features/courses/lib/recording/actions.ts");
-  const { id } = await createRecording(
-    null,
-    new Blob([Buffer.from("loose audio")], { type: "audio/mp4" }),
-    2500
-  );
+  const { id } = await createRecording(null, await storeRecordedAudio(new Blob([Buffer.from("loose audio")], { type: "audio/mp4" }), 2500));
   const backup = await readBackupFile(new File([await backupArchive(await createBackup())], "b.zip"));
   assert.ok(backup.recordings.some((row) => row.id === id && row.page_id === null));
   await deleteRecording(id);

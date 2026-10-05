@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState, type SubmitEvent } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextInput } from "../../../shared/ui/Input";
@@ -56,16 +57,8 @@ function Toggle({
   );
 }
 
-export default function ProfileForm({
-  profile,
-  onSave,
-  onClose
-}: Readonly<{
-  profile?: AiProfile;
-  onSave: () => void;
-  onClose: () => void;
-}>) {
-  const [input, setInput] = useState<ProfileInput>({
+function profileInput(profile: AiProfile | null | undefined): ProfileInput {
+  return {
     name: profile?.name ?? "",
     language: profile?.language ?? null,
     explanationLevel: profile?.explanationLevel ?? ExplanationLevel.Any,
@@ -74,9 +67,28 @@ export default function ProfileForm({
     keepTerms: profile?.keepTerms ?? false,
     useExamples: profile?.useExamples ?? false,
     hintsForAssessed: profile?.hintsForAssessed ?? false
-  });
+  };
+}
+
+export default function ProfileForm({
+  open,
+  profile,
+  onSave,
+  onClose
+}: Readonly<{
+  open: boolean;
+  profile?: AiProfile | null;
+  onSave: () => void;
+  onClose: () => void;
+}>) {
+  const [input, setInput] = useState<ProfileInput>(() => profileInput(profile));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setInput(profileInput(profile));
+    setBusy(false);
+    setError("");
+  });
   const submitLabel = profile ? "Save changes" : "Create profile";
   const change = (patch: Partial<ProfileInput>) =>
     setInput((current) => ({ ...current, ...patch }));
@@ -102,7 +114,7 @@ export default function ProfileForm({
   }
 
   return (
-    <Dialog title={profile ? "Edit profile" : "New profile"} onClose={onClose} busy={busy}>
+    <Dialog open={open} title={profile ? "Edit profile" : "New profile"} onClose={onClose} busy={busy}>
       {(close, complete) => (
         <form onSubmit={(event) => save(event, complete)}>
           <fieldset disabled={busy} className={clsx("space-y-6")}>

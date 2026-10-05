@@ -351,19 +351,18 @@ export default function PageDetailPage({
         </button>
       )}
       <ReadAloudBar reader={reader} />
-      {audioView === "download" && (
-        <CreateAudioDialog
-          pageId={page.id}
-          chunks={pageChunks}
-          preferredVoiceId={reader.voiceId}
-          replacing={pageAudio !== null}
-          onCreated={(audio) => {
-            onChangePageAudio(audio);
-            setAudioView("play");
-          }}
-          onClose={() => setAudioView(pageAudio ? "play" : "closed")}
-        />
-      )}
+      <CreateAudioDialog
+        open={audioView === "download"}
+        pageId={page.id}
+        chunks={pageChunks}
+        preferredVoiceId={reader.voiceId}
+        replacing={pageAudio !== null}
+        onCreated={(audio) => {
+          onChangePageAudio(audio);
+          setAudioView("play");
+        }}
+        onClose={() => setAudioView(pageAudio ? "play" : "closed")}
+      />
       {audioView === "play" && pageAudio && (
         <AudiobookBar
           key={pageAudio.file_reference}
@@ -377,22 +376,23 @@ export default function PageDetailPage({
           onClose={() => setAudioView("closed")}
         />
       )}
-      {dialog === "edit" && (
-        <PageForm
-          courseColor={course.color}
-          key={page.id}
-          moduleId={page.module_id}
-          page={page}
-          onClose={() => setDialog(null)}
-          onSave={(updated) => {
-            onSavePage(updated);
-            setDialog(null);
-          }}
-        />
-      )}
-      {dialog === "delete" && (
-        <DeletePage page={page} onClose={() => setDialog(null)} onDelete={onDeletePage} />
-      )}
+      <PageForm
+        open={dialog === "edit"}
+        courseColor={course.color}
+        moduleId={page.module_id}
+        page={page}
+        onClose={() => setDialog(null)}
+        onSave={(updated) => {
+          onSavePage(updated);
+          setDialog(null);
+        }}
+      />
+      <DeletePage
+        open={dialog === "delete"}
+        page={page}
+        onClose={() => setDialog(null)}
+        onDelete={onDeletePage}
+      />
     </div>
   );
 }

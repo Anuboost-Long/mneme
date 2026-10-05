@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import { useLastValue } from "../../../shared/lib/dialogState";
 import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
 import CourseIcon from "../../../shared/ui/CourseIcon";
 import { BodyText, Caption, PageTitle } from "../../../shared/ui/Typography";
@@ -38,6 +39,7 @@ export default function RecentlyDeletedPage({
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [erasing, setErasing] = useState<DeletedItem[] | null>(null);
+  const erasingItems = useLastValue(erasing) ?? [];
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const chosen = (items ?? []).filter((item) => selected.has(deletedItemKey(item)));
@@ -198,25 +200,24 @@ export default function RecentlyDeletedPage({
         {notice}
       </p>
 
-      {erasing && (
-        <ConfirmDeleteDialog
-          title="Delete permanently?"
-          message={
-            erasing.length === 1
-              ? `“${erasing[0].name}” will be deleted with everything in it, including recordings and attachments. This can’t be undone.`
-              : `${plural(erasing.length, "item")} will be deleted with everything in them, including recordings and attachments. This can’t be undone.`
-          }
-          confirmLabel="Delete permanently"
-          failure="Couldn’t delete these items. Try again."
-          onConfirm={() => onErase(erasing)}
-          onClose={() => setErasing(null)}
-          onDeleted={() => {
-            setNotice(`Deleted ${plural(erasing.length, "item")} permanently.`);
-            setSelected(new Set());
-            setErasing(null);
-          }}
-        />
-      )}
+      <ConfirmDeleteDialog
+        open={erasing !== null}
+        title="Delete permanently?"
+        message={
+          erasingItems.length === 1
+            ? `“${erasingItems[0].name}” will be deleted with everything in it, including recordings and attachments. This can’t be undone.`
+            : `${plural(erasingItems.length, "item")} will be deleted with everything in them, including recordings and attachments. This can’t be undone.`
+        }
+        confirmLabel="Delete permanently"
+        failure="Couldn’t delete these items. Try again."
+        onConfirm={() => onErase(erasingItems)}
+        onClose={() => setErasing(null)}
+        onDeleted={() => {
+          setNotice(`Deleted ${plural(erasingItems.length, "item")} permanently.`);
+          setSelected(new Set());
+          setErasing(null);
+        }}
+      />
     </div>
   );
 }

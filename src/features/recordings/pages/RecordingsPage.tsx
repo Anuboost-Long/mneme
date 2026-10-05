@@ -1,8 +1,10 @@
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { timeAgo } from "../../../shared/lib/date";
 import { DATE_GROUP_VALUES, groupByDate, type DateGroupBy } from "../../../shared/lib/dateGroups";
+import { useLastValue } from "../../../shared/lib/dialogState";
 import { formatDuration } from "../../../shared/lib/formatDuration";
 import { useListView, type SortOption } from "../../../shared/lib/useListView";
 import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
@@ -10,6 +12,8 @@ import ListToolbar from "../../../shared/ui/ListToolbar";
 import { BodyText, Caption, PageTitle } from "../../../shared/ui/Typography";
 import type { Course } from "../../courses/lib/course/types";
 import type { RecordingListItem } from "../../courses/lib/recording/types";
+import DeleteRecordingDialog from "../components/DeleteRecordingDialog";
+import RecordingBar from "../components/RecordingBar";
 import RecordingDetails from "../components/RecordingDetails";
 
 type SortKey = "newest" | "oldest" | "longest" | "name";
@@ -39,13 +43,13 @@ export default function RecordingsPage({
   recordings,
   courses,
   onChange,
-  onPlaced,
+  onReload,
   onDelete
 }: Readonly<{
   recordings: RecordingListItem[] | null;
   courses: Course[];
   onChange: (recording: RecordingListItem) => void;
-  onPlaced: () => void;
+  onReload: () => void;
   onDelete: (id: number) => void;
 }>) {
   const [courseFilter, setCourseFilter] = useState("all");
@@ -55,6 +59,16 @@ export default function RecordingsPage({
     "month"
   );
   const [openId, setOpenId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<RecordingListItem | null>(null);
+  const deletingRecording = useLastValue(deleting);
+  const routeState = useLocation().state as { openRecordingId?: number } | null;
+  const navigate = useNavigate();
+  useEffect(() => {
+    const id = routeState?.openRecordingId;
+    if (!id) return;
+    navigate(".", { replace: true, state: null });
+    setOpenId(id);
+  }, [routeState]);
   const filtered = (recordings ?? []).filter(
     (recording) =>
       courseFilter === "all" ||
@@ -81,9 +95,10 @@ export default function RecordingsPage({
       <PageTitle>Recordings</PageTitle>
       <BodyText tone="muted" className={clsx("mt-1")}>
         {recordings?.length
-          ? `${recordings.length} ${recordings.length === 1 ? "recording" : "recordings"} · ${formatDuration(totalMs)} in all. Play, transcribe or delete them here.`
-          : "Lectures and notes you record, on pages or from Home, collect here."}
+          ? `${recordings.length} ${recordings.length === 1 ? "recording" : "recordings"} · ${formatDuration(totalMs)} in all. Play, transcribe, add to a page or delete them here.`
+          : "Record a lecture or a note here. Recordings from pages and Home collect here too."}
       </BodyText>
+      <RecordingBar onSaved={onReload} />
 
       {recordings && recordings.length > 0 && (
         <>
@@ -124,86 +139,108 @@ export default function RecordingsPage({
                       const open = recording.id === openId;
                       return (
                         <li key={recording.id} className={clsx(open && "bg-ink/2")}>
-                          <button
-                            type="button"
-                            aria-expanded={open}
-                            onClick={() => setOpenId(open ? null : recording.id)}
-                            className={clsx(
-                              "flex w-full items-center gap-3 px-3 py-2.5 text-left",
-                              "hover:bg-ink/4 focus-visible:bg-ink/4 focus-visible:outline-none"
-                            )}
-                          >
-                            <svg
-                              className={clsx("size-4 shrink-0 text-muted")}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
+                          <div className={clsx("flex items-center pr-2")}>
+                            <button
+                              type="button"
+                              aria-expanded={open}
+                              onClick={() => setOpenId(open ? null : recording.id)}
+                              className={clsx(
+                                "flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left",
+                                "hover:bg-ink/4 focus-visible:bg-ink/4 focus-visible:outline-none"
+                              )}
                             >
-                              <rect x="9" y="3" width="6" height="11" rx="3" />
-                              <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-                            </svg>
-                            <span className={clsx("min-w-0 flex-1")}>
-                              <span className={clsx("block truncate text-sm font-medium")}>
-                                {recording.name}
+                              <svg
+                                className={clsx("size-4 shrink-0 text-muted")}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <rect x="9" y="3" width="6" height="11" rx="3" />
+                                <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                              </svg>
+                              <span className={clsx("min-w-0 flex-1")}>
+                                <span className={clsx("block truncate text-sm font-medium")}>
+                                  {recording.name}
+                                </span>
+                                <Caption as="span" tone="muted" className={clsx("block truncate")}>
+                                  {recording.page_title === null
+                                    ? "Not on a page yet"
+                                    : `${recording.page_title} · ${recording.course_name} › ${recording.module_name}`}
+                                </Caption>
                               </span>
-                              <Caption as="span" tone="muted" className={clsx("block truncate")}>
-                                {recording.page_title === null
-                                  ? "Not on a page yet"
-                                  : `${recording.page_title} · ${recording.course_name} › ${recording.module_name}`}
-                              </Caption>
-                            </span>
-                            {recording.transcript && (
+                              {recording.transcript && (
+                                <Caption
+                                  as="span"
+                                  tone="muted"
+                                  className={clsx("hidden rounded-sm px-1.5 sm:inline", "bg-ink/6")}
+                                >
+                                  Transcript
+                                </Caption>
+                              )}
                               <Caption
                                 as="span"
                                 tone="muted"
-                                className={clsx("hidden rounded-sm px-1.5 sm:inline", "bg-ink/6")}
+                                className={clsx("w-14 shrink-0 text-right tabular-nums")}
                               >
-                                Transcript
+                                {formatDuration(recording.duration_ms)}
                               </Caption>
-                            )}
-                            <Caption
-                              as="span"
-                              tone="muted"
-                              className={clsx("w-14 shrink-0 text-right tabular-nums")}
-                            >
-                              {formatDuration(recording.duration_ms)}
-                            </Caption>
-                            <Caption
-                              as="span"
-                              tone="muted"
-                              className={clsx("hidden w-24 shrink-0 text-right sm:block")}
-                            >
-                              {timeAgo(recording.created_at)}
-                            </Caption>
-                            <svg
+                              <Caption
+                                as="span"
+                                tone="muted"
+                                className={clsx("hidden w-24 shrink-0 text-right sm:block")}
+                              >
+                                {timeAgo(recording.created_at)}
+                              </Caption>
+                              <svg
+                                className={clsx(
+                                  "size-4 shrink-0 text-muted transition-transform motion-reduce:transition-none",
+                                  open && "rotate-180"
+                                )}
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="m4 6 4 4 4-4" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleting(recording)}
+                              aria-label={`Delete ${recording.name}`}
+                              title="Delete"
                               className={clsx(
-                                "size-4 shrink-0 text-muted transition-transform motion-reduce:transition-none",
-                                open && "rotate-180"
+                                "grid size-8 shrink-0 place-items-center rounded-md text-muted",
+                                "hover:bg-danger/10 hover:text-danger focus-visible:outline-2 focus-visible:outline-danger"
                               )}
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
                             >
-                              <path d="m4 6 4 4 4-4" />
-                            </svg>
-                          </button>
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                              </svg>
+                            </button>
+                          </div>
                           {open && (
                             <RecordingDetails
                               recording={recording}
                               onTranscribed={(transcript) => onChange({ ...recording, transcript })}
-                              onPlaced={onPlaced}
-                              onDeleted={() => {
-                                setOpenId(null);
-                                onDelete(recording.id);
-                              }}
+                              onPlaced={onReload}
                             />
                           )}
                         </li>
@@ -216,6 +253,18 @@ export default function RecordingsPage({
           )}
         </>
       )}
+      <DeleteRecordingDialog
+        open={deleting !== null}
+        recording={deletingRecording}
+        onClose={() => setDeleting(null)}
+        onDeleted={() => {
+          if (deletingRecording) {
+            if (openId === deletingRecording.id) setOpenId(null);
+            onDelete(deletingRecording.id);
+          }
+          setDeleting(null);
+        }}
+      />
     </div>
   );
 }

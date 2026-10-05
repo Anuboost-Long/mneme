@@ -213,16 +213,15 @@ export default function RootLayout() {
           </div>
         )}
       </div>
-      {creating && (
-        <CourseForm
-          onClose={() => setCreating(false)}
-          onSave={(course) => {
-            save(course);
-            setCreating(false);
-            navigate(`/courses/${course.id}`);
-          }}
-        />
-      )}
+      <CourseForm
+        open={creating}
+        onClose={() => setCreating(false)}
+        onSave={(course) => {
+          save(course);
+          setCreating(false);
+          navigate(`/courses/${course.id}`);
+        }}
+      />
       <ApprovalPrompt />
       <CommandPalette courses={courses} />
     </div>

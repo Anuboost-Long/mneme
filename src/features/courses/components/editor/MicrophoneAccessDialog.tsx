@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import appIcon from "../../../../../asset/app-icon.svg";
 import Dialog from "../../../../shared/ui/Dialog";
 import { BodyText } from "../../../../shared/ui/Typography";
+import type { DeniedAccess } from "../../lib/useAudioRecorder";
 
 type Guide = {
   steps: string[];
@@ -41,10 +42,25 @@ const guides: Record<ChainOs, Guide> = {
   }
 };
 
+const systemAudioGuide: Guide = {
+  steps: [
+    "Open System Settings from the Apple menu.",
+    "Select Privacy & Security, then Screen & System Audio Recording.",
+    "Under System Audio Recording Only, turn on mneme.",
+    "Come back and try again. If mneme still can’t record, quit and reopen it."
+  ],
+  sidebar: ["General", "Sound", "Privacy & Security", "Keyboard"],
+  section: "Privacy & Security",
+  pane: "Screen & System Audio Recording",
+  switches: [{ label: "mneme", icon: appIcon }]
+};
+
 export default function MicrophoneAccessDialog({
+  open,
+  access = "microphone",
   onRetry,
   onClose
-}: Readonly<{ onRetry: () => void; onClose: () => void }>) {
+}: Readonly<{ open: boolean; access?: DeniedAccess; onRetry: () => void; onClose: () => void }>) {
   const [os, setOs] = useState<ChainOs>("macos");
 
   useEffect(() => {
@@ -58,15 +74,21 @@ export default function MicrophoneAccessDialog({
     };
   }, []);
 
-  const guide = guides[os];
+  const systemAudio = access === "system" && os === "macos";
+  const guide = systemAudio ? systemAudioGuide : guides[os];
 
   return (
-    <Dialog title="Turn on microphone access" onClose={onClose}>
+    <Dialog
+      open={open}
+      title={systemAudio ? "Turn on computer audio recording" : "Turn on microphone access"}
+      onClose={onClose}
+    >
       {(close, complete) => (
         <>
           <BodyText tone="muted">
-            mneme needs your permission to use the microphone. You can turn it on in{" "}
-            {os === "macos" ? "System Settings" : "Settings"}.
+            mneme needs your permission to{" "}
+            {systemAudio ? "record the sound your computer plays" : "use the microphone"}. You can
+            turn it on in {os === "macos" ? "System Settings" : "Settings"}.
           </BodyText>
           <SettingsPreview guide={guide} os={os} />
           <ol className={clsx("mt-6 space-y-3")}>

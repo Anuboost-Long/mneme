@@ -132,13 +132,12 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
           className={clsx("flex-1 px-4 pt-4 pb-3")}
         />
       )}
-      {picking && (
-        <AgentPicker
-          onClose={() => setPicking(false)}
-          onStart={async (id) => select(await chat.create(id))}
-          onResume={() => setPicking(false)}
-        />
-      )}
+      <AgentPicker
+        open={picking}
+        onClose={() => setPicking(false)}
+        onStart={async (id) => select(await chat.create(id))}
+        onResume={() => setPicking(false)}
+      />
     </aside>
   );
 }

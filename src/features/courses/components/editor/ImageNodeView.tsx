@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { useId, useRef, useState, type PointerEvent as ReactPointerEvent, type ToggleEvent } from "react";
 import { createPortal } from "react-dom";
 
+import { useOpenedOnce } from "../../../../shared/lib/dialogState";
 import { hideUntilPlaced, placePopover } from "../../../../shared/lib/placePopover";
 import { BodyText } from "../../../../shared/ui/Typography";
 import type { ImageAiAction, ImageAlign } from "./AlignableImage";
@@ -35,6 +36,8 @@ export default function ImageNodeView({
   selected
 }: Readonly<ReactNodeViewProps>) {
   const [extracting, setExtracting] = useState<"text" | "table" | null>(null);
+  const extractTextUsed = useOpenedOnce(extracting === "text");
+  const extractTableUsed = useOpenedOnce(extracting === "table");
   const [viewing, setViewing] = useState(false);
   const [aiProblem, setAiProblem] = useState("");
   const menuId = useId();
@@ -99,11 +102,13 @@ export default function ImageNodeView({
   }
 
   function insertExtracted(text: string, placement: ExtractPlacement) {
+    setExtracting(null);
     const range = placementRange(placement);
     if (range) insertParagraphs(editor, text, range);
   }
 
   function insertTables(html: string, placement: ExtractPlacement) {
+    setExtracting(null);
     const range = placementRange(placement);
     if (range) editor.chain().focus().insertContentAt(range.to === undefined ? range.from : range, html).run();
   }
@@ -279,24 +284,22 @@ export default function ImageNodeView({
           />,
           document.body
         )}
-      {extracting === "text" &&
-        createPortal(
-          <ExtractTextDialog
-            imageSrc={node.attrs.src}
-            onInsert={insertExtracted}
-            onClose={() => setExtracting(null)}
-          />,
-          document.body
-        )}
-      {extracting === "table" &&
-        createPortal(
-          <ExtractTableDialog
-            imageSrc={node.attrs.src}
-            onInsert={insertTables}
-            onClose={() => setExtracting(null)}
-          />,
-          document.body
-        )}
+      {extractTextUsed && (
+        <ExtractTextDialog
+          open={extracting === "text"}
+          imageSrc={node.attrs.src}
+          onInsert={insertExtracted}
+          onClose={() => setExtracting(null)}
+        />
+      )}
+      {extractTableUsed && (
+        <ExtractTableDialog
+          open={extracting === "table"}
+          imageSrc={node.attrs.src}
+          onInsert={insertTables}
+          onClose={() => setExtracting(null)}
+        />
+      )}
     </NodeViewWrapper>
   );
 }

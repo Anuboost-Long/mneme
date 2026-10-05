@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
+import { useResetOnOpen } from "../../../../shared/lib/dialogState";
 import { extractText } from "../../../../shared/lib/ocr";
 import Dialog from "../../../../shared/ui/Dialog";
 import { BodyText, Caption } from "../../../../shared/ui/Typography";
@@ -8,10 +9,12 @@ import { BodyText, Caption } from "../../../../shared/ui/Typography";
 export type ExtractPlacement = "below" | "replace";
 
 export default function ExtractTextDialog({
+  open,
   imageSrc,
   onInsert,
   onClose
 }: Readonly<{
+  open: boolean;
   imageSrc: string;
   onInsert: (text: string, placement: ExtractPlacement) => void;
   onClose: () => void;
@@ -20,7 +23,14 @@ export default function ExtractTextDialog({
   const [uncertainLines, setUncertainLines] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  useResetOnOpen(open, () => {
+    setText(null);
+    setUncertainLines(0);
+    setError(null);
+  });
+
   useEffect(() => {
+    if (!open) return;
     let active = true;
     extractText(imageSrc)
       .then((result) => {
@@ -33,7 +43,7 @@ export default function ExtractTextDialog({
     return () => {
       active = false;
     };
-  }, [imageSrc]);
+  }, [open, imageSrc]);
 
   const empty = text !== null && !text.trim();
   const uncertainNote =
@@ -42,7 +52,7 @@ export default function ExtractTextDialog({
       : `${uncertainLines} lines were hard to read.`;
 
   return (
-    <Dialog title="Extract text" onClose={onClose}>
+    <Dialog open={open} title="Extract text" onClose={onClose}>
       {(close, complete) => (
         <>
           {text === null && !error && (

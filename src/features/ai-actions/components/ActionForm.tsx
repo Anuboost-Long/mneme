@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState, type SubmitEvent } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
@@ -75,25 +76,36 @@ function Choice({
   );
 }
 
-export default function ActionForm({
-  action,
-  onSave,
-  onClose
-}: Readonly<{
-  action?: AiAction;
-  onSave: () => void;
-  onClose: () => void;
-}>) {
-  const [input, setInput] = useState<ActionInput>({
+function actionInput(action: AiAction | null | undefined): ActionInput {
+  return {
     name: action?.name ?? "",
     prompt: action?.prompt ?? "",
     icon: action?.icon ?? null,
     scope: action?.scope ?? ActionScope.Page,
     output: action?.output ?? ActionOutput.Preview,
     pageTypes: action?.pageTypes ?? null
-  });
+  };
+}
+
+export default function ActionForm({
+  open,
+  action,
+  onSave,
+  onClose
+}: Readonly<{
+  open: boolean;
+  action?: AiAction | null;
+  onSave: () => void;
+  onClose: () => void;
+}>) {
+  const [input, setInput] = useState<ActionInput>(() => actionInput(action));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setInput(actionInput(action));
+    setBusy(false);
+    setError("");
+  });
   const submitLabel = action ? "Save changes" : "Create action";
   const change = (patch: Partial<ActionInput>) => setInput((current) => ({ ...current, ...patch }));
 
@@ -127,7 +139,7 @@ export default function ActionForm({
   }
 
   return (
-    <Dialog title={action ? "Edit action" : "New action"} onClose={onClose} busy={busy}>
+    <Dialog open={open} title={action ? "Edit action" : "New action"} onClose={onClose} busy={busy}>
       {(close, complete) => (
         <form onSubmit={(event) => save(event, complete)}>
           <fieldset disabled={busy} className={clsx("space-y-6")}>

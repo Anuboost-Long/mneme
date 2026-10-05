@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState, type FormEvent } from "react";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
 import { TextArea, TextInput } from "../../../shared/ui/Input";
 import Select from "../../../shared/ui/Select";
@@ -13,15 +14,17 @@ export { moduleStatusLabels };
 
 // `courseColor` tints the icon choices, as the module's icon is shown.
 export default function ModuleForm({
+  open,
   courseId,
   courseColor,
   module,
   onSave,
   onClose
 }: Readonly<{
+  open: boolean;
   courseId: number;
   courseColor: string | null;
-  module?: Module;
+  module?: Module | null;
   onSave: (module: Module) => void;
   onClose: () => void;
 }>) {
@@ -32,6 +35,15 @@ export default function ModuleForm({
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setName(module?.name ?? "");
+    setDescription(module?.description ?? "");
+    setStatus(module?.status ?? ModuleStatus.NotStarted);
+    setIcon(module?.icon ?? null);
+    setUploading(false);
+    setBusy(false);
+    setError("");
+  });
 
   async function save(event: FormEvent<HTMLFormElement>, complete: (callback: () => void) => void) {
     event.preventDefault();
@@ -56,6 +68,7 @@ export default function ModuleForm({
 
   return (
     <Dialog
+      open={open}
       title={module ? "Edit module" : "Create module"}
       onClose={onClose}
       busy={busy || uploading}
@@ -66,7 +79,7 @@ export default function ModuleForm({
             <fieldset disabled={busy || uploading} className={clsx("space-y-5")}>
               <TextInput
                 label="Module name"
-                autoFocus
+                data-autofocus
                 required
                 name="name"
                 value={name}

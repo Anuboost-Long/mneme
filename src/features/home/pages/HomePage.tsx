@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { useLastValue } from "../../../shared/lib/dialogState";
 import { useDragReorder } from "../../../shared/lib/useDragReorder";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
 import type { Course } from "../../courses/lib/course/types";
@@ -169,6 +170,7 @@ export default function HomePage({
   }, [sizesKey]);
 
   const settingsDefinition = settingsFor ? widgetDefinitions.get(settingsFor.kind) : undefined;
+  const settingsWidget = useLastValue(settingsFor);
 
   function renderBody() {
     if (courses.length === 0) {
@@ -337,29 +339,26 @@ export default function HomePage({
 
       {renderBody()}
 
-      {adding && (
-        <WidgetGallery
-          courses={courses}
-          onAdd={(widget) => void onAdd(widget)}
-          onClose={() => setAdding(false)}
-        />
-      )}
-      {choosingLayout && (
-        <LayoutsDialog
-          current={(widgets ?? []).map(({ kind, size, config }) => ({ kind, size, config }))}
-          onApply={(name, layout) => void applyLayout(() => onApplyLayout(name, layout))}
-          onClose={() => setChoosingLayout(false)}
-        />
-      )}
-      {settingsFor && settingsDefinition && (
-        <WidgetSettings
-          widget={settingsFor}
-          definition={settingsDefinition}
-          courses={courses}
-          onSave={onUpdate}
-          onClose={() => setSettingsFor(null)}
-        />
-      )}
+      <WidgetGallery
+        open={adding}
+        courses={courses}
+        onAdd={(widget) => void onAdd(widget)}
+        onClose={() => setAdding(false)}
+      />
+      <LayoutsDialog
+        open={choosingLayout}
+        current={(widgets ?? []).map(({ kind, size, config }) => ({ kind, size, config }))}
+        onApply={(name, layout) => void applyLayout(() => onApplyLayout(name, layout))}
+        onClose={() => setChoosingLayout(false)}
+      />
+      <WidgetSettings
+        open={settingsFor !== null && settingsDefinition !== undefined}
+        widget={settingsWidget}
+        definition={settingsWidget ? widgetDefinitions.get(settingsWidget.kind) : undefined}
+        courses={courses}
+        onSave={onUpdate}
+        onClose={() => setSettingsFor(null)}
+      />
     </div>
   );
 }

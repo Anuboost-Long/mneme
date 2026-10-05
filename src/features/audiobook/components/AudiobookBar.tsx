@@ -104,17 +104,16 @@ export default function AudiobookBar({
           }
         />
       </div>
-      {deleting && (
-        <ConfirmDeleteDialog
-          title="Delete page audio?"
-          message="The audio file for this page will be deleted from this device. You can download it again any time."
-          confirmLabel="Delete audio"
-          failure="Couldn’t delete the audio. Try again."
-          onConfirm={() => deletePageAudio(audio.page_id)}
-          onClose={() => setDeleting(false)}
-          onDeleted={onDeleted}
-        />
-      )}
+      <ConfirmDeleteDialog
+        open={deleting}
+        title="Delete page audio?"
+        message="The audio file for this page will be deleted from this device. You can download it again any time."
+        confirmLabel="Delete audio"
+        failure="Couldn’t delete the audio. Try again."
+        onConfirm={() => deletePageAudio(audio.page_id)}
+        onClose={() => setDeleting(false)}
+        onDeleted={onDeleted}
+      />
     </section>
   );
 }

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { languageName } from "../../../shared/lib/languageName";
 import Dialog from "../../../shared/ui/Dialog";
@@ -14,6 +15,7 @@ import { cancelCompile, compilePageAudio } from "../lib/page-audio/actions";
 import type { PageAudio } from "../lib/page-audio/types";
 
 export default function CreateAudioDialog({
+  open,
   pageId,
   chunks,
   preferredVoiceId,
@@ -21,6 +23,7 @@ export default function CreateAudioDialog({
   onCreated,
   onClose
 }: Readonly<{
+  open: boolean;
   pageId: number;
   chunks: () => ReadableChunk[];
   preferredVoiceId?: string;
@@ -37,6 +40,12 @@ export default function CreateAudioDialog({
   const [speed, setSpeed] = useState<number>(1);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  useResetOnOpen(open, () => {
+    setVoiceId(voices.find((item) => item.id === preferredVoiceId)?.id ?? voices[0]?.id);
+    setSpeed(1);
+    setProgress(null);
+    setError(null);
+  });
   const languages = [...new Set(voices.map((item) => item.lang))];
 
   async function create(complete: (callback: () => void) => void) {
@@ -56,7 +65,7 @@ export default function CreateAudioDialog({
   const creating = progress !== null;
 
   return (
-    <Dialog title="Download page audio" busy={creating} onClose={onClose}>
+    <Dialog open={open} title="Download page audio" busy={creating} onClose={onClose}>
       {(close, complete) => (
         <>
           <BodyText tone="muted">

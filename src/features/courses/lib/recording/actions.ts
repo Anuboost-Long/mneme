@@ -7,6 +7,7 @@ import {
   insertRecording,
   updateRecordingColumns
 } from "./table";
+import type { RecordedAudio } from "./types";
 
 export { getAllRecordings, getPageRecordings, getRecording } from "./table";
 
@@ -18,24 +19,27 @@ const EXTENSIONS: Record<string, string> = {
   "audio/wav": "wav"
 };
 
-export async function createRecording(pageId: number | null, audio: Blob, durationMs: number) {
+export async function storeRecordedAudio(audio: Blob, durationMs: number): Promise<RecordedAudio> {
   const mimeType = audio.type.split(";")[0].trim() || "audio/mp4";
-  const reference = await desktop.files.write(new Uint8Array(await audio.arrayBuffer()), {
+  const file = await desktop.files.write(new Uint8Array(await audio.arrayBuffer()), {
     extension: EXTENSIONS[mimeType] ?? "m4a"
   });
+  return { file, mimeType: audio.type || mimeType, durationMs };
+}
+
+export function createRecording(pageId: number | null, audio: RecordedAudio) {
   const name = `Recording ${new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
-  try {
-    return await insertRecording({
-      page_id: pageId,
-      name,
-      file_reference: reference,
-      mime_type: audio.type || mimeType,
-      duration_ms: Math.round(durationMs)
-    });
-  } catch (error) {
-    await desktop.files.delete(reference);
-    throw error;
-  }
+  return insertRecording({
+    page_id: pageId,
+    name,
+    file_reference: audio.file,
+    mime_type: audio.mimeType,
+    duration_ms: Math.round(audio.durationMs)
+  });
+}
+
+export async function discardRecordedAudio(audio: RecordedAudio) {
+  await desktop.files.delete(audio.file);
 }
 
 export async function copyRecordings(content: string, pageId: number) {

@@ -579,20 +579,31 @@ Do not attempt to bypass school security.
 
 Instead, use the user's authenticated browser session where permitted.
 
+> **Done — 5 October 2026.** On chain-sdk's `desktop.browser`
+> (request 36), tested against a real LMS: sign-in, importing signed-in
+> pages, and staying signed in. Every LMS lays its pages out
+> differently, so per-site reading improvements come later (Phase 12).
+> See [Authenticated LMS Pages](features/11-authenticated-lms-pages.md).
+
 ## Development Steps
 
-- [ ] Create an LMS browser window.
-- [ ] Allow the user to log in normally.
-- [ ] Store session cookies securely.
-- [ ] Detect the current LMS page.
-- [ ] Add "Import Current Page".
-- [ ] Read permitted page content.
-- [ ] Send page content into the importer.
-- [ ] Keep login credentials out of the application's database.
+- [x] Create an LMS browser window. (The school window, opened from Import from LMS.)
+- [x] Allow the user to log in normally. (A real browser for the site; single sign-on popups work.)
+- [x] Store session cookies securely. (In the OS web engine's own store, kept between launches.)
+- [x] Detect the current LMS page.
+- [x] Add "Import Current Page". (Import this page, in the window's toolbar.)
+- [x] Read permitted page content. (The page as it stands, with its same-origin frames.)
+- [x] Send page content into the importer. (Same preview as a pasted link; pictures download with the session.)
+- [x] Keep login credentials out of the application's database. (mneme keeps the school's address only; Sign out in Settings.)
 
 ---
 
 # 14. Phase 12 — Smart Content Detection
+
+> **Built — 5 October 2026**, not yet tried in the running app. Every
+> import says what kind of page it looks like and lists its due dates,
+> activities and files; Ask AI classifies a page the rules can't place.
+> See [Smart Content Detection](features/12-smart-content-detection.md).
 
 ## Goal
 
@@ -1704,7 +1715,41 @@ Everything becomes learning material inside the same workspace.
 
 ---
 
-# 45. Recommended MVP
+# 45. Phase 43 — Record Computer Audio
+
+## Goal
+
+Record what the laptop plays (an online lecture, a video call, a video),
+not only the room, and choose the source each time:
+
+```text
+Microphone
+Computer audio
+Both (mixed into one recording)
+```
+
+> **Done — 4 October 2026.** Built on chain-sdk's `audioRecorder`
+> (requests 32–35) and run through its manual test plan in the app; see
+> [Recording sources](features/recording-sources.md).
+
+## Development Steps
+
+- [x] Native capture of computer audio (chain-sdk, request 32).
+- [x] Choose the source: Microphone, Computer audio, or Both.
+- [x] Mix the microphone and computer audio into one recording.
+- [x] Remember the last source chosen.
+- [x] Offer it on Home's recorder and on a page's recording block.
+- [x] Explain how to allow computer-audio access when it's refused.
+- [x] Cancel the speakers' echo when recording both (chain-sdk, request 33). (SpeexDSP; passed chain-sdk's live test on laptop speakers.)
+- [x] Setting to turn echo cancellation on or off. (Settings → General → Recordings → Reduce echo when recording both; on by default.)
+- [x] Suggest headphones when recording both without echo cancellation. (A hint under the source picker.)
+- [x] Settings to reduce background noise and even out voice volume (chain-sdk, request 34). (Settings → General → Recordings; both off by default.)
+- [x] Record from the laptop's mic, not a Bluetooth headset's, and warn when a headset mic is in use (chain-sdk, request 35). (Microphone: Automatic or a chosen one.)
+- [x] Change sound settings from the recorder too. (A Sound settings button beside the source picker.)
+
+---
+
+# 46. Recommended MVP
 
 Do not build everything immediately.
 
@@ -1730,7 +1775,7 @@ At this point the application will already be useful.
 
 ---
 
-# 46. Second Release
+# 47. Second Release
 
 Add:
 
@@ -1747,7 +1792,7 @@ Module Summaries
 
 ---
 
-# 47. Third Release
+# 48. Third Release
 
 Add:
 
@@ -1764,7 +1809,7 @@ Semantic Search
 
 ---
 
-# 48. Development Rule for Working With an AI Agent
+# 49. Development Rule for Working With an AI Agent
 
 Avoid prompts such as:
 
@@ -1828,7 +1873,7 @@ This keeps development predictable and makes debugging much easier.
 
 ---
 
-# 49. One Feature at a Time Rule
+# 50. One Feature at a Time Rule
 
 For every feature use this order:
 
@@ -1854,7 +1899,7 @@ Avoid asking the agent to change unrelated parts of the application.
 
 ---
 
-# 50. Suggested Git Strategy
+# 51. Suggested Git Strategy
 
 Keep commits small.
 
@@ -1892,7 +1937,7 @@ This makes it much easier to reverse AI-generated changes when something breaks.
 
 ---
 
-# 51. Core Product Vision
+# 52. Core Product Vision
 
 The application should eventually provide this workflow:
 

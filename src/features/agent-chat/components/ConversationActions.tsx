@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useLastValue } from "../../../shared/lib/dialogState";
 import type { Conversation } from "../lib/conversation/types";
 import ConversationForm from "./ConversationForm";
 
@@ -18,6 +19,8 @@ export default function ConversationActions({
 }>) {
   const [open, setOpen] = useState(false);
   const [action, setAction] = useState<"rename" | "delete" | null>(null);
+  const shownAction = useLastValue(action);
+  const formUsed = shownAction !== null;
   const trigger = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLMenuElement>(null);
   const id = useId();
@@ -143,9 +146,10 @@ export default function ConversationActions({
           </menu>,
           document.body
         )}
-      {action && (
+      {formUsed && (
         <ConversationForm
-          action={action}
+          open={action !== null}
+          action={shownAction ?? "rename"}
           conversation={conversation}
           onRename={onRename}
           onDelete={onDelete}
