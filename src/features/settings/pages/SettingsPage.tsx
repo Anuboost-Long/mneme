@@ -15,6 +15,8 @@ import {
   Typography
 } from "../../../shared/ui/Typography";
 import ChatRetention from "../../agent-chat/components/ChatRetention";
+import AgentActivity from "../../agent-server/components/AgentActivity";
+import AgentPermissions from "../../agent-server/components/AgentPermissions";
 import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentServerState";
 import { useAgentServer } from "../../agent-server/lib/useAgentServer";
 import ActionSettings from "../../ai-actions/components/ActionSettings";
@@ -559,9 +561,8 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                         </Typography>
                         <BodyText tone="muted" className={clsx("mt-1")}>
                           Runs on this device only (127.0.0.1) — nothing is reachable over the
-                          network. An agent can list and read freely; the first time it creates or
-                          updates a page in a conversation, you'll get a popup to approve it before
-                          it happens. Deleting anything still always happens here in Mneme.
+                          network. An agent can list and read freely; before it changes anything it
+                          asks you, unless you allow that kind of change under Permissions below.
                         </BodyText>
                         <div className={clsx("mt-3 flex flex-wrap items-center gap-3")}>
                           {agentServer.status === "running" ? (
@@ -626,6 +627,8 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                         </div>
                       </div>
                     </section>
+                    <AgentPermissions />
+                    <AgentActivity />
                   </>
                 );
               case "extensions":

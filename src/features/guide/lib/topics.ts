@@ -1,4 +1,6 @@
 import chatAgentApproval from "../assets/chat-agent-approval.jpg";
+import agentAlwaysAllow from "../assets/agent-always-allow.jpg";
+import agentPermissionsActivity from "../assets/agent-permissions-activity.jpg";
 import assistantAnswer from "../assets/assistant-answer.jpg";
 import chatAskMode from "../assets/chat-ask-mode.jpg";
 import iconPicker from "../assets/icon-picker.jpg";
@@ -12,6 +14,7 @@ import importFromUrl from "../assets/import-from-url.jpg";
 import importUnsure from "../assets/import-unsure.jpg";
 import moduleImportButton from "../assets/module-import-button.jpg";
 import paletteAsk from "../assets/palette-ask.jpg";
+import searchByMeaning from "../assets/search-by-meaning.jpg";
 
 export type GuideScreenshot = { src: string; alt: string; landscape?: boolean };
 
@@ -185,8 +188,8 @@ export const guideTopics: GuideTopic[] = [
       {
         title: "Agent: let it make changes",
         body: [
-          "Switch to Agent and the agent can create and change pages. It asks before its first change in a conversation, and every time it would replace what's on a page.",
-          "Deny keeps everything as it was. The mode is saved with the conversation."
+          "Switch to Agent and the agent can create and change pages. It asks before each change; tick Always allow to stop it asking about that kind of change. Replacing what’s on a page always asks.",
+          "Deny keeps everything as it was. Each message gets up to 50 tool calls, the agent is stopped if it keeps repeating the same call, and Stop ends it any time. Settings → Agent tools lists what’s allowed and everything the agent did."
         ],
         screenshots: [
           {
@@ -194,6 +197,74 @@ export const guideTopics: GuideTopic[] = [
             alt: "Agent wants to make a change: Create a page titled Attacker types, with Deny and Approve",
             landscape: true
           }
+        ]
+      }
+    ]
+  },
+  {
+    id: "agent-permissions",
+    label: "Agent permissions",
+    title: "What the agent may do, and what it did",
+    summary:
+      "Decide which changes the agent may make without asking, and look back at everything it read or changed.",
+    where: "Settings → Agent tools → Permissions and Activity",
+    place: { label: "Open Agent tools", path: "/settings/agent-tools" },
+    steps: [
+      {
+        title: "Allow once, or always",
+        body: [
+          "When the agent wants to create, edit or move a page, it asks. Tick Always allow to stop it asking about that kind of change, then press Allow.",
+          "Replacing what’s on a page always asks, and anything that deletes will too."
+        ],
+        screenshots: [
+          {
+            src: agentAlwaysAllow,
+            alt: "Agent wants to make a change, with Always allow the agent to create pages, Deny and Allow",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Change permissions and check the activity",
+        body: [
+          "Permissions lists what each kind of change covers. Tick or untick Allow without asking for Create, Edit and Move.",
+          "Activity lists every call the agent made, newest first: what it was, which conversation, and whether it was read, allowed, denied, failed or blocked in Ask mode."
+        ],
+        screenshots: [
+          {
+            src: agentPermissionsActivity,
+            alt: "Settings → Agent tools with the Permissions list and an Activity entry: Denied",
+            landscape: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "search",
+    label: "Search",
+    title: "Find anything with ⌘P",
+    summary:
+      "Find courses, modules, pages and attachments by their words, and pages by what they’re about.",
+    where: "⌘P from anywhere; the search model in Settings → Extensions",
+    place: { label: "Get a search model", path: "/settings/extensions" },
+    steps: [
+      {
+        title: "Search by words",
+        body: [
+          "Press ⌘P and type. Courses, modules, pages (by title or content) and attachments (by file name) are listed; Enter opens the first.",
+          "Recordings has its own search over names and transcripts, and ⌘F finds words on the page you’re reading."
+        ],
+        screenshots: []
+      },
+      {
+        title: "Search by meaning",
+        body: [
+          "Download BGE Small (English), or E5 Small for other languages, in Settings → Extensions. mneme indexes your pages on this device; nothing is sent anywhere.",
+          "Then a question in ⌘P also lists By meaning: pages about it even when they don’t use your words, with the passage that matched. The assistant can search the same way."
+        ],
+        screenshots: [
+          { src: searchByMeaning, alt: "⌘P with “why do people hack”, listing the cyber threats chapters By meaning", landscape: true }
         ]
       }
     ]

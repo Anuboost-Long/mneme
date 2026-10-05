@@ -1,4 +1,13 @@
-export type PendingApproval = { toolName: string; description: string; everyTime: boolean };
+import type { AgentPermission } from "./permissions";
+
+export type PendingApproval = {
+  toolName: string;
+  description: string;
+  permission: AgentPermission;
+  canAlwaysAllow: boolean;
+};
+
+export type ApprovalAnswer = { approved: boolean; always: boolean };
 
 // Matches chain-sdk's AGENT_SERVER_HANDLER_TIMEOUT (agent-server
 // CONTRACT.md's Errors section) — past this, native has already sent the
@@ -12,16 +21,9 @@ const APPROVAL_TIMEOUT_MS = 30_000;
 // so handleMcpRequest — and therefore this module — is never asked to gate
 // a second tool call while one is already awaiting an answer.
 let pending: PendingApproval | null = null;
-let resolvePending: ((approved: boolean) => void) | null = null;
+let resolvePending: ((answer: ApprovalAnswer) => void) | null = null;
 let timer: ReturnType<typeof setTimeout> | undefined;
 const listeners = new Set<() => void>();
-
-// Once a conversation's agent has one write approved, later writes in that
-// same conversation go through without asking again — re-prompting for
-// every single edit in a multi-step task would just get clicked through.
-// In-memory only: it resets on app restart, same as everything else this
-// module tracks.
-const approvedConversations = new Set<number>();
 
 function notify() {
   listeners.forEach((listener) => listener());
@@ -36,30 +38,22 @@ export function getPendingApproval() {
   return pending;
 }
 
-export function requestApproval(
-  conversationId: number,
-  toolName: string,
-  description: string,
-  everyTime = false
-): Promise<boolean> {
-  if (!everyTime && approvedConversations.has(conversationId)) return Promise.resolve(true);
-  return new Promise<boolean>((resolve) => {
-    pending = { toolName, description, everyTime };
-    resolvePending = (approved) => {
-      if (approved && !everyTime) approvedConversations.add(conversationId);
-      resolve(approved);
-    };
+export function requestApproval(request: PendingApproval): Promise<ApprovalAnswer> {
+  return new Promise<ApprovalAnswer>((resolve) => {
+    pending = request;
+    resolvePending = resolve;
     timer = setTimeout(() => answerApproval(false), APPROVAL_TIMEOUT_MS);
     notify();
   });
 }
 
-export function answerApproval(approved: boolean) {
+export function answerApproval(approved: boolean, always = false) {
   if (!resolvePending) return;
   clearTimeout(timer);
   const resolve = resolvePending;
+  const allowAlways = approved && always && (pending?.canAlwaysAllow ?? false);
   pending = null;
   resolvePending = null;
   notify();
-  resolve(approved);
+  resolve({ approved, always: allowAlways });
 }

@@ -1,4 +1,6 @@
 import { extractImages, toBase64 } from "../../../shared/lib/htmlImages";
+import { activeSearchModel, searchByMeaning } from "../../search/lib/searchIndex";
+import { AgentPermission } from "./permissions";
 import { pageTypeLabels } from "../../courses/components/PageForm";
 import { completionStatusLabels } from "../../courses/lib/completion-status";
 import { getCourse, getCourses } from "../../courses/lib/course/actions";
@@ -37,7 +39,7 @@ export type Tool = {
   // tools that actually change the user's data need one; list/get/search
   // run immediately. `describeCall` renders what the popup shows, from the
   // call's raw (not yet validated) arguments.
-  mutates?: boolean;
+  permission?: AgentPermission;
   destructive?: (args: Record<string, unknown>) => boolean;
   describeCall?: (args: Record<string, unknown>) => string;
   check?: (args: Record<string, unknown>) => Promise<unknown>;
@@ -232,6 +234,33 @@ export const tools: Tool[] = [
     execute: (args) => searchPages(requireString(args, "query"))
   },
   {
+    name: "search_by_meaning",
+    description:
+      "Find the passages of the user's pages closest in meaning to a question, even when they share no words with it. Returns each page's best passage with its page id and a similarity score (higher is closer). Use get_page to read a whole page.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "The question or topic, in plain words." },
+        limit: { type: "number", description: "How many pages to return, 1–20 (default 8)." }
+      },
+      required: ["query"]
+    },
+    execute: async (args) => {
+      const query = requireString(args, "query");
+      const limit = Math.min(Math.max(optionalNumber(args, "limit") ?? 8, 1), 20);
+      if (!(await activeSearchModel()))
+        throw new Error(
+          "Search by meaning isn't set up: the user needs to download a search model in Settings → Extensions. Use search_pages instead."
+        );
+      return (await searchByMeaning(query, limit)).map(({ page_id, page_title, text, score }) => ({
+        page_id,
+        page_title,
+        passage: text,
+        score: Math.round(score * 1000) / 1000
+      }));
+    }
+  },
+  {
     name: "create_page",
     description: "Create a new page in a module.",
     inputSchema: {
@@ -244,7 +273,7 @@ export const tools: Tool[] = [
       },
       required: ["module_id", "title"]
     },
-    mutates: true,
+    permission: AgentPermission.Create,
     describeCall: (args) =>
       `Create a page titled "${typeof args.title === "string" && args.title.trim() ? args.title : "Untitled"}"${typeof args.module_id === "number" ? ` in module #${args.module_id}` : ""}.`,
     check: (args) => requireModule(requireNumber(args, "module_id")),
@@ -271,7 +300,7 @@ export const tools: Tool[] = [
       },
       required: ["id", "html"]
     },
-    mutates: true,
+    permission: AgentPermission.Edit,
     describeCall: (args) => {
       const after = optionalString(args, "after_text");
       let where = " at the end";
@@ -300,7 +329,7 @@ export const tools: Tool[] = [
       },
       required: ["id", "module_id"]
     },
-    mutates: true,
+    permission: AgentPermission.Move,
     describeCall: (args) => `Move page ${pageRef(args, "id")} to module ${pageRef(args, "module_id")}.`,
     check: async (args) => {
       await requirePage(requireNumber(args, "id"));
@@ -350,7 +379,7 @@ export const tools: Tool[] = [
       },
       required: ["content"]
     },
-    mutates: true,
+    permission: AgentPermission.Create,
     describeCall: (args) => {
       const source = typeof args.page_id === "number" ? `page #${args.page_id}` : `module ${pageRef(args, "module_id")}`;
       return `Save a summary of ${source} as a new page.`;
@@ -396,7 +425,7 @@ export const tools: Tool[] = [
       },
       required: ["id"]
     },
-    mutates: true,
+    permission: AgentPermission.Edit,
     destructive: (args) => args.content !== undefined,
     describeCall: (args) => {
       const fields = (["title", "type", "content", "status"] as const).filter(

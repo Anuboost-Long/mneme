@@ -17,10 +17,13 @@ import { storeInlineIcons } from "../features/courses/lib/icon/actions";
 import { storeInlinePageImages } from "../features/courses/lib/page/actions";
 import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "../features/recently-deleted/lib/deleted-item/actions";
+import { updateSearchIndex } from "../features/search/lib/searchIndex";
 import { initDb } from "../shared/lib/db";
 import { useShortcut, useShortcuts } from "../shared/lib/shortcuts/shortcutsState";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
 import { BodyText, PageTitle } from "../shared/ui/Typography";
+
+const SEARCH_INDEX_INTERVAL_MS = 120_000;
 
 export default function RootLayout() {
   const { courses, save, remove, reorder } = useCourses();
@@ -89,6 +92,13 @@ export default function RootLayout() {
   }, [pathname]);
 
   useEffect(unloadVoiceWhenIdle, []);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    void updateSearchIndex();
+    const timer = setInterval(() => void updateSearchIndex(), SEARCH_INDEX_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [status]);
 
   useEffect(() => {
     let active = true;

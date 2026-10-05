@@ -151,18 +151,108 @@ test('Ask mode offers only read tools and refuses changes; Agent mode offers the
   await eraseCourse(course.id);
 });
 
-test('replacing a page asks every time; other changes ask once per conversation', async () => {
-  const { requestApproval, answerApproval, getPendingApproval } = await import('../src/features/agent-server/lib/approvals.ts');
-  const first = requestApproval(41, 'create_page', 'Create a page.');
-  assert.equal(getPendingApproval().everyTime, false);
-  answerApproval(true);
-  assert.equal(await first, true);
-  assert.equal(await requestApproval(41, 'create_page', 'Create another page.'), true);
+test('always allow stops a kind of change asking, replacing a page always asks, and every call is logged', { timeout: 10000 }, async () => {
+  const { handleMcpRequest } = await import('../src/features/agent-server/lib/mcp.ts');
+  const { answerApproval, getPendingApproval } = await import('../src/features/agent-server/lib/approvals.ts');
+  const { AgentPermission, getTrustedPermissions, setPermissionTrusted } = await import('../src/features/agent-server/lib/permissions.ts');
+  const { clearActivity, getRecentActivity } = await import('../src/features/agent-server/lib/activity/actions.ts');
+  const { ActivityOutcome } = await import('../src/features/agent-server/lib/activity/types.ts');
+  const { getConnections } = await import('../src/features/agent-chat/lib/connection/actions.ts');
+  const { createConversation, setConversationMode } = await import('../src/features/agent-chat/lib/conversation/actions.ts');
+  const { ConversationMode } = await import('../src/features/agent-chat/lib/conversation/types.ts');
+  const [connection] = await getConnections();
+  const conversation = await createConversation(connection.id);
+  await setConversationMode(conversation.id, ConversationMode.Agent);
+  await clearActivity();
+  const { course, first } = await library();
+  const call = (name, args) =>
+    handleMcpRequest({
+      method: 'POST',
+      path: `/mcp?conversation=${conversation.id}`,
+      headers: {},
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } })
+    }).then((response) => JSON.parse(response.body).result);
+  async function prompted() {
+    for (let tries = 0; tries < 200 && !getPendingApproval(); tries++) await new Promise((resolve) => setTimeout(resolve, 5));
+    return getPendingApproval();
+  }
+
+  await call('get_module', { id: first.id });
+  const firstCreate = call('create_page', { module_id: first.id, title: 'One' });
+  assert.equal((await prompted()).canAlwaysAllow, true);
+  answerApproval(true, true);
+  assert.equal((await firstCreate).isError, false);
+  assert.ok((await getTrustedPermissions()).has(AgentPermission.Create));
+  assert.equal((await call('create_page', { module_id: first.id, title: 'Two' })).isError, false);
   assert.equal(getPendingApproval(), null);
-  const replace = requestApproval(41, 'update_page', 'Update page #1 (content).', true);
-  assert.equal(getPendingApproval().everyTime, true);
-  answerApproval(false);
-  assert.equal(await replace, false);
-  assert.equal(tools.find((tool) => tool.name === 'update_page').destructive({ id: 1, content: '<p>x</p>' }), true);
-  assert.equal(tools.find((tool) => tool.name === 'update_page').destructive({ id: 1, title: 'New' }), false);
+
+  await setPermissionTrusted(AgentPermission.Edit, true);
+  const [page] = await getPages(first.id);
+  const replace = call('update_page', { id: page.id, content: '<p>New</p>' });
+  assert.equal((await prompted()).canAlwaysAllow, false);
+  answerApproval(false, true);
+  assert.equal((await replace).isError, true);
+  assert.equal((await call('update_page', { id: page.id, title: 'Renamed' })).isError, false);
+
+  assert.deepEqual(
+    (await getRecentActivity(10)).map(({ tool, outcome }) => [tool, outcome]),
+    [
+      ['update_page', ActivityOutcome.AllowedAutomatically],
+      ['update_page', ActivityOutcome.Denied],
+      ['create_page', ActivityOutcome.AllowedAutomatically],
+      ['create_page', ActivityOutcome.Allowed],
+      ['get_module', ActivityOutcome.Read]
+    ]
+  );
+  assert.equal((await getRecentActivity(1))[0].conversation_id, conversation.id);
+  await setPermissionTrusted(AgentPermission.Create, false);
+  await setPermissionTrusted(AgentPermission.Edit, false);
+  await clearActivity();
+  assert.deepEqual(await getRecentActivity(10), []);
+  await eraseCourse(course.id);
+});
+
+test('each message gets a tool-call budget, and the same call repeated too often is refused', { timeout: 10000 }, async () => {
+  const { handleMcpRequest } = await import('../src/features/agent-server/lib/mcp.ts');
+  const { SAME_CALLS_IN_A_ROW, TOOL_CALLS_PER_MESSAGE, spendToolCall, startMessageBudget } = await import('../src/features/agent-server/lib/budget.ts');
+  const { clearActivity, getRecentActivity } = await import('../src/features/agent-server/lib/activity/actions.ts');
+  const { ActivityOutcome } = await import('../src/features/agent-server/lib/activity/types.ts');
+  const { getConnections } = await import('../src/features/agent-chat/lib/connection/actions.ts');
+  const { createConversation } = await import('../src/features/agent-chat/lib/conversation/actions.ts');
+  const [connection] = await getConnections();
+  const conversation = await createConversation(connection.id);
+  await clearActivity();
+  const { course, first } = await library();
+  const call = (name, args) =>
+    handleMcpRequest({
+      method: 'POST',
+      path: `/mcp?conversation=${conversation.id}`,
+      headers: {},
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } })
+    }).then((response) => JSON.parse(response.body).result);
+
+  assert.equal(spendToolCall(999999, 'list_courses {}'), 'ok');
+
+  startMessageBudget(conversation.id);
+  for (let index = 0; index < SAME_CALLS_IN_A_ROW; index++)
+    assert.equal((await call('get_module', { id: first.id })).isError, false);
+  const repeated = await call('get_module', { id: first.id });
+  assert.equal(repeated.isError, true);
+  assert.match(repeated.content[0].text, /3 times in a row/);
+  assert.equal((await call('list_modules', { course_id: course.id })).isError, false);
+  assert.equal((await call('get_module', { id: first.id })).isError, false);
+
+  startMessageBudget(conversation.id);
+  for (let index = 0; index < TOOL_CALLS_PER_MESSAGE; index++) spendToolCall(conversation.id, `call ${index}`);
+  const limited = await call('list_courses', {});
+  assert.equal(limited.isError, true);
+  assert.match(limited.content[0].text, /used its 50 tool calls/);
+
+  startMessageBudget(conversation.id);
+  assert.equal((await call('list_courses', {})).isError, false);
+  const outcomes = (await getRecentActivity(10)).map(({ outcome }) => outcome);
+  assert.ok(outcomes.includes(ActivityOutcome.StoppedRepeating));
+  assert.ok(outcomes.includes(ActivityOutcome.StoppedAtLimit));
+  await clearActivity();
+  await eraseCourse(course.id);
 });

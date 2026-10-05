@@ -1189,6 +1189,8 @@ Generate summary
 Create Revision Notes page
 ```
 
+> **Done — 5 October 2026.** See [Agent Mode](features/26-agent-mode.md).
+
 ## Development Steps
 
 - [x] Create agent execution loop. (The connected agent CLI runs the loop with mneme’s tools.)
@@ -1197,8 +1199,8 @@ Create Revision Notes page
 - [x] Display current agent action. (A card per tool call, “Running”.)
 - [x] Display completed actions. (“Finished” or “Failed”.)
 - [x] Add Stop button. (In the message box while the agent works.)
-- [ ] Add maximum tool-call limit.
-- [ ] Prevent infinite loops.
+- [x] Add maximum tool-call limit. (50 tool calls per message; past that the agent is told to stop and report.)
+- [x] Prevent infinite loops. (The same call more than 3 times in a row is refused.)
 - [x] Add error recovery. (A failed tool call is returned to the agent with its reason, so it can try another way.)
 - [x] Add user approval system. (Agent wants to make a change: Approve or Deny.)
 
@@ -1276,14 +1278,17 @@ For safe actions, users can optionally select:
 Always allow this action.
 ```
 
+> **Done — 5 October 2026.** See
+> [Agent Permission System](features/28-agent-permissions.md).
+
 ## Development Steps
 
-- [ ] Define permissions.
+- [x] Define permissions. (Read, Create, Edit, Move, Delete, Use the internet; each tool has one.)
 - [x] Categorize AI tools. (Read tools, tools that change pages, and changes that replace a page.)
-- [x] Add approval dialog.
-- [ ] Save trusted permissions.
+- [x] Add approval dialog. (Allow or Deny, with Always allow for changes that can be trusted.)
+- [x] Save trusted permissions. (Always allow in the prompt, or Settings → Agent tools → Permissions; kept across restarts.)
 - [x] Always confirm deletion. (Agents have no delete tool; replacing a page’s content always asks.)
-- [ ] Create agent activity log.
+- [x] Create agent activity log. (Settings → Agent tools → Activity: every call and how it ended; the last 1,000 kept.)
 
 ---
 
@@ -1350,6 +1355,9 @@ Generate References
 
 Allow users and AI to find anything quickly.
 
+> **Done — 5 October 2026.** Words, attachments and meaning, on the
+> device. See [Search](features/30-search.md).
+
 ## Development Steps
 
 - [x] Search courses. (Command palette, ⌘P.)
@@ -1357,15 +1365,15 @@ Allow users and AI to find anything quickly.
 - [x] Search page titles.
 - [x] Search page content. (Shown as “matches content”.)
 - [x] Search transcripts. (Recordings screen.)
-- [ ] Search attachments.
+- [x] Search attachments. (⌘P finds attachments by file name and opens their page.)
 - [x] Add keyboard shortcut. (⌘P.)
 - [x] Highlight search results. (Find in page, ⌘F, highlights each match.)
 - [x] Open result directly.
 
 Later:
 
-- [ ] Semantic search.
-- [ ] Vector embeddings.
+- [x] Semantic search. (⌘P lists pages By meaning; the assistant has search_by_meaning.)
+- [x] Vector embeddings. (On the device with a downloaded model; chain-sdk request 37.)
 - [x] AI search. (⌘P → Ask: the assistant searches and reads your pages to answer.)
 
 ---

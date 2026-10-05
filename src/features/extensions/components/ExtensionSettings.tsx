@@ -3,7 +3,8 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 import { BodyText, Caption, SectionTitle, Typography } from "../../../shared/ui/Typography";
-import { transcriptionModels, VAD, voiceModels, type Extension } from "../lib/catalog";
+import SearchIndexStatus from "../../search/components/SearchIndexStatus";
+import { searchModels, transcriptionModels, VAD, voiceModels, type Extension } from "../lib/catalog";
 import {
   cancelExtension,
   installExtension,
@@ -93,11 +94,20 @@ export default function ExtensionSettings() {
               label="Only use downloaded models"
               hint="Transcribe stops offering this device’s built-in engine."
             />
+            <Typography as="h3" variant="label" className={clsx("mt-6")}>
+              Search by meaning
+            </Typography>
+            <BodyText tone="muted" className={clsx("mt-1")}>
+              Finds pages by what they’re about, not just their words, in ⌘P and for the assistant.
+              Your pages are indexed on this device. With both downloaded, the first one is used.
+            </BodyText>
+            <ExtensionList extensions={searchModels} />
+            <SearchIndexStatus />
           </>
         )}
         <Caption tone="muted" className={clsx("mt-3")}>
-          Models come from the sherpa-onnx releases and are checked against a pinned checksum before
-          they’re kept. Speech detection uses Silero VAD (
+          Voices and transcription models come from the sherpa-onnx releases, search models from
+          Hugging Face; each is checked against a pinned checksum before it’s kept. Speech detection uses Silero VAD (
           <a
             href={VAD.license.url}
             target="_blank"

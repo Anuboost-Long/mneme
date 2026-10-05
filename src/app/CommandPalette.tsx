@@ -11,6 +11,10 @@ import {
 import { useMatch, useNavigate } from "react-router-dom";
 
 import { askAssistant, openAssistant } from "../features/agent-chat/lib/assistant";
+import type { PassageMatch } from "../features/search/lib/passage/types";
+import { searchByMeaning } from "../features/search/lib/searchIndex";
+import { searchAttachmentLinks } from "../features/courses/lib/attachment/actions";
+import type { AttachmentLink } from "../features/courses/lib/attachment/types";
 import type { Course } from "../features/courses/lib/course/types";
 import { searchModuleLinks } from "../features/courses/lib/module/actions";
 import type { ModuleLink } from "../features/courses/lib/module/types";
@@ -63,6 +67,12 @@ const places = [
 ];
 
 const searchDelayMs = 120;
+const meaningDelayMs = 350;
+
+function passageSnippet({ text, page_title }: PassageMatch) {
+  const body = text.startsWith(page_title) ? text.slice(page_title.length).replace(/^( — |: )/, "") : text;
+  return body.length > 90 ? `${body.slice(0, 89)}…` : body;
+}
 
 function matches(text: string, query: string) {
   return text.toLowerCase().includes(query.trim().toLowerCase());
@@ -78,10 +88,12 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
   const [commandGroups, setCommandGroups] = useState<
     { group: string; commands: PaletteCommand[] }[]
   >([]);
-  const [found, setFound] = useState<{ modules: ModuleLink[]; pages: PageLink[] }>({
+  const [found, setFound] = useState<{ modules: ModuleLink[]; pages: PageLink[]; attachments: AttachmentLink[] }>({
     modules: [],
-    pages: []
+    pages: [],
+    attachments: []
   });
+  const [byMeaning, setByMeaning] = useState<PassageMatch[]>([]);
   const [active, setActive] = useState(0);
   const [recent] = useState(readRecent);
   const listId = useId();
@@ -106,19 +118,37 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
 
   useEffect(() => {
     if (!query.trim()) {
-      setFound({ modules: [], pages: [] });
+      setFound({ modules: [], pages: [], attachments: [] });
       return;
     }
     let current = true;
     const timer = setTimeout(() => {
-      Promise.all([searchModuleLinks(query, 6), searchPageLinks(query, 8)])
-        .then(([modules, pages]) => {
-          if (current) setFound({ modules, pages });
+      Promise.all([searchModuleLinks(query, 6), searchPageLinks(query, 8), searchAttachmentLinks(query, 6)])
+        .then(([modules, pages, attachments]) => {
+          if (current) setFound({ modules, pages, attachments });
         })
         .catch(() => {
-          if (current) setFound({ modules: [], pages: [] });
+          if (current) setFound({ modules: [], pages: [], attachments: [] });
         });
     }, searchDelayMs);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  useEffect(() => {
+    const words = query.trim();
+    if (words.split(/\s+/).length < 2 && words.length < 8) {
+      setByMeaning([]);
+      return;
+    }
+    let current = true;
+    const timer = setTimeout(() => {
+      searchByMeaning(words, 5)
+        .then((matches) => current && setByMeaning(matches))
+        .catch(() => current && setByMeaning([]));
+    }, meaningDelayMs);
     return () => {
       current = false;
       clearTimeout(timer);
@@ -197,6 +227,30 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
                 page.title,
                 page.in_title ? page.module_name : `${page.module_name} · matches content`,
                 `/courses/${page.course_id}/modules/${page.module_id}/pages/${page.id}`
+              )
+            )
+          },
+          {
+            name: "By meaning",
+            items: byMeaning
+              .filter((match) => !found.pages.some((page) => page.id === match.page_id))
+              .map((match) =>
+                link(
+                  `meaning-${match.page_id}`,
+                  match.page_title,
+                  passageSnippet(match),
+                  `/courses/${match.course_id}/modules/${match.module_id}/pages/${match.page_id}`
+                )
+              )
+          },
+          {
+            name: "Attachments",
+            items: found.attachments.map((attachment) =>
+              link(
+                `attachment-${attachment.id}`,
+                attachment.file_name,
+                `On “${attachment.page_title}”`,
+                `/courses/${attachment.course_id}/modules/${attachment.module_id}/pages/${attachment.page_id}`
               )
             )
           }

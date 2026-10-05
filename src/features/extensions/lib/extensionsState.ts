@@ -27,9 +27,9 @@ function storedOnlyDownloaded(): Record<Extension["kind"], boolean> {
     const saved = JSON.parse(localStorage.getItem(ONLY_DOWNLOADED_KEY) ?? "{}") as Partial<
       Record<Extension["kind"], boolean>
     >;
-    return { voice: saved.voice === true, transcription: saved.transcription === true };
+    return { voice: saved.voice === true, transcription: saved.transcription === true, search: false };
   } catch {
-    return { voice: false, transcription: false };
+    return { voice: false, transcription: false, search: false };
   }
 }
 
@@ -92,6 +92,8 @@ export async function installExtension(extension: Extension) {
   try {
     if (extension.kind === "transcription" && !state.installed[VAD.manifest.id])
       await desktop.models.install(VAD.manifest);
+    if (extension.kind === "search" && !state.installed[extension.tokenizer.id])
+      await desktop.models.install(extension.tokenizer);
     await desktop.models.install(extension.manifest, (received, total) => {
       setState({
         downloads: {
@@ -111,6 +113,7 @@ export async function installExtension(extension: Extension) {
 
 export async function cancelExtension(extension: Extension) {
   await desktop.models.cancel(VAD.manifest.id);
+  if (extension.kind === "search") await desktop.models.cancel(extension.tokenizer.id);
   await desktop.models.cancel(extension.manifest.id);
 }
 
@@ -120,6 +123,7 @@ export async function removeExtension(extension: Extension) {
   setState({ errors: without(state.errors, id) });
   try {
     await desktop.models.remove(id);
+    if (extension.kind === "search") await desktop.models.remove(extension.tokenizer.id);
     const stillNeeded = transcriptionModels.some(
       (other) => other.manifest.id !== id && state.installed[other.manifest.id]
     );
@@ -148,9 +152,9 @@ export function setOnlyDownloaded(kind: Extension["kind"], only: boolean) {
 }
 
 export function isReady(extension: Extension, installed: Record<string, InstalledModel>) {
-  return Boolean(
-    installed[extension.manifest.id] && (extension.kind === "voice" || installed[VAD.manifest.id])
-  );
+  if (!installed[extension.manifest.id]) return false;
+  if (extension.kind === "search") return Boolean(installed[extension.tokenizer.id]);
+  return extension.kind === "voice" || Boolean(installed[VAD.manifest.id]);
 }
 
 function subscribe(listener: () => void) {

@@ -3,6 +3,7 @@ import { desktop, type ProcessArg, type ProcessOutputChunk } from "@chain/sdk";
 import { errorMessage } from "../../../shared/lib/errorMessage";
 import { toBase64, type ImageData } from "../../../shared/lib/htmlImages";
 import { getAgentServerSnapshot, startAgentServer } from "../../agent-server/lib/agentServerState";
+import { startMessageBudget } from "../../agent-server/lib/budget";
 import { getActiveProfile } from "../../ai-profiles/lib/profile/actions";
 import {
   withProfile,
@@ -468,6 +469,7 @@ export async function runTurn(
   const mcpUrl = invoker.needsMcp
     ? `${await ensureAgentServerUrl()}?conversation=${conversationId}`
     : null;
+  startMessageBudget(conversationId);
   const built = buildArgs(
     invoker,
     connection,

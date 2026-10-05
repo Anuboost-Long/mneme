@@ -29,10 +29,9 @@ which one is on.
   changes in its reply instead of making them. A change it tries anyway
   is refused with "This conversation is in Ask mode…". Its instructions
   say which mode it is in.
-- **Agent mode**: every tool, as today. A change asks for approval the
-  first time in a conversation; later ones go through. Replacing a
-  page's content (`update_page` with `content`) is destructive, so it
-  asks every time.
+- **Agent mode**: every tool. Each change asks for approval unless its
+  permission is always allowed (Phase 28). Replacing a page's content
+  (`update_page` with `content`) is destructive, so it asks every time.
 - **Ask from anywhere**: in the command palette (⌘P), typing a question
   offers **Ask: “…”** (after any matching pages and commands, so Enter
   still opens a match first). It opens the agent chat panel over the

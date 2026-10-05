@@ -13,7 +13,7 @@ const modes = [
   {
     value: ConversationMode.Agent,
     label: "Agent",
-    detail: "Can create and change pages. It asks before its first change, and every time it would replace a page."
+    detail: "Can create and change pages. It asks first, unless you’ve chosen Always allow."
   }
 ];
 

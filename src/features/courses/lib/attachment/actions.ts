@@ -10,7 +10,7 @@ import {
 } from "./table";
 import type { Attachment } from "./types";
 
-export { getAttachment } from "./table";
+export { getAttachment, searchAttachmentLinks } from "./table";
 
 export async function createAttachment(pageId: number, file: File) {
   const reference = await storePageFile(file);

@@ -1,4 +1,4 @@
-import type { AsrModelConfig, ModelManifest, TtsModelConfig } from "@chain/sdk";
+import type { AsrModelConfig, EmbeddingModelConfig, ModelManifest, TtsModelConfig } from "@chain/sdk";
 
 // mneme's reviewed list of downloadable open-source models. chain-sdk's
 // `desktop.models` installs whatever manifest it's given; this file is
@@ -40,7 +40,13 @@ export type VoiceExtension = ExtensionBase & {
   voices: { name: string; language: string }[];
 };
 
-export type Extension = TranscriptionExtension | VoiceExtension;
+export type SearchExtension = ExtensionBase & {
+  kind: "search";
+  tokenizer: ModelManifest;
+  config: EmbeddingModelConfig;
+};
+
+export type Extension = TranscriptionExtension | VoiceExtension | SearchExtension;
 
 // Every transcription model segments speech with Silero VAD, installed
 // alongside the first one and removed with the last.
@@ -273,4 +279,63 @@ export const voiceModels: VoiceExtension[] = [
   }
 ];
 
-export const catalog: Extension[] = [...voiceModels, ...transcriptionModels];
+const HUGGING_FACE = "https://huggingface.co";
+
+export const searchModels: SearchExtension[] = [
+  {
+    kind: "search",
+    manifest: {
+      id: "bge-small-en-v1-5",
+      url: `${HUGGING_FACE}/BAAI/bge-small-en-v1.5/resolve/main/onnx/model.onnx`,
+      sha256: "828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35",
+      archive: "none",
+      sizeBytes: 133_093_490
+    },
+    tokenizer: {
+      id: "bge-small-en-v1-5-tokenizer",
+      url: `${HUGGING_FACE}/BAAI/bge-small-en-v1.5/resolve/main/tokenizer.json`,
+      sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+      archive: "none",
+      sizeBytes: 711_396
+    },
+    name: "BGE Small (English)",
+    description: "Finds English pages by what they’re about. Light on memory.",
+    license: { name: "MIT", url: "https://huggingface.co/BAAI/bge-small-en-v1.5" },
+    config: {
+      model: "model.onnx",
+      tokenizer: "tokenizer.json",
+      tokenizerModelId: "bge-small-en-v1-5-tokenizer",
+      pooling: "cls"
+    }
+  },
+  {
+    kind: "search",
+    manifest: {
+      id: "multilingual-e5-small",
+      url: `${HUGGING_FACE}/intfloat/multilingual-e5-small/resolve/main/onnx/model.onnx`,
+      sha256: "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665",
+      archive: "none",
+      sizeBytes: 470_268_510
+    },
+    tokenizer: {
+      id: "multilingual-e5-small-tokenizer",
+      url: `${HUGGING_FACE}/intfloat/multilingual-e5-small/resolve/main/tokenizer.json`,
+      sha256: "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39",
+      archive: "none",
+      sizeBytes: 17_082_730
+    },
+    name: "E5 Small (many languages)",
+    description: "Searches pages in many languages, including Khmer, Thai and Chinese. Uses more memory while indexing.",
+    license: { name: "MIT", url: "https://huggingface.co/intfloat/multilingual-e5-small" },
+    config: {
+      model: "model.onnx",
+      tokenizer: "tokenizer.json",
+      tokenizerModelId: "multilingual-e5-small-tokenizer",
+      pooling: "mean",
+      queryPrefix: "query: ",
+      passagePrefix: "passage: "
+    }
+  }
+];
+
+export const catalog: Extension[] = [...voiceModels, ...transcriptionModels, ...searchModels];

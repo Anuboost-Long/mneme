@@ -1,6 +1,7 @@
 // The database schema: one @Table class per table. Edit a class, then run
 // `chain migration add <name>` to generate the migration for the change.
 export { ActionPack, type ActionPackRow } from "./action-pack";
+export { AgentActivity, type AgentActivityRow } from "./agent-activity";
 export { AgentConnection, type AgentConnectionRow } from "./agent-connection";
 export { AgentConversation, type AgentConversationRow } from "./agent-conversation";
 export { AgentMessage, type AgentMessageRow } from "./agent-message";
@@ -14,6 +15,7 @@ export { HomeLayout, type HomeLayoutRow } from "./home-layout";
 export { HomeWidget, type HomeWidgetRow } from "./home-widget";
 export { Module, type ModuleRow } from "./module";
 export { Page, type PageRow } from "./page";
+export { PagePassage, type PagePassageRow } from "./page-passage";
 export { PageAudio, type PageAudioRow } from "./page-audio";
 export { Recording, type RecordingRow } from "./recording";
 export { Settings, type SettingsRow } from "./settings";
