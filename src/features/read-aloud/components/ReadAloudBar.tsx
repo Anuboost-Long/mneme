@@ -91,7 +91,7 @@ export default function ReadAloudBar({ reader }: Readonly<{ reader: ReadAloud }>
               onChange={(event) => reader.skip(Number(event.target.value) - reader.index)}
               aria-label="Paragraph"
               aria-valuetext={`Paragraph ${reader.index + 1} of ${reader.total}`}
-              className={clsx("h-9 min-w-0 flex-1 cursor-pointer accent-chain-lime")}
+              className={clsx("h-9 min-w-0 flex-1 cursor-pointer accent-accent")}
             />
           }
           controls={
@@ -138,7 +138,7 @@ export default function ReadAloudBar({ reader }: Readonly<{ reader: ReadAloud }>
                   onChange={(event) => reader.chooseVolume(Number(event.target.value))}
                   aria-label="Volume"
                   aria-valuetext={`${Math.round(reader.volume * 100)}%`}
-                  className={clsx("w-20 cursor-pointer accent-chain-lime")}
+                  className={clsx("w-20 cursor-pointer accent-accent")}
                 />
               </label>
               <span className={clsx("flex-1")} />

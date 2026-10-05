@@ -8,6 +8,11 @@
       } catch {
         document.documentElement.dataset.theme = "light";
       }
+      try {
+        const appearance = JSON.parse(localStorage.getItem("mneme.appearance") || "{}");
+        for (const key of ["accent", "sidebar", "pageWidth", "pageFont", "textSize", "compact"])
+          if (key in appearance) document.documentElement.dataset[key] = String(appearance[key]);
+      } catch {}
     </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

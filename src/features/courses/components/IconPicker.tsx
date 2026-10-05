@@ -70,6 +70,7 @@ export default function IconPicker({
         </Typography>
         <TextInput
           label="Search icons"
+          showRequirement={false}
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}

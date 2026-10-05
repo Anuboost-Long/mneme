@@ -5,8 +5,8 @@ import CourseIcon from "../../../shared/ui/CourseIcon";
 import { Caption } from "../../../shared/ui/Typography";
 import ActionIcon from "../../ai-actions/components/ActionIcon";
 import { getActionConnection, getEnabledActions } from "../../ai-actions/lib/action/actions";
-import { typeGlyphs } from "../../courses/components/pageDisplay";
-import { pageTypeLabels } from "../../courses/components/PageForm";
+import { typeGlyph } from "../../courses/components/pageDisplay";
+import { pageTypeLabel } from "../../courses/lib/page-type/pageTypesState";
 import type { Course } from "../../courses/lib/course/types";
 import { getCoursePageProgress } from "../../courses/lib/page/actions";
 import { pageTypes, percentDone } from "../../courses/lib/page/types";
@@ -78,9 +78,9 @@ export function PageTypesWidget({ widget }: Readonly<WidgetProps>) {
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <path d={typeGlyphs[type]} />
+            <path d={typeGlyph(type)} />
           </svg>
-          <span className={clsx("truncate")}>{pageTypeLabels[type]}</span>
+          <span className={clsx("truncate")}>{pageTypeLabel(type)}</span>
           <span className={clsx("h-1.5 overflow-hidden rounded-full bg-ink/10")}>
             <span
               style={{ width: `${((counts.get(type) ?? 0) / max) * 100}%` }}

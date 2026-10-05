@@ -36,7 +36,7 @@ export default function CassetteDeck({
     <div className={clsx("w-full rounded-lg border border-ink/15 bg-ink/5 p-2")}>
       <div
         className={clsx(
-          "flex items-center gap-2 rounded-md border-l-4 border-chain-lime",
+          "flex items-center gap-2 rounded-md border-l-4 border-accent",
           "bg-chain-cream px-3 py-1.5 text-chain-navy"
         )}
       >

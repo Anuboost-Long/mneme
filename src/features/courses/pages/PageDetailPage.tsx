@@ -14,7 +14,8 @@ import { elementChunk, elementChunks } from "../../read-aloud/lib/readableText";
 import { useReadAloud } from "../../read-aloud/lib/useReadAloud";
 import DeletePage from "../components/DeletePage";
 import PageEditor from "../components/editor/PageEditor";
-import PageForm, { pageTypeLabels } from "../components/PageForm";
+import PageForm from "../components/PageForm";
+import { pageTypeLabel } from "../lib/page-type/pageTypesState";
 import { StatusChip } from "../components/StatusPicker";
 import { CompletionStatus } from "../lib/completion-status";
 import type { Course } from "../lib/course/types";
@@ -196,7 +197,7 @@ export default function PageDetailPage({
               tone="muted"
               className={clsx("mt-2 inline-block rounded-full border border-ink/15 px-2 py-0.5")}
             >
-              {pageTypeLabels[page.type]}
+              {pageTypeLabel(page.type)}
             </Typography>
             <StatusChip
               status={page.status}
@@ -222,7 +223,7 @@ export default function PageDetailPage({
             className={clsx(
               "flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium",
               page.status === CompletionStatus.Completed
-                ? "bg-chain-lime text-chain-navy"
+                ? "bg-accent text-chain-navy"
                 : "border border-ink/15 hover:bg-ink/5",
               "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink"
             )}
@@ -246,7 +247,7 @@ export default function PageDetailPage({
                 strokeLinejoin="round"
                 aria-hidden="true"
                 className={clsx(
-                  "pointer-events-none absolute inset-0 hidden size-4 text-chain-lime peer-checked:block"
+                  "pointer-events-none absolute inset-0 hidden size-4 text-accent peer-checked:block"
                 )}
               >
                 <path d="m4 8.5 2.5 2.5L12 5.5" />

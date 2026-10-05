@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
 import { Caption } from "../../../shared/ui/Typography";
-import { typeGlyphs } from "../../courses/components/pageDisplay";
+import { typeGlyph } from "../../courses/components/pageDisplay";
 import type { PageType } from "../../courses/lib/page/types";
 import type { WidgetSize } from "../lib/widget/types";
 
@@ -60,7 +60,7 @@ export function PageGlyph({
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d={typeGlyphs[page.type]} />
+        <path d={typeGlyph(page.type)} />
       </svg>
     </span>
   );

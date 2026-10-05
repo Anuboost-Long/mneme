@@ -1,13 +1,13 @@
 import { CompletionStatus, completionStatusLabels } from "../lib/completion-status";
 import { pageContentPreview, PageType, type Page } from "../lib/page/types";
 import type { ItemAction } from "./ItemMenu";
-import { pageTypeLabels } from "./PageForm";
+import { pageTypeLabel } from "../lib/page-type/pageTypesState";
 
 // What a page list row and a gallery card both show and do.
 
 const WORDS_PER_MINUTE = 220;
 
-export const typeGlyphs: Record<PageType, string> = {
+const typeGlyphs: Record<PageType, string> = {
   [PageType.Lesson]: "M12 6C10 4.5 7 4 4 4.5v14C7 18 10 18.5 12 20m0-14c2-1.5 5-2 8-1.5v14c-3-.5-6 0-8 1.5m0-14v14",
   [PageType.Lecture]: "M4 5h16v11H4zM9 20h6M12 16v4M10.5 8.5v4l3.5-2-3.5-2Z",
   [PageType.Exercise]: "m15 5 4 4M4 20l1-4L16 5l3 3-11 11-4 1Z",
@@ -18,6 +18,8 @@ export const typeGlyphs: Record<PageType, string> = {
   [PageType.Revision]: "M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4",
   [PageType.Custom]: "M12 3l9 9-9 9-9-9 9-9Z",
 };
+
+export const typeGlyph = (type: number) => typeGlyphs[type as PageType] ?? typeGlyphs[PageType.Custom];
 
 export function readingTime(content: string | null) {
   const text = pageContentPreview(content);
@@ -31,7 +33,7 @@ const inBetween = new Set([CompletionStatus.InProgress, CompletionStatus.Revisio
 
 // "Lesson", or "Lesson · In progress".
 export function pageMeta(page: Page) {
-  return inBetween.has(page.status) ? `${pageTypeLabels[page.type]} · ${completionStatusLabels[page.status]}` : pageTypeLabels[page.type];
+  return inBetween.has(page.status) ? `${pageTypeLabel(page.type)} · ${completionStatusLabels[page.status]}` : pageTypeLabel(page.type);
 }
 
 export type PageItemProps = {

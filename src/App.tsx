@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
+import AppearanceProvider from "./shared/providers/AppearanceProvider";
 import ThemeProvider from "./shared/providers/ThemeProvider";
 import SidebarModeProvider from "./shared/providers/SidebarModeProvider";
 
@@ -21,7 +22,7 @@ function App() {
     return () => window.removeEventListener("keydown", guardBackspaceNavigation);
   }, []);
 
-  return <ThemeProvider><SidebarModeProvider><RouterProvider router={router} /></SidebarModeProvider></ThemeProvider>;
+  return <ThemeProvider><AppearanceProvider><SidebarModeProvider><RouterProvider router={router} /></SidebarModeProvider></AppearanceProvider></ThemeProvider>;
 }
 
 export default App;

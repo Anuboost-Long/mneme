@@ -3,6 +3,9 @@ import agentAlwaysAllow from "../assets/agent-always-allow.jpg";
 import agentPermissionsActivity from "../assets/agent-permissions-activity.jpg";
 import assistantAnswer from "../assets/assistant-answer.jpg";
 import chatAskMode from "../assets/chat-ask-mode.jpg";
+import customizeReadingPageTypes from "../assets/customize-reading-page-types.jpg";
+import flashcardsDeck from "../assets/flashcards-deck.jpg";
+import flashcardsStudy from "../assets/flashcards-study.jpg";
 import iconPicker from "../assets/icon-picker.jpg";
 import iconSearch from "../assets/icon-search.jpg";
 import importAiAnswer from "../assets/import-ai-answer.jpg";
@@ -265,6 +268,93 @@ export const guideTopics: GuideTopic[] = [
         ],
         screenshots: [
           { src: searchByMeaning, alt: "⌘P with “why do people hack”, listing the cyber threats chapters By meaning", landscape: true }
+        ]
+      }
+    ]
+  },
+  {
+    id: "tasks",
+    label: "Tasks",
+    title: "Keep track of exercises, discussions and assignments",
+    summary:
+      "Imported activities become tasks on their own; add your own, give them due dates, and tick them off.",
+    where: "Sidebar → Tasks, ⌘P → Tasks, or the Tasks widget on Home",
+    place: { label: "Open Tasks", path: "/tasks" },
+    steps: [
+      {
+        title: "Tasks from your imports",
+        body: [
+          "When you import a page, each ticked activity in the preview becomes a task in that module. An assignment, quiz, discussion or exercise page becomes a task too, due on the earliest date found.",
+          "Importing the same page again doesn’t add the same task twice."
+        ],
+        screenshots: []
+      },
+      {
+        title: "Your own tasks and due dates",
+        body: [
+          "New task asks for a name, a type, a due date and, if you like, a course and module. Pick the date from the calendar: arrow keys move a day or a week, and the month title switches to months and years.",
+          "Tasks are grouped as Overdue, Today, This week, Later and No due date. Tick one to move it to Done; untick it to bring it back. Add the Tasks widget to Home to see the next few there."
+        ],
+        screenshots: []
+      }
+    ]
+  },
+  {
+    id: "flashcards",
+    label: "Flashcards",
+    title: "Study a module with flashcards",
+    summary:
+      "mneme turns your pages into flashcards on its own, then brings each card back just before you’d forget it.",
+    where: "A module → Flashcards, or ⌘P → Study flashcards",
+    place: { label: "Go to your courses", path: "/courses" },
+    steps: [
+      {
+        title: "Cards are made for you",
+        body: [
+          "Pages you import get flashcards in the background, using the agent your AI actions use. Turn this off with Make flashcards for pages you import.",
+          "On a module’s Flashcards, Make flashcards goes through every page that has no cards yet, one page at a time. Add card writes your own, and Edit or Delete fixes any card."
+        ],
+        screenshots: [{ src: flashcardsDeck, alt: "A module’s flashcards being made from its pages", landscape: true }]
+      },
+      {
+        title: "Study what’s due",
+        body: [
+          "Study shows each due card’s front. Press Space to see the answer, then Again, Hard, Good or Easy (keys 1 to 4); each shows when the card comes back.",
+          "Again brings it back in 10 minutes and counts as wrong. Good brings a new card back tomorrow, then in 3 days, then further apart each time."
+        ],
+        screenshots: [{ src: flashcardsStudy, alt: "Studying a card with its answer and the four grades", landscape: true }]
+      }
+    ]
+  },
+  {
+    id: "customize",
+    label: "Make mneme yours",
+    title: "Colours, layout, reading and page types",
+    summary:
+      "Pick an accent colour, how wide things are, the font and size your pages are read in, and your own kinds of page.",
+    where: "Settings → General",
+    place: { label: "Open Settings", path: "/settings/general" },
+    steps: [
+      {
+        title: "Appearance and layout",
+        body: [
+          "Under Appearance, choose light or dark and an accent colour; each accent has a shade for each theme.",
+          "Under Layout, set the sidebar width and how wide pages are, and turn on Compact mode to fit more on screen. These are saved on this device."
+        ],
+        screenshots: []
+      },
+      {
+        title: "Reading and page types",
+        body: [
+          "Under Reading, choose your pages’ font (Avenir Next, System, Serif or Rounded) and text size; the sample shows the result.",
+          "Under Page types, add your own kinds of page, like Lab report. They appear in every Type picker and in grouping and filters. Deleting one turns its pages into Custom."
+        ],
+        screenshots: [
+          {
+            src: customizeReadingPageTypes,
+            alt: "Settings → General with Layout, Reading with a sample, and Page types",
+            landscape: true
+          }
         ]
       }
     ]

@@ -24,6 +24,18 @@ export const pageTypes: PageType[] = [
   PageType.Custom,
 ];
 
+export const pageTypeLabels: Record<PageType, string> = {
+  [PageType.Lesson]: "Lesson",
+  [PageType.Lecture]: "Lecture",
+  [PageType.Exercise]: "Exercise",
+  [PageType.Discussion]: "Discussion",
+  [PageType.Assignment]: "Assignment",
+  [PageType.Notes]: "Notes",
+  [PageType.Reading]: "Reading",
+  [PageType.Revision]: "Revision",
+  [PageType.Custom]: "Custom",
+};
+
 export type Page = {
   id: number;
   module_id: number;

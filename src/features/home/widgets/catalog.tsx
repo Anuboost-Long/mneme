@@ -1,7 +1,6 @@
-import { pageTypeLabels } from "../../courses/components/PageForm";
+import { pageTypeOptions } from "../../courses/lib/page-type/pageTypesState";
 import { CompletionStatus, completionStatusLabels } from "../../courses/lib/completion-status";
 import type { Course } from "../../courses/lib/course/types";
-import { pageTypes } from "../../courses/lib/page/types";
 import { pageSorts } from "../lib/dashboard/types";
 import type { NewWidget, WidgetConfig } from "../lib/widget/types";
 import { BookshelfWidget } from "./Bookshelf";
@@ -23,6 +22,7 @@ import {
 } from "./progress";
 import { RecorderWidget } from "./Recorder";
 import { ContinueWidget, HighlightsWidget, PageListWidget } from "./study";
+import { TasksWidget } from "./tasks";
 import { LinksWidget, NoteWidget } from "./tools";
 import type { WidgetDefinition, WidgetField } from "./types";
 
@@ -32,10 +32,9 @@ const type: WidgetField = {
   key: "type",
   label: "Page type",
   type: "select",
-  options: [
-    { value: 0, label: "Any type" },
-    ...pageTypes.map((value) => ({ value, label: pageTypeLabels[value] }))
-  ]
+  get options() {
+    return [{ value: 0, label: "Any type" }, ...pageTypeOptions()];
+  }
 };
 
 const status: WidgetField = {
@@ -105,6 +104,17 @@ export const widgetCatalog: WidgetDefinition[] = [
     sizes: ["small", "medium", "wide", "large"],
     defaultSize: "medium",
     render: (props) => <RecorderWidget {...props} />
+  },
+  {
+    kind: "tasks",
+    name: "Tasks",
+    description: "Your next tasks, overdue first. Tick one off right here.",
+    category: "Study",
+    sizes: ["small", "medium", "wide", "large"],
+    defaultSize: "medium",
+    fields: [course],
+    title: inCourse("Tasks"),
+    render: (props) => <TasksWidget {...props} />
   },
   {
     kind: "highlights",

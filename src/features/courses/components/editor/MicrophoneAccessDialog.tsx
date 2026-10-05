@@ -179,7 +179,7 @@ function SettingsPreview({ guide, os }: Readonly<{ guide: Guide; os: ChainOs }>)
                 key={label}
                 className={clsx(
                   "flex items-center gap-2 rounded-md px-2 py-1.5",
-                  "bg-surface ring-2 ring-chain-lime"
+                  "bg-surface ring-2 ring-accent"
                 )}
               >
                 {icon && <img src={icon} alt="" className={clsx("size-4 rounded")} />}
@@ -187,7 +187,7 @@ function SettingsPreview({ guide, os }: Readonly<{ guide: Guide; os: ChainOs }>)
                 <span
                   className={clsx(
                     "flex h-4 w-7 shrink-0 items-center justify-end rounded-full p-0.5",
-                    "bg-chain-lime"
+                    "bg-accent"
                   )}
                 >
                   <span className={clsx("size-3 rounded-full bg-chain-navy")} />

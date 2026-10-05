@@ -186,9 +186,9 @@ export default function HomePage({
             onClick={onCreateCourse}
             className={clsx(
               "mt-4 h-9 rounded-md",
-              "bg-chain-lime text-chain-navy",
+              "bg-accent text-chain-navy",
               "px-4 text-sm font-semibold",
-              "hover:bg-chain-lime/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              "hover:bg-accent/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             )}
           >
             Create a course

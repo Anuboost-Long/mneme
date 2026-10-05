@@ -18,7 +18,7 @@ const BACKUP_JSON = "backup.json";
 const FILES_FOLDER = "files/";
 
 export async function createBackup(): Promise<Backup> {
-  const [courses, modules, pages, attachments, recordings, widgets, layouts] = await getBackupRows();
+  const [courses, modules, pages, attachments, recordings, widgets, layouts, pageTypes, flashcards, tasks] = await getBackupRows();
   const references = new Set([
     ...courses.flatMap((course) => [course.cover, course.icon]),
     ...modules.map((module) => module.icon),
@@ -42,6 +42,9 @@ export async function createBackup(): Promise<Backup> {
     recordings,
     widgets,
     layouts,
+    pageTypes,
+    flashcards,
+    tasks,
     files
   };
 }
@@ -197,6 +200,15 @@ export async function restoreBackup(backup: Backup) {
         icon: await files.column(module.icon ?? null)
       });
   }
+  for (const pageType of backup.pageTypes ?? []) {
+    await insertIfMissing("custom_page_type", {
+      id: pageType.id,
+      name: pageType.name,
+      position: pageType.position ?? 0,
+      created_at: pageType.created_at,
+      updated_at: pageType.updated_at
+    });
+  }
   for (const page of backup.pages) {
     const inserted = await insertIfMissing("page", {
       id: page.id,
@@ -217,6 +229,38 @@ export async function restoreBackup(backup: Backup) {
       icon: await files.column(page.icon ?? null),
       cover: await files.column(page.cover ?? null),
       content: page.content ? await restoredContent(page.content, page.id, backup, files) : null
+    });
+  }
+  for (const card of backup.flashcards ?? []) {
+    await insertIfMissing("flashcard", {
+      id: card.id,
+      module_id: card.module_id,
+      page_id: card.page_id,
+      front: card.front,
+      back: card.back,
+      ease: card.ease,
+      interval_days: card.interval_days,
+      repetitions: card.repetitions,
+      due_at: card.due_at,
+      right_count: card.right_count,
+      wrong_count: card.wrong_count,
+      last_reviewed_at: card.last_reviewed_at,
+      created_at: card.created_at,
+      updated_at: card.updated_at
+    });
+  }
+  for (const task of backup.tasks ?? []) {
+    await insertIfMissing("task", {
+      id: task.id,
+      title: task.title,
+      type: task.type,
+      course_id: task.course_id,
+      module_id: task.module_id,
+      page_id: task.page_id,
+      due_on: task.due_on,
+      completed_at: task.completed_at,
+      created_at: task.created_at,
+      updated_at: task.updated_at
     });
   }
   for (const layout of backup.layouts ?? []) {

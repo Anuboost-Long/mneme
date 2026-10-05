@@ -61,7 +61,7 @@ export default function ImportFileSlot({ file, dragging, disabled, onChoose, onC
           aria-hidden="true"
           className={clsx(
             "flex size-11 shrink-0 items-center justify-center rounded-md",
-            "bg-chain-lime text-chain-navy",
+            "bg-accent text-chain-navy",
             "text-xs font-bold tracking-wide"
           )}
         >

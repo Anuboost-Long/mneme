@@ -58,6 +58,12 @@
   },
   "chain": {
     "gpl": true,
+    "window": {
+      "titleBarStyle": "overlay",
+      "titleBarSize": "large",
+      "windowButtons": { "position": { "left": 20, "centerY": 30 } },
+      "backgroundColor": "#ffffff"
+    },
     "permissions": {
       "microphone": "Mneme records lectures and notes you choose to capture.",
       "systemAudio": "Mneme records the sound your computer plays, like an online lecture, when you choose to.",

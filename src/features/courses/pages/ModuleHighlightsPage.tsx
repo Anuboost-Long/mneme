@@ -198,7 +198,7 @@ export default function ModuleHighlightsPage({
                           "rounded-md border-l-4 py-3 pr-3 pl-4",
                           highlight.orphaned_at
                             ? "border-ink/15 bg-ink/5"
-                            : "border-chain-lime bg-chain-lime/10"
+                            : "border-accent bg-accent/10"
                         )}
                       >
                         <div className={clsx("flex items-start justify-between gap-3")}>

@@ -15,7 +15,7 @@ export default function FileDropOverlay({ visible }: Readonly<{ visible: boolean
     className={clsx("file-drop-overlay pointer-events-none absolute inset-0 z-20", "flex flex-col items-center justify-center gap-5 px-6 text-center", "bg-surface/85 backdrop-blur-sm")}>
     <div aria-hidden="true" className={clsx("relative flex h-20 w-40 items-center justify-center")}>
       {tiles.map((tile) => <span key={tile.label}
-        className={clsx("file-drop-tile absolute flex size-16 items-center justify-center rounded-xl", "border border-ink/15 bg-surface text-muted", "last:border-transparent last:bg-chain-lime last:text-chain-navy")}>
+        className={clsx("file-drop-tile absolute flex size-16 items-center justify-center rounded-xl", "border border-ink/15 bg-surface text-muted", "last:border-transparent last:bg-accent last:text-chain-navy")}>
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={clsx("size-7")}><path d={tile.path} /></svg>
       </span>)}
     </div>

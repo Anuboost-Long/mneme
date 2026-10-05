@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import clsx from "clsx";
-import { PageType, pageTypes, type Page } from "../lib/page/types";
+import { PageType, type Page } from "../lib/page/types";
+import { pageTypeOptions } from "../lib/page-type/pageTypesState";
 import { createPage, updatePage } from "../lib/page/actions";
 import { useResetOnOpen } from "../../../shared/lib/dialogState";
 import Dialog from "../../../shared/ui/Dialog";
@@ -11,17 +12,7 @@ import { CompletionStatus, completionStatuses, completionStatusLabels } from "..
 import CoverPicker, { saveWithCover, type CoverChoice } from "./CoverPicker";
 import IconPicker from "./IconPicker";
 
-export const pageTypeLabels: Record<PageType, string> = {
-  [PageType.Lesson]: "Lesson",
-  [PageType.Lecture]: "Lecture",
-  [PageType.Exercise]: "Exercise",
-  [PageType.Discussion]: "Discussion",
-  [PageType.Assignment]: "Assignment",
-  [PageType.Notes]: "Notes",
-  [PageType.Reading]: "Reading",
-  [PageType.Revision]: "Revision",
-  [PageType.Custom]: "Custom",
-};
+export { pageTypeLabels } from "../lib/page/types";
 
 // `courseColor` tints the icon choices, as the page's icon is shown.
 export default function PageForm({ open, moduleId, courseColor, page, onSave, onClose }: Readonly<{
@@ -75,7 +66,7 @@ export default function PageForm({ open, moduleId, courseColor, page, onSave, on
       <form onSubmit={(event) => save(event, complete)}>
         <fieldset disabled={busy || uploading} className={clsx("space-y-5")}>
           <TextInput label="Page title" data-autofocus required name="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Introduction" />
-          <Select label="Type" value={type} onChange={setType} options={pageTypes.map((value) => ({ value, label: pageTypeLabels[value] }))} />
+          <Select label="Type" value={type} onChange={setType} options={pageTypeOptions()} />
           <Select label="Status" value={status} onChange={setStatus} options={completionStatuses.map((value) => ({ value, label: completionStatusLabels[value] }))} />
           <IconPicker value={icon} onChange={setIcon} color={courseColor} allowNone onBusyChange={setUploading} />
           <CoverPicker value={cover} onChange={setCover} />

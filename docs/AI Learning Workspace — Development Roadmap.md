@@ -1076,7 +1076,6 @@ Replace
 Append
 Create Section
 Create Page
-Create Child Page
 ```
 
 ## Development Steps
@@ -1087,7 +1086,6 @@ Create Child Page
 - [x] Generate heading + content.
 - [x] Generate editor blocks.
 - [x] Create page from AI result.
-- [ ] Create child page. (Needs a page hierarchy first; pages are flat within a module. See features/24-ai-output-to-editor.md.)
 - [x] Add undo support.
 
 ---
@@ -1176,7 +1174,7 @@ Agent:
 ```text
 Read Module 3
       ↓
-Read child pages
+Read its pages
       ↓
 Read lecture transcript
       ↓
@@ -1439,12 +1437,12 @@ Cmd + S      Manual Save
 
 - [x] Light mode. (Settings → General → Appearance.)
 - [x] Dark mode.
-- [ ] Custom accent colour.
-- [ ] Sidebar width.
-- [ ] Editor width.
-- [ ] Font selection.
-- [ ] Font size.
-- [ ] Compact mode.
+- [x] Custom accent colour. (Six accents, each with a light and a dark shade.)
+- [x] Sidebar width. (Narrow, Standard, Wide.)
+- [x] Editor width. (Page width: Full, Wide, Readable.)
+- [x] Font selection. (Page font: Avenir Next, System, Serif, Rounded.)
+- [x] Font size. (Text size: Small to Extra large; headings scale too.)
+- [x] Compact mode. (Tighter spacing and text everywhere.)
 
 ## Course Customization
 
@@ -1452,7 +1450,7 @@ Cmd + S      Manual Save
 - [x] Covers. (Course and page covers.)
 - [x] Colours. (Course colours.)
 - [x] Custom module icons. (Icons, emoji or your own picture.)
-- [ ] Custom page types.
+- [x] Custom page types. (Settings → General → Page types; in every picker, grouping and backup.)
 
 ---
 
@@ -1473,6 +1471,8 @@ Recent Notes
 Recent Recordings
 AI Actions
 ```
+
+> **Done — 5 October 2026.** See [Customization](features/33-customization.md).
 
 ## Development Steps
 
@@ -1503,17 +1503,17 @@ Personal Task
 
 ## Development Steps
 
-- [ ] Create Task table.
-- [ ] Add task title.
-- [ ] Add type.
-- [ ] Add course.
-- [ ] Add module.
-- [ ] Add due date.
-- [ ] Add completion state.
-- [ ] Create task manually.
-- [ ] Generate task from imported LMS item.
-- [ ] Mark complete.
-- [ ] Show tasks on dashboard.
+- [x] Create Task table.
+- [x] Add task title.
+- [x] Add type.
+- [x] Add course.
+- [x] Add module.
+- [x] Add due date.
+- [x] Add completion state.
+- [x] Create task manually.
+- [x] Generate task from imported LMS item.
+- [x] Mark complete.
+- [x] Show tasks on dashboard.
 
 ---
 
@@ -1552,18 +1552,18 @@ AI could automatically create:
 
 ## Development Steps
 
-- [ ] Create Flashcard model.
-- [ ] Create front/back card.
-- [ ] Create flashcards manually.
-- [ ] Generate flashcards with AI.
-- [ ] Generate cards from current page.
-- [ ] Generate cards from entire module.
-- [ ] Review flashcards.
-- [ ] Track correct/incorrect answers.
+- [x] Create Flashcard model.
+- [x] Create front/back card.
+- [x] Create flashcards manually.
+- [x] Generate flashcards with AI.
+- [x] Generate cards from current page (automatically for imported pages).
+- [x] Generate cards from entire module.
+- [x] Review flashcards.
+- [x] Track correct/incorrect answers.
 
 Later:
 
-- [ ] Spaced repetition.
+- [x] Spaced repetition (SM-2).
 
 ---
 

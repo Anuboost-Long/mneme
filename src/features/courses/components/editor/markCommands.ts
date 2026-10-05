@@ -20,5 +20,5 @@ export const markCommands: MarkCommand[] = [
   // own generated toggleHighlight — that one's TS signature is hardcoded to
   // { color: string } from @tiptap/extension-highlight's own module
   // augmentation and doesn't pick up the custom `ref` attribute HighlightMark.ts adds.
-  { id: "highlight", label: "H", hint: "Highlight", className: "border-b-2 border-chain-lime", isActive: (editor) => editor.isActive("highlight"), run: (editor) => editor.chain().focus().toggleMark("highlight", { ref: crypto.randomUUID() }).run() },
+  { id: "highlight", label: "H", hint: "Highlight", className: "border-b-2 border-accent", isActive: (editor) => editor.isActive("highlight"), run: (editor) => editor.chain().focus().toggleMark("highlight", { ref: crypto.randomUUID() }).run() },
 ];

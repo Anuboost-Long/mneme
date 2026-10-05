@@ -6,7 +6,7 @@ import { Caption } from "../../../shared/ui/Typography";
 import { completionStatusLabels } from "../lib/completion-status";
 import type { Page } from "../lib/page/types";
 import { getPages } from "../lib/page/actions";
-import { pageTypeLabels } from "./PageForm";
+import { pageTypeLabel } from "../lib/page-type/pageTypesState";
 import { statusMarkerStyles } from "./StatusPicker";
 
 // A module's pages, listed under its row on the course page while expanded.
@@ -45,7 +45,7 @@ export default function ModulePages({ id, courseId, moduleId }: Readonly<{ id: s
               {page.title}
               <span className={clsx("sr-only")}>, {completionStatusLabels[page.status]}</span>
             </span>
-            <Caption as="span" tone="muted" className={clsx("shrink-0")}>{pageTypeLabels[page.type]}</Caption>
+            <Caption as="span" tone="muted" className={clsx("shrink-0")}>{pageTypeLabel(page.type)}</Caption>
           </Link>
         </li>
       ))}

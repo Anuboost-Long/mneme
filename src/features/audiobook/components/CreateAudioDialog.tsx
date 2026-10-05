@@ -118,7 +118,7 @@ export default function CreateAudioDialog({
               <progress
                 aria-label="Creating audio"
                 value={progress}
-                className={clsx("h-1.5 w-full accent-chain-lime")}
+                className={clsx("h-1.5 w-full accent-accent")}
               />
               <Caption tone="muted" className={clsx("mt-2 tabular-nums")}>
                 Creating audio with {voice?.name}… {Math.round(progress * 100)}%

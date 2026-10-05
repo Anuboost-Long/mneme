@@ -15,9 +15,12 @@ import { getCourses } from "../features/courses/lib/course/actions";
 import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
 import { storeInlineIcons } from "../features/courses/lib/icon/actions";
 import { storeInlinePageImages } from "../features/courses/lib/page/actions";
+import { loadCustomPageTypes, useCustomPageTypes } from "../features/courses/lib/page-type/pageTypesState";
+import { deleteOrphanCards } from "../features/flashcards/lib/card/actions";
 import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "../features/recently-deleted/lib/deleted-item/actions";
 import { updateSearchIndex } from "../features/search/lib/searchIndex";
+import { deleteOrphanTasks } from "../features/tasks/lib/task/actions";
 import { initDb } from "../shared/lib/db";
 import { useShortcut, useShortcuts } from "../shared/lib/shortcuts/shortcutsState";
 import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
@@ -91,6 +94,7 @@ export default function RootLayout() {
     return () => animation?.cancel();
   }, [pathname]);
 
+  useCustomPageTypes();
   useEffect(unloadVoiceWhenIdle, []);
 
   useEffect(() => {
@@ -105,10 +109,13 @@ export default function RootLayout() {
     initDb()
       .then(cleanUpConversations)
       .then(purgeExpiredItems)
+      .then(deleteOrphanCards)
+      .then(deleteOrphanTasks)
       .then(() => {
         void storeInlinePageImages().catch(() => undefined);
         void storeInlineIcons().catch(() => undefined);
         void loadShortcuts().catch(() => undefined);
+        void loadCustomPageTypes().catch(() => undefined);
         return getCourses();
       })
       .then((loaded) => {

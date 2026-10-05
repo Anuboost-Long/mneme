@@ -21,6 +21,7 @@ import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentS
 import { useAgentServer } from "../../agent-server/lib/useAgentServer";
 import ActionSettings from "../../ai-actions/components/ActionSettings";
 import ProfileSettings from "../../ai-profiles/components/ProfileSettings";
+import PageTypeSettings from "../../courses/components/PageTypeSettings";
 import SchoolSiteSettings from "../../courses/components/SchoolSiteSettings";
 import {
   createBackup,
@@ -30,6 +31,9 @@ import {
 } from "../../courses/lib/backup/actions";
 import ExtensionSettings from "../../extensions/components/ExtensionSettings";
 import RecordingSoundSettings from "../../recordings/components/RecordingSoundSettings";
+import AccentSetting from "../components/AccentSetting";
+import LayoutSettings from "../components/LayoutSettings";
+import ReadingSettings from "../components/ReadingSettings";
 import ShortcutSettings from "../components/ShortcutSettings";
 
 export const settingsSections = [
@@ -269,6 +273,7 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                             ))}
                           </div>
                         </fieldset>
+                        <AccentSetting />
                         <Caption tone="muted" className={clsx("mt-4")}>
                           Your choice is saved on this device.
                         </Caption>
@@ -391,6 +396,9 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                         </div>
                       </div>
                     </section>
+                    <LayoutSettings />
+                    <ReadingSettings />
+                    <PageTypeSettings />
                     <section
                       aria-labelledby="recordings-title"
                       className={clsx(

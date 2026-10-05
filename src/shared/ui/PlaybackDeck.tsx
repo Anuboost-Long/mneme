@@ -33,7 +33,7 @@ export default function PlaybackDeck({
             onChange={(event) => playback.seek(Number(event.target.value))}
             aria-label="Playback position"
             aria-valuetext={formatDuration(positionMs)}
-            className={clsx("h-9 min-w-0 flex-1 cursor-pointer accent-chain-lime")}
+            className={clsx("h-9 min-w-0 flex-1 cursor-pointer accent-accent")}
           />
         }
         controls={controls}
@@ -88,7 +88,7 @@ export function PlaybackKeys({ playback }: Readonly<{ playback: Playback }>) {
           onChange={(event) => playback.setVolume(Number(event.target.value))}
           aria-label="Volume"
           aria-valuetext={`${Math.round(playback.volume * 100)}%`}
-          className={clsx("w-20 cursor-pointer accent-chain-lime max-sm:hidden")}
+          className={clsx("w-20 cursor-pointer accent-accent max-sm:hidden")}
         />
       </span>
     </>

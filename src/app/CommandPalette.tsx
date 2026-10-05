@@ -62,6 +62,7 @@ const places = [
   { label: "Home", path: "/" },
   { label: "Courses", path: "/courses" },
   { label: "Agent chat", path: "/agent-chat" },
+  { label: "Tasks", path: "/tasks" },
   { label: "Guide", path: "/guide" },
   { label: "Settings", path: "/settings" }
 ];

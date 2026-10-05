@@ -71,7 +71,7 @@ export default function Waveform({ values, live }: Readonly<{ values: number[]; 
   return (
     <canvas
       ref={canvas}
-      className={clsx("h-9 min-w-0 flex-1", live ? "text-chain-lime" : "text-chain-cream/50")}
+      className={clsx("h-9 min-w-0 flex-1", live ? "text-accent" : "text-chain-cream/50")}
     />
   );
 }

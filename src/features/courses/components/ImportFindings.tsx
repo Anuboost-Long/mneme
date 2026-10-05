@@ -74,7 +74,7 @@ export default function ImportFindings({
   if (dueDates.length + activities.length + files.length === 0) return null;
   return (
     <div className={clsx("space-y-4")}>
-      <Caption tone="muted">Ticked items are listed at the top of the page.</Caption>
+      <Caption tone="muted">Ticked items are listed at the top of the page, and ticked activities are added to Tasks.</Caption>
       <FindingGroup legend="Due dates" items={dueDates} keyOf={({ text }) => text} onChange={(items) => onChange({ ...findings, dueDates: items })}>
         {({ text, date }) => (
           <>

@@ -7,6 +7,7 @@ type FieldProps = {
   hint?: string;
   error?: string;
   fieldClassName?: string;
+  showRequirement?: boolean;
 };
 
 export type TextInputProps = FieldProps & ComponentPropsWithRef<"input">;
@@ -29,7 +30,7 @@ function describedBy(id: string, hint?: string, error?: string, external?: strin
   return [external, hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
 }
 
-function Field({ id, label, hint, error, required, fieldClassName, children }: Readonly<FieldProps & {
+function Field({ id, label, hint, error, required, fieldClassName, showRequirement = true, children }: Readonly<FieldProps & {
   id: string;
   required?: boolean;
   children: ReactNode;
@@ -37,8 +38,8 @@ function Field({ id, label, hint, error, required, fieldClassName, children }: R
   return (
     <div className={clsx("min-w-0 space-y-2", fieldClassName)}>
       <label htmlFor={id} className={clsx("block")}>
-        <Typography as="span" variant="label">{label}</Typography>{" "}
-        <Typography as="span" tone="muted">({required ? "required" : "optional"})</Typography>
+        <Typography as="span" variant="label">{label}</Typography>
+        {showRequirement && <>{" "}<Typography as="span" tone="muted">({required ? "required" : "optional"})</Typography></>}
       </label>
       {children}
       {hint && <Caption id={`${id}-hint`} tone="muted">{hint}</Caption>}
@@ -48,13 +49,13 @@ function Field({ id, label, hint, error, required, fieldClassName, children }: R
 }
 
 export function TextInput({
-  label, hint, error, fieldClassName: wrapperClassName,
+  label, hint, error, fieldClassName: wrapperClassName, showRequirement,
   id, className, type = "text", ...props
 }: Readonly<TextInputProps>) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   return (
-    <Field id={inputId} label={label} hint={hint} error={error} required={props.required} fieldClassName={wrapperClassName}>
+    <Field id={inputId} label={label} hint={hint} error={error} required={props.required} fieldClassName={wrapperClassName} showRequirement={showRequirement}>
       <input
         {...props}
         id={inputId}
@@ -68,13 +69,13 @@ export function TextInput({
 }
 
 export function TextArea({
-  label, hint, error, fieldClassName: wrapperClassName,
+  label, hint, error, fieldClassName: wrapperClassName, showRequirement,
   id, className, rows = 3, ...props
 }: Readonly<TextAreaProps>) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   return (
-    <Field id={inputId} label={label} hint={hint} error={error} required={props.required} fieldClassName={wrapperClassName}>
+    <Field id={inputId} label={label} hint={hint} error={error} required={props.required} fieldClassName={wrapperClassName} showRequirement={showRequirement}>
       <textarea
         {...props}
         id={inputId}

@@ -205,7 +205,7 @@ function CourseRow({
               aria-label={`${course.name} progress`}
               className={clsx(
                 "mt-1.5 block h-1 w-full appearance-none overflow-hidden rounded-full bg-ink/10",
-                "[&::-webkit-progress-bar]:bg-ink/10 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-chain-lime [&::-moz-progress-bar]:bg-chain-lime"
+                "[&::-webkit-progress-bar]:bg-ink/10 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-accent [&::-moz-progress-bar]:bg-accent"
               )}
             />
           </div>

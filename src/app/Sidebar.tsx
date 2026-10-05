@@ -85,7 +85,7 @@ function SidebarLinks({
         className={({ isActive }) =>
           clsx(
             "mb-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
-            isActive ? "bg-ink/7" : "hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 text-accent-ink" : "hover:bg-ink/5"
           )
         }
       >
@@ -110,7 +110,7 @@ function SidebarLinks({
         className={({ isActive }) =>
           clsx(
             "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
-            isActive ? "bg-ink/7" : "hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 text-accent-ink" : "hover:bg-ink/5"
           )
         }
       >
@@ -128,11 +128,35 @@ function SidebarLinks({
         All courses
       </NavLink>
       <NavLink
+        to="/tasks"
+        className={({ isActive }) =>
+          clsx(
+            "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
+            isActive ? "bg-accent-ink/10 text-accent-ink" : "hover:bg-ink/5"
+          )
+        }
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m4 6 1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9" />
+        </svg>
+        Tasks
+      </NavLink>
+      <NavLink
         to="/agent-chat"
         className={({ isActive }) =>
           clsx(
             "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
-            isActive ? "bg-ink/7" : "hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 text-accent-ink" : "hover:bg-ink/5"
           )
         }
       >
@@ -156,7 +180,7 @@ function SidebarLinks({
         className={({ isActive }) =>
           clsx(
             "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
-            isActive ? "bg-ink/7" : "hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 text-accent-ink" : "hover:bg-ink/5"
           )
         }
       >
@@ -215,7 +239,7 @@ function SidebarLinks({
         className={({ isActive }) =>
           clsx(
             "mt-4 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm",
-            isActive ? "bg-ink/7 font-medium" : "text-muted hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 font-medium text-accent-ink" : "text-muted hover:bg-ink/5"
           )
         }
       >
@@ -239,7 +263,7 @@ function SidebarLinks({
         className={({ isActive }) =>
           clsx(
             "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm",
-            isActive ? "bg-ink/7 font-medium" : "text-muted hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 font-medium text-accent-ink" : "text-muted hover:bg-ink/5"
           )
         }
       >
@@ -263,7 +287,7 @@ function SidebarLinks({
         className={({ isActive }) =>
           clsx(
             "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm",
-            isActive ? "bg-ink/7 font-medium" : "text-muted hover:bg-ink/5"
+            isActive ? "bg-accent-ink/10 font-medium text-accent-ink" : "text-muted hover:bg-ink/5"
           )
         }
       >
@@ -328,13 +352,13 @@ export default function Sidebar({
         data-expanded={expanded}
         data-instant={instant}
         className={clsx(
-          "sidebar-push grid max-h-[70vh] shrink-0 bg-sidebar sm:h-[calc(100vh-4rem)] sm:max-h-none"
+          "sidebar-push grid max-h-[70vh] shrink-0 bg-sidebar sm:h-[calc(100vh-3.75rem)] sm:max-h-none"
         )}
       >
         <div className={clsx("flex min-h-0")}>
           <div
             className={clsx(
-              "sidebar-push-content relative z-10 flex min-h-0 min-w-0 flex-1 flex-col sm:w-60 sm:shrink-0 sm:flex-none",
+              "sidebar-push-content relative z-10 flex min-h-0 min-w-0 flex-1 flex-col sm:w-(--sidebar-width) sm:shrink-0 sm:flex-none",
               "bg-sidebar border-b border-ink/10 sm:border-r sm:border-b-0",
               "p-4"
             )}
@@ -355,7 +379,7 @@ export default function Sidebar({
       data-expanded={expanded}
       data-instant={instant}
       className={clsx(
-        "sidebar-overlay fixed top-16 bottom-0 left-0 z-30 flex w-60 flex-col overflow-hidden",
+        "sidebar-overlay fixed top-16 bottom-0 left-0 z-30 flex w-(--sidebar-width) flex-col overflow-hidden",
         "bg-sidebar shadow-lg",
         "border-r border-ink/10",
         "p-4"

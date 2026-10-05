@@ -34,7 +34,7 @@ export function StreakWidget({ widget }: Readonly<WidgetProps>) {
                   title={`${date.toLocaleDateString(undefined, { weekday: "long" })}: ${plural(day.opened, "page")} opened`}
                   className={clsx(
                     "size-3 rounded-full",
-                    day.opened > 0 ? "bg-chain-lime" : "bg-ink/10"
+                    day.opened > 0 ? "bg-accent" : "bg-ink/10"
                   )}
                 />
                 <Caption as="span" tone="muted" aria-hidden="true">

@@ -19,8 +19,10 @@ import {
   storePageImages,
   type ParsedImport
 } from "../lib/lms-import";
+import { makeFlashcardsForImport } from "../../flashcards/lib/autoFlashcards";
+import { addImportedTasks, pageTaskType } from "../../tasks/lib/fromImport";
 import { createPage } from "../lib/page/actions";
-import { pageTypes, type Page } from "../lib/page/types";
+import { type Page } from "../lib/page/types";
 import {
   closeSchoolBrowser,
   downloadSchoolImage,
@@ -37,7 +39,7 @@ import ImportFileSlot from "./ImportFileSlot";
 import ImportFindings, { pickAll, pickedValues, type Findings } from "./ImportFindings";
 import KindGuess, { type Guess } from "./KindGuess";
 import ImportProgress from "./ImportProgress";
-import { pageTypeLabels } from "./PageForm";
+import { pageTypeOptions } from "../lib/page-type/pageTypesState";
 
 type Source = "url" | "file";
 
@@ -73,12 +75,14 @@ function isHttpUrl(value: string) {
 
 export default function LmsImportForm({
   open,
+  courseId,
   moduleId,
   initialSource = "url",
   onImported,
   onClose
 }: Readonly<{
   open: boolean;
+  courseId: number;
   moduleId: number;
   initialSource?: Source;
   onImported: (pages: Page[]) => void;
@@ -287,16 +291,26 @@ export default function LmsImportForm({
             )
           : fetched.html;
       setSaved(undefined);
-      const summary = summaryHtml({
+      const picked = {
         dueDates: pickedValues(findings.dueDates),
         activities: pickedValues(findings.activities),
         files: pickedValues(findings.files)
-      });
+      };
+      const summary = summaryHtml(picked);
       const page = await createPage(moduleId, {
         title: fetched.title,
         type: fetched.type,
         content: summary + html
       });
+      await addImportedTasks({
+        page,
+        pageTask: pageTaskType(fetched.type, guess?.kind),
+        activities: picked.activities,
+        dueDates: picked.dueDates,
+        courseId,
+        moduleId
+      }).catch(() => 0);
+      void makeFlashcardsForImport(moduleId, { id: page.id, title: page.title, content: html }).catch(() => undefined);
       if (fromSchool) {
         onImported([page]);
         setImportedTitles([...importedTitles, page.title]);
@@ -494,7 +508,7 @@ export default function LmsImportForm({
                 label="Type"
                 value={fetched.type}
                 onChange={(value) => setFetched({ ...fetched, type: value })}
-                options={pageTypes.map((value) => ({ value, label: pageTypeLabels[value] }))}
+                options={pageTypeOptions()}
               />
               {guess && <KindGuess guess={guess} asking={asking} onAskAi={() => void askAi()} />}
               <ImportFindings findings={findings} onChange={setFindings} />

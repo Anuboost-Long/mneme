@@ -5,9 +5,9 @@ import { CompletionStatus, completionStatuses, completionStatusLabels } from "..
 
 export const statusMarkerStyles: Record<CompletionStatus, string> = {
   [CompletionStatus.NotStarted]: "border border-ink/20 bg-surface text-muted",
-  [CompletionStatus.InProgress]: "border-2 border-chain-lime bg-surface text-ink",
-  [CompletionStatus.Completed]: "bg-chain-lime text-chain-navy",
-  [CompletionStatus.RevisionNeeded]: "border-2 border-dashed border-chain-lime bg-surface text-ink",
+  [CompletionStatus.InProgress]: "border-2 border-accent bg-surface text-ink",
+  [CompletionStatus.Completed]: "bg-accent text-chain-navy",
+  [CompletionStatus.RevisionNeeded]: "border-2 border-dashed border-accent bg-surface text-ink",
 };
 
 export default function StatusPicker({ status, itemLabel, onChange, triggerClassName, children }: Readonly<{

@@ -8,8 +8,8 @@ import { BodyText, Caption } from "../../../shared/ui/Typography";
 import { CompletionStatus, completionStatusLabels } from "../lib/completion-status";
 import { pageContentPreview } from "../lib/page/types";
 import ItemMenu from "./ItemMenu";
-import { pageMeta, readingTime, typeGlyphs, type PageItemProps } from "./pageDisplay";
-import { pageTypeLabels } from "./PageForm";
+import { pageTypeLabel } from "../lib/page-type/pageTypesState";
+import { pageMeta, readingTime, typeGlyph, type PageItemProps } from "./pageDisplay";
 
 // A page in the gallery view: its cover (or icon) above its title.
 // `handle` is the drag grip, when the gallery can be reordered.
@@ -42,7 +42,7 @@ export default function PageCard({ ref, page, courseColor, to, handle, dragging 
               <CourseIcon icon={page.icon} color={courseColor} large />
             ) : (
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d={typeGlyphs[page.type]} />
+                <path d={typeGlyph(page.type)} />
               </svg>
             )}
           </div>
@@ -52,7 +52,7 @@ export default function PageCard({ ref, page, courseColor, to, handle, dragging 
           <label
             className={clsx(
               "absolute top-2 left-2 z-10 flex size-8 cursor-pointer items-center justify-center rounded-md",
-              completed ? "bg-chain-lime text-chain-navy" : "bg-surface/90 text-muted hover:text-ink",
+              completed ? "bg-accent text-chain-navy" : "bg-surface/90 text-muted hover:text-ink",
               "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink"
             )}
           >
@@ -66,7 +66,7 @@ export default function PageCard({ ref, page, courseColor, to, handle, dragging 
       <div className={clsx("flex min-h-0 flex-1 flex-col gap-1 p-3")}>
         {selectable ? (
           <label className={clsx("flex cursor-pointer items-start gap-2", "after:absolute after:inset-0")}>
-            <input type="checkbox" checked={selected} onChange={onToggleSelect} className={clsx("mt-1 size-4 shrink-0 accent-chain-lime")} />
+            <input type="checkbox" checked={selected} onChange={onToggleSelect} className={clsx("mt-1 size-4 shrink-0 accent-accent")} />
             <span className={clsx("line-clamp-2 text-sm font-medium")}>{page.title}</span>
           </label>
         ) : (
@@ -78,7 +78,7 @@ export default function PageCard({ ref, page, courseColor, to, handle, dragging 
             )}
           >
             {page.title}
-            <span className={clsx("sr-only")}>, {pageTypeLabels[page.type]}, {completionStatusLabels[page.status]}</span>
+            <span className={clsx("sr-only")}>, {pageTypeLabel(page.type)}, {completionStatusLabels[page.status]}</span>
           </Link>
         )}
         {preview && <BodyText tone="muted" className={clsx("line-clamp-2")}>{preview}</BodyText>}

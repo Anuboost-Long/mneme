@@ -60,7 +60,7 @@ export default function ListToolbar<K extends string, G extends string = DateGro
         <button type="button" aria-expanded={optionsOpen} aria-controls={optionsId} onClick={() => setOptionsOpen(!optionsOpen)} className={clsx("flex h-9 shrink-0 items-center gap-2 rounded-md border border-ink/20 px-3 text-sm text-ink", optionsOpen ? "bg-ink/7" : "hover:bg-ink/5", "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink")}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
           Sort &amp; filter
-          {hasActiveFilter && <span className={clsx("size-1.5 rounded-full bg-chain-lime")}><span className={clsx("sr-only")}>(filter on)</span></span>}
+          {hasActiveFilter && <span className={clsx("size-1.5 rounded-full bg-accent")}><span className={clsx("sr-only")}>(filter on)</span></span>}
         </button>
       </div>
       {optionsOpen && <div id={optionsId} className={clsx("mt-3 grid grid-cols-2 gap-3 @min-xl:grid-cols-3")}>

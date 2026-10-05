@@ -42,9 +42,9 @@ export function ContinueWidget({ widget }: Readonly<WidgetProps>) {
         to={pageLink(page)}
         className={clsx(
           "inline-flex h-8 shrink-0 items-center justify-center gap-2 rounded-md",
-          "bg-chain-lime text-chain-navy",
+          "bg-accent text-chain-navy",
           "px-3 text-sm font-semibold",
-          "hover:bg-chain-lime/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          "hover:bg-accent/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         )}
       >
         Continue
@@ -171,7 +171,7 @@ export function HighlightsWidget({ widget }: Readonly<WidgetProps>) {
             )}
           >
             <p className={clsx("line-clamp-2 text-sm")}>
-              <mark className={clsx("rounded-sm bg-chain-lime/45 text-inherit")}>
+              <mark className={clsx("rounded-sm bg-accent/45 text-inherit")}>
                 {plainText(highlight.html)}
               </mark>
             </p>

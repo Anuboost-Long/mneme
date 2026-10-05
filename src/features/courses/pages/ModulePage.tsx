@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { addCommandSource } from "../../../shared/lib/commandSources";
 import { DATE_GROUP_VALUES, groupByDate, groupItems } from "../../../shared/lib/dateGroups";
@@ -24,7 +24,8 @@ import ModuleForm from "../components/ModuleForm";
 import MovePageDialog from "../components/MovePageDialog";
 import PageCard from "../components/PageCard";
 import type { PageItemProps } from "../components/pageDisplay";
-import PageForm, { pageTypeLabels } from "../components/PageForm";
+import PageForm from "../components/PageForm";
+import { pageTypeLabel, pageTypeOptions } from "../lib/page-type/pageTypesState";
 import ProgressSummary from "../components/ProgressSummary";
 import ReadingRow from "../components/ReadingRow";
 import { StatusChip } from "../components/StatusPicker";
@@ -34,7 +35,7 @@ import type { Course } from "../lib/course/types";
 import { updateModule } from "../lib/module/actions";
 import type { Module } from "../lib/module/types";
 import { duplicatePage, setPageDone } from "../lib/page/actions";
-import { pageTypes, type Page } from "../lib/page/types";
+import { type Page } from "../lib/page/types";
 
 const PAGE_VIEWS = ["list", "gallery"] as const;
 
@@ -63,7 +64,7 @@ const PAGE_SORTS: SortOption<Page, PageSortKey>[] = [
   {
     value: "type",
     label: "Type",
-    compare: (a, b) => pageTypeLabels[a.type].localeCompare(pageTypeLabels[b.type])
+    compare: (a, b) => pageTypeLabel(a.type).localeCompare(pageTypeLabel(b.type))
   }
 ];
 
@@ -102,6 +103,7 @@ export default function ModulePage({
   const [doneError, setDoneError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const reader = useReadAloud();
+  const navigate = useNavigate();
   const pageTarget = useLastValue(typeof pageDialog === "object" ? pageDialog?.page : null);
   const bulkDeleteIds = useLastValue(selectedPageIds);
 
@@ -127,6 +129,18 @@ export default function ModulePage({
           label: "Import PDF or document",
           detail: module.name,
           run: () => setPageDialog("import-file")
+        },
+        {
+          id: "module-flashcards",
+          label: "Flashcards",
+          detail: module.name,
+          run: () => navigate(`/courses/${module.course_id}/modules/${module.id}/flashcards`)
+        },
+        {
+          id: "module-study-flashcards",
+          label: "Study flashcards",
+          detail: module.name,
+          run: () => navigate(`/courses/${module.course_id}/modules/${module.id}/flashcards/review`)
         }
       ]
     });
@@ -152,8 +166,8 @@ export default function ModulePage({
         ? groupItems(
             visiblePages,
             (page) => page.type,
-            pageTypes,
-            (type) => pageTypeLabels[type]
+            pageTypeOptions().map(({ value }) => value),
+            (type) => pageTypeLabel(type)
           )
         : groupByDate(
             visiblePages,
@@ -361,6 +375,15 @@ export default function ModulePage({
           >
             Highlights
           </Link>
+          <Link
+            to={`/courses/${course.id}/modules/${module.id}/flashcards`}
+            className={clsx(
+              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+              "hover:bg-ink/5"
+            )}
+          >
+            Flashcards
+          </Link>
           <button
             type="button"
             onClick={() => setDialog("edit")}
@@ -545,7 +568,7 @@ export default function ModulePage({
               onFilterChange={setTypeFilter}
               filterOptions={[
                 { value: "all", label: "All types" },
-                ...pageTypes.map((type) => ({ value: String(type), label: pageTypeLabels[type] }))
+                ...pageTypeOptions().map(({ value, label }) => ({ value: String(value), label }))
               ]}
               sortValue={sortValue}
               onSortChange={setSortValue}
@@ -654,6 +677,7 @@ export default function ModulePage({
       />
       <LmsImportForm
         open={pageDialog === "import" || pageDialog === "import-file"}
+        courseId={module.course_id}
         moduleId={module.id}
         initialSource={pageDialog === "import-file" ? "file" : "url"}
         onClose={() => setPageDialog(null)}
