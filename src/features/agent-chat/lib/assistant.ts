@@ -1,5 +1,8 @@
+import { buildChatContext } from "../../ai-context/lib/builder";
 import { getActionConnection } from "../../ai-actions/lib/action/actions";
+import { getActiveProfile } from "../../ai-profiles/lib/profile/actions";
 import { createConversation } from "./conversation/actions";
+import { hasTools } from "./runTurn";
 import { startTurn } from "./turns";
 
 export type AssistantEvent = { conversationId: number | null; error?: string };
@@ -28,10 +31,7 @@ export async function askAssistant(question: string, pageId: number | null) {
     return;
   }
   const conversation = await createConversation(connection.id);
-  const context =
-    pageId === null
-      ? undefined
-      : `The user has mneme page id ${pageId} open. When they say "this page", they mean it: read it with get_page.`;
   notify({ conversationId: conversation.id });
-  void startTurn(conversation.id, question, [], context);
+  const context = await buildChatContext(pageId, "", hasTools(connection), await getActiveProfile()).catch(() => null);
+  void startTurn(conversation.id, question, [], context?.text || undefined);
 }

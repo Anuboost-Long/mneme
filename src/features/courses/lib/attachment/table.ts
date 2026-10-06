@@ -21,6 +21,10 @@ export async function getAttachment(id: number) {
   return (await attachmentTable().find(id)) ?? null;
 }
 
+export function getPageAttachments(pageId: number) {
+  return attachmentTable().where({ page_id: pageId }).orderBy("created_at", "id").all();
+}
+
 export function getAttachments(filter: SqlFragment) {
   return attachmentTable().where(filter).all();
 }

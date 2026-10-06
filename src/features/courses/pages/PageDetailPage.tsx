@@ -15,6 +15,7 @@ import { useReadAloud } from "../../read-aloud/lib/useReadAloud";
 import DeletePage from "../components/DeletePage";
 import PageEditor from "../components/editor/PageEditor";
 import PageForm from "../components/PageForm";
+import SiblingSwitcher, { type Sibling } from "../components/SiblingSwitcher";
 import { pageTypeLabel } from "../lib/page-type/pageTypesState";
 import { StatusChip } from "../components/StatusPicker";
 import { CompletionStatus } from "../lib/completion-status";
@@ -22,9 +23,14 @@ import type { Course } from "../lib/course/types";
 import { setPageDone, updatePage } from "../lib/page/actions";
 import type { Page } from "../lib/page/types";
 
+function asSibling(page: Page): Sibling {
+  return { id: page.id, name: page.title, icon: page.icon };
+}
+
 export default function PageDetailPage({
   course,
   page,
+  modulePages,
   pageReady,
   moduleName,
   onSavePage,
@@ -35,6 +41,7 @@ export default function PageDetailPage({
 }: Readonly<{
   course: Course | undefined;
   page: Page | undefined;
+  modulePages: Page[];
   pageReady: boolean;
   moduleName: string | undefined;
   onSavePage: (page: Page) => void;
@@ -173,9 +180,13 @@ export default function PageDetailPage({
           {moduleName ?? "Module"}
         </Link>
         <span aria-hidden="true">/</span>
-        <span className={clsx("truncate")} aria-current="page">
-          {page.title}
-        </span>
+        <SiblingSwitcher
+          noun="page"
+          color={course.color}
+          siblings={modulePages.map(asSibling)}
+          current={asSibling(page)}
+          path={(id) => `/courses/${course.id}/modules/${page.module_id}/pages/${id}`}
+        />
       </nav>
       {coverUrl && (
         <img
@@ -314,6 +325,7 @@ export default function PageDetailPage({
             courseName: course.name,
             moduleId: page.module_id,
             moduleName: moduleName ?? "Module",
+            pageId: page.id,
             pageTitle: page.title,
             aiProfileId: course.ai_profile_id
           }}

@@ -2,8 +2,7 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
 import Select from "../../../shared/ui/Select";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getPage } from "../../courses/lib/page/actions";
+import { BodyText } from "../../../shared/ui/Typography";
 import { subscribeAssistant } from "../lib/assistant";
 import { useAgentChat } from "../lib/useAgentChat";
 import AgentPicker from "./AgentPicker";
@@ -20,12 +19,11 @@ function storedConversation() {
   }
 }
 
-// Agent chat beside whatever is open. On a page, each message tells the
-// agent which page that is, so "this page" means something to it.
+// Agent chat beside whatever is open. On a page, each message goes with
+// that page's context, so "this page" means something to the agent.
 export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: number | null; onClose: () => void }>) {
   const [selectedId, setSelectedId] = useState(storedConversation);
   const [picking, setPicking] = useState(false);
-  const [pageTitle, setPageTitle] = useState<string | null>(null);
   const [assistantError, setAssistantError] = useState("");
   const chat = useAgentChat(selectedId);
   const refreshConversations = useRef(chat.refreshConversations);
@@ -42,18 +40,6 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
     []
   );
 
-  useEffect(() => {
-    setPageTitle(null);
-    if (pageId === null) return;
-    let active = true;
-    getPage(pageId)
-      .then((page) => active && setPageTitle(page?.title ?? null))
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [pageId]);
-
   function select(id: number | null) {
     setSelectedId(id);
     try {
@@ -63,11 +49,6 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
       return;
     }
   }
-
-  const context =
-    pageId !== null && pageTitle !== null
-      ? `The user has the mneme page "${pageTitle}" open (page id ${pageId}). When they say "this page", they mean it: read it with get_page.`
-      : undefined;
 
   return (
     <aside
@@ -122,11 +103,6 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
           {assistantError}
         </BodyText>
       )}
-      {pageTitle && (
-        <Caption tone="muted" className={clsx("shrink-0 truncate border-b border-ink/10 px-3 py-1.5")}>
-          Knows you’re on “{pageTitle}”
-        </Caption>
-      )}
       {!chat.loaded && !chat.error && (
         <BodyText role="status" tone="muted" className={clsx("p-4")}>
           Loading conversations…
@@ -146,7 +122,7 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
         <ConversationPane
           chat={chat}
           selectedId={selectedId}
-          context={context}
+          pageId={pageId}
           emptyText="Choose a conversation or start a new chat."
           compact
           className={clsx("flex-1 px-4 pt-4 pb-3")}

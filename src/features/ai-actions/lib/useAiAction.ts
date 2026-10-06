@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "../../../shared/lib/errorMessage";
+import { extractImages } from "../../../shared/lib/htmlImages";
+import { buildActionContext } from "../../ai-context/lib/builder";
+import type { AiContext, ContextLayer } from "../../ai-context/lib/types";
 import type { AgentConnection } from "../../agent-chat/lib/connection/types";
+import { acceptsImages } from "../../agent-chat/lib/runTurn";
 import { getActiveProfile } from "../../ai-profiles/lib/profile/actions";
 import { createPage } from "../../courses/lib/page/actions";
 import { PageType } from "../../courses/lib/page/types";
@@ -19,6 +23,7 @@ export type ActionLocation = {
   courseName: string;
   moduleId: number;
   moduleName: string;
+  pageId: number;
   pageTitle: string;
   aiProfileId: number | null;
 };
@@ -28,6 +33,7 @@ export type ActionRun = {
   scope: RunScope;
   placement: Placement;
   text: string;
+  context?: AiContext;
   status: "running" | "done" | "error";
   error?: string;
 };
@@ -43,6 +49,21 @@ const emptyMessages: Record<RunScope, string> = {
   module: "No pages in this module match this action’s page types.",
   course: "No pages in this course match this action’s page types."
 };
+
+const subjectLabels: Record<RunScope, string> = {
+  selection: "Selected text",
+  image: "The picture",
+  page: "The whole page",
+  module: "Every page in the module",
+  course: "Every page in the course"
+};
+
+function subjectLayer(scope: RunScope, html: string): ContextLayer {
+  const text = new DOMParser().parseFromString(html, "text/html").body.textContent ?? "";
+  const count = text.trim().split(/\s+/).filter(Boolean).length;
+  const words = scope === "image" ? "" : `, ${count.toLocaleString()} ${count === 1 ? "word" : "words"}`;
+  return { label: "Working on", detail: `${subjectLabels[scope]}${words}`, chars: html.length };
+}
 
 function runScope(action: AiAction, hasSelection: boolean): RunScope {
   switch (action.scope) {
@@ -190,9 +211,15 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
         return;
       }
       const profile = await getActiveProfile(location.courseId);
+      const content = await extractImages(html);
+      const context = await buildActionContext(location, scope, content.images, acceptsImages(connection), profile);
       if (runId.current !== id) return;
+      update((current) => ({
+        ...current,
+        context: { ...context, layers: [subjectLayer(scope, content.html), ...context.layers] }
+      }));
 
-      const handle = await runAction(connection, action, scope, html, profile, (event) => {
+      const handle = await runAction(connection, action, scope, content, context.text, profile, (event) => {
         switch (event.type) {
           case "text":
             update((current) => ({ ...current, text: current.text + event.text }));

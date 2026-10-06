@@ -921,20 +921,23 @@ Custom Prompt
 AI
 ```
 
+> **Done — 6 October 2026.** See
+> [AI Context System](features/20-ai-context.md).
+
 ## Development Steps
 
-- [ ] Create Context Builder service.
-- [ ] Add current course context.
-- [ ] Add current module context.
-- [ ] Add current page context.
-- [ ] Add selected text context.
-- [ ] Add child-page context.
-- [ ] Add attachments.
-- [ ] Add image text.
-- [ ] Add transcripts.
-- [ ] Estimate context size.
-- [ ] Avoid sending unnecessary content.
-- [ ] Display what context is being used.
+- [x] Create Context Builder service. (`features/ai-context/lib/builder.ts`, used by AI actions, AI blocks, the chat side panel and ⌘P → Ask.)
+- [x] Add current course context. (Name, code, semester, school, instructor, description.)
+- [x] Add current module context. (Name and description.)
+- [x] Add current page context. (Title, type and status; the content too where it isn't already the subject and the agent can't read it with tools.)
+- [x] Add selected text context. (AI actions run on it; chat sends whatever is selected on the open page.)
+- [x] Add child-page context. (Pages are flat (Phase 24), so the module's pages are listed by title, type and status, with the open one marked.)
+- [x] Add attachments. (By name, type and size; the text of plain-text files. PDFs and other binary files go by name only.)
+- [x] Add image text. (AI actions with an agent that can't take pictures get them read on the device; Claude and Codex get the pictures.)
+- [x] Add transcripts. (The page's recordings; skipped when already pasted into the page.)
+- [x] Estimate context size. (Characters ÷ 4, shown as "about N tokens".)
+- [x] Avoid sending unnecessary content. (Pointers for agents with tools, no page repeat on a selection run, no duplicate transcripts, and a 60,000-character budget that cuts transcripts first.)
+- [x] Display what context is being used. (A Context disclosure on an action's result and above the chat message box.)
 
 ---
 

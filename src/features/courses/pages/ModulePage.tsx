@@ -21,6 +21,7 @@ import DeletePage from "../components/DeletePage";
 import DeletePages from "../components/DeletePages";
 import LmsImportForm from "../components/LmsImportForm";
 import ModuleForm from "../components/ModuleForm";
+import SiblingSwitcher from "../components/SiblingSwitcher";
 import MovePageDialog from "../components/MovePageDialog";
 import PageCard from "../components/PageCard";
 import type { PageItemProps } from "../components/pageDisplay";
@@ -71,6 +72,7 @@ const PAGE_SORTS: SortOption<Page, PageSortKey>[] = [
 export default function ModulePage({
   course,
   module,
+  modules,
   moduleReady,
   pages,
   pagesReady,
@@ -83,6 +85,7 @@ export default function ModulePage({
 }: Readonly<{
   course: Course | undefined;
   module: Module | undefined;
+  modules: Module[];
   moduleReady: boolean;
   pages: Page[];
   pagesReady: boolean;
@@ -321,9 +324,13 @@ export default function ModulePage({
           {course.name}
         </Link>
         <span aria-hidden="true">/</span>
-        <span className={clsx("truncate")} aria-current="page">
-          {module.name}
-        </span>
+        <SiblingSwitcher
+          noun="module"
+          color={course.color}
+          siblings={modules}
+          current={module}
+          path={(id) => `/courses/${course.id}/modules/${id}`}
+        />
       </nav>
       <div className={clsx("mt-6 flex flex-wrap items-start justify-between gap-4")}>
         <div className={clsx("min-w-0")}>

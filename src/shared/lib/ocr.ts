@@ -29,7 +29,10 @@ function recognitionError(error: unknown, fallback: string) {
 
 // On-device only (Vision on macOS), so the image never leaves the machine.
 export async function extractText(imageSrc: string): Promise<ExtractedText> {
-  const bytes = await imageBytes(imageSrc);
+  return extractTextFromBytes(await imageBytes(imageSrc));
+}
+
+export async function extractTextFromBytes(bytes: Uint8Array): Promise<ExtractedText> {
   try {
     const result = await desktop.vision.recognizeText(bytes);
     return {

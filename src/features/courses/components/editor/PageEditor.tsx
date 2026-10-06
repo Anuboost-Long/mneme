@@ -20,6 +20,7 @@ import clsx from "clsx";
 import { addCommandSource } from "../../../../shared/lib/commandSources";
 import { useShortcut } from "../../../../shared/lib/shortcuts/shortcutsState";
 import { BodyText } from "../../../../shared/ui/Typography";
+import { useSetPageSelection } from "../../../ai-context/lib/selectionState";
 import AiActions from "../../../ai-actions/components/AiActions";
 import { markdownToEditorHtml } from "../../../ai-actions/lib/editorHtml";
 import type { ActionLocation } from "../../../ai-actions/lib/useAiAction";
@@ -70,6 +71,7 @@ export default function PageEditor({
   const timeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pendingContent = useRef<string | null>(null);
+  const setPageSelection = useSetPageSelection();
 
   async function flushPendingSave() {
     if (timeout.current) {
@@ -107,7 +109,7 @@ export default function PageEditor({
       DetailsSummary,
       DetailsContent,
       Video,
-      AiBlock.configure({ courseId: actionLocation.courseId })
+      AiBlock.configure({ courseId: actionLocation.courseId, moduleId: actionLocation.moduleId, pageId })
     ],
     content: content || "",
     editorProps: {
@@ -166,6 +168,19 @@ export default function PageEditor({
     },
     []
   );
+
+  useEffect(() => {
+    if (!editor) return;
+    function shareSelection() {
+      const { from, to, empty } = editor.state.selection;
+      setPageSelection(empty ? null : { pageId, text: editor.state.doc.textBetween(from, to, "\n") });
+    }
+    editor.on("selectionUpdate", shareSelection);
+    return () => {
+      editor.off("selectionUpdate", shareSelection);
+      setPageSelection(null);
+    };
+  }, [editor, pageId, setPageSelection]);
 
   useEffect(() => {
     if (!editor) return;

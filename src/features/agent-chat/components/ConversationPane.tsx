@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
 import type { useAgentChat } from "../lib/useAgentChat";
@@ -12,18 +12,30 @@ import ModeSwitch from "./ModeSwitch";
 import { useAttachments, useFileDrop } from "../lib/useAttachments";
 import { parseAttachments, type ChatAttachment } from "../lib/attachments";
 import ProfilePicker from "../../ai-profiles/components/ProfilePicker";
+import { getActiveProfile } from "../../ai-profiles/lib/profile/actions";
+import ContextSummary from "../../ai-context/components/ContextSummary";
+import { buildChatContext } from "../../ai-context/lib/builder";
+import { usePageSelection } from "../../ai-context/lib/selectionState";
+import type { AiContext } from "../../ai-context/lib/types";
+import type { AgentConnection } from "../lib/connection/types";
+import { hasTools } from "../lib/runTurn";
 
 const roles = { user: "You", assistant: "Agent", tool: "Tool activity", error: "Error" };
+const contextPreviewDelay = 300;
+
+async function pageContext(pageId: number, selection: string, connection: AgentConnection) {
+  return buildChatContext(pageId, selection, hasTools(connection), await getActiveProfile());
+}
 
 // One conversation: its transcript and composer. Used by the chat screen
-// and the side panel. `context` goes to the agent with each message
-// without being saved (see runTurn).
+// and the side panel. On a page (`pageId`), each message goes with the
+// context of that page, rebuilt at send time and not saved (see runTurn).
 // `compact` (the side panel) leaves the title to the panel's own
 // conversation picker.
-export default function ConversationPane({ chat, selectedId, context, emptyText, compact = false, className }: Readonly<{
+export default function ConversationPane({ chat, selectedId, pageId = null, emptyText, compact = false, className }: Readonly<{
   chat: ReturnType<typeof useAgentChat>;
   selectedId: number | null;
-  context?: string;
+  pageId?: number | null;
   emptyText: string;
   compact?: boolean;
   className?: string;
@@ -35,10 +47,29 @@ export default function ConversationPane({ chat, selectedId, context, emptyText,
   const files = useAttachments(conversation?.id ?? null);
   const canAttach = conversation !== undefined && connection !== undefined && !chat.turn?.busy && chat.messagesLoaded && !chat.messageError;
   const drop = useFileDrop(canAttach, (dropped) => void files.add(dropped));
+  const selection = usePageSelection(pageId);
+  const [context, setContext] = useState<AiContext | null>(null);
+  const messageCount = chat.messages.length;
+
+  useEffect(() => {
+    setContext(null);
+    if (pageId === null || !connection) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      pageContext(pageId, selection, connection)
+        .then((built) => active && setContext(built))
+        .catch(() => undefined);
+    }, contextPreviewDelay);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [pageId, selection, connection, messageCount]);
 
   async function handleSend(message: string, attachments: ChatAttachment[]) {
     if (connection && await chat.runCommand(connection, message)) return;
-    await chat.send(message, attachments, context);
+    const sent = pageId !== null && connection ? await pageContext(pageId, selection, connection).catch(() => null) : null;
+    await chat.send(message, attachments, sent?.text || undefined);
   }
 
   useEffect(() => { followOutput.current = true; }, [selectedId]);
@@ -82,6 +113,7 @@ export default function ConversationPane({ chat, selectedId, context, emptyText,
         </div>
         {chat.turn?.error && !chat.messages.some((message) => message.role === "error" && message.content === chat.turn?.error) && <BodyText role="alert" tone="error" className={clsx("mb-3")}>{chat.turn.error}</BodyText>}
         {chat.notice && !chat.turn?.busy && <Caption tone="muted" className={clsx("mb-3")}>{chat.notice}</Caption>}
+        {context && <ContextSummary context={context} className={clsx("mb-3")} />}
         {connection?.kind !== "custom" && (
           <div className={clsx("mb-3")}>
             <ModeSwitch mode={conversation.mode} disabled={chat.turn?.busy ?? false} onChange={(mode) => void chat.setMode(conversation.id, mode)} />

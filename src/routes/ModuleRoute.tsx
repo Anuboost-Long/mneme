@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useCourses } from "../features/courses/lib/coursesState";
-import { getModule } from "../features/courses/lib/module/actions";
+import { getModule, getModules } from "../features/courses/lib/module/actions";
 import type { Module as ModuleRecord } from "../features/courses/lib/module/types";
 import { getPages, reorderPages } from "../features/courses/lib/page/actions";
 import type { Page as PageRecord } from "../features/courses/lib/page/types";
@@ -13,6 +13,7 @@ export default function ModuleRoute() {
   const { courses } = useCourses();
   const course = courses.find((item) => String(item.id) === courseId);
   const [module, setModule] = useState<ModuleRecord>();
+  const [modules, setModules] = useState<ModuleRecord[]>([]);
   const [moduleReady, setModuleReady] = useState(false);
   const [pages, setPages] = useState<PageRecord[]>([]);
   const [pagesReady, setPagesReady] = useState(false);
@@ -22,7 +23,6 @@ export default function ModuleRoute() {
   useEffect(() => {
     if (!moduleId) return;
     let active = true;
-    setModuleReady(false);
     getModule(Number(moduleId)).then((loaded) => {
       if (active) {
         setModule(loaded);
@@ -33,6 +33,17 @@ export default function ModuleRoute() {
       active = false;
     };
   }, [moduleId]);
+
+  useEffect(() => {
+    if (!course) return;
+    let active = true;
+    getModules(course.id)
+      .then((loaded) => active && setModules(loaded))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [course?.id]);
 
   useEffect(() => {
     if (!module) return;
@@ -48,6 +59,11 @@ export default function ModuleRoute() {
       active = false;
     };
   }, [module?.id, pagesVersion]);
+
+  function saveModule(saved: ModuleRecord) {
+    setModule(saved);
+    setModules((current) => current.map((item) => (item.id === saved.id ? saved : item)));
+  }
 
   function savePage(page: PageRecord) {
     setPages((current) =>
@@ -70,12 +86,14 @@ export default function ModuleRoute() {
 
   return (
     <ModulePage
+      key={module?.id}
       course={course}
       module={module}
+      modules={modules}
       moduleReady={moduleReady}
       pages={pages}
       pagesReady={pagesReady}
-      onSaveModule={setModule}
+      onSaveModule={saveModule}
       onDeleteModule={() => navigate(`/courses/${courseId}`, { replace: true })}
       onSavePage={savePage}
       onDeletePage={removePage}

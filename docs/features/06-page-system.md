@@ -772,3 +772,12 @@ Two screen recordings from the actual app, requested afterward,
 reproduced it immediately once the drag crossed an image.
 
 </details>
+
+## Switching pages — 6 October 2026
+
+A page's breadcrumb ends in the same switcher as a module's
+(`courses/components/SiblingSwitcher.tsx`): the page title opens the
+module's pages in page order, with the current one ticked, and the
+previous / next arrows step through them. `routes/PageRoute.tsx` loads
+the module's pages and keeps the current page on screen while the next
+one loads; the editor saves any pending change as it closes.

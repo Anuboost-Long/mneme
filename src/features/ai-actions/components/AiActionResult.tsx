@@ -1,6 +1,7 @@
 import { useState } from "react";
 import clsx from "clsx";
 import { BodyText, Caption } from "../../../shared/ui/Typography";
+import ContextSummary from "../../ai-context/components/ContextSummary";
 import { markdownToEditorHtml } from "../lib/editorHtml";
 import type { RunScope } from "../lib/runAction";
 import type { ActionRun, Placement } from "../lib/useAiAction";
@@ -67,6 +68,7 @@ export default function AiActionResult({ run, onStop, onInsert, onAddSection, on
         <BodyText as="h2" className={clsx("font-semibold")}>{run.action.name}</BodyText>
         <Caption as="span" tone="muted">{scopeLabels[run.scope]}</Caption>
       </header>
+      {run.context && <ContextSummary context={run.context} className={clsx("border-b border-ink/10 px-4 py-2")} />}
       <div className={clsx("min-h-0 flex-1 overflow-y-auto px-4 py-3")}>
         {run.text && <div className={clsx("page-editor-content wrap-anywhere")} dangerouslySetInnerHTML={{ __html: markdownToEditorHtml(run.text) }} />}
         {!run.text && run.status === "running" && <BodyText role="status" tone="muted">Working…</BodyText>}

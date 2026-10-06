@@ -10,7 +10,7 @@ import {
 } from "./table";
 import type { Attachment } from "./types";
 
-export { getAttachment, searchAttachmentLinks } from "./table";
+export { getAttachment, getPageAttachments, searchAttachmentLinks } from "./table";
 
 export async function createAttachment(pageId: number, file: File) {
   const reference = await storePageFile(file);
@@ -90,4 +90,17 @@ export async function saveAttachmentCopy(attachment: Attachment) {
     suggestedName: attachment.file_name,
     extensions: extension ? [extension] : undefined
   });
+}
+
+const textExtensions = new Set(["txt", "md", "markdown", "csv", "tsv", "json", "xml", "yaml", "yml", "html", "htm", "tex", "rtf"]);
+const maxTextBytes = 200_000;
+
+export async function readAttachmentText(attachment: Attachment): Promise<string | null> {
+  const isText = attachment.mime_type?.startsWith("text/") || textExtensions.has(fileExtension(attachment.file_name) ?? "");
+  if (!isText || (attachment.size_bytes ?? 0) > maxTextBytes) return null;
+  try {
+    return new TextDecoder().decode(await desktop.files.read(attachment.file_path));
+  } catch {
+    return null;
+  }
 }

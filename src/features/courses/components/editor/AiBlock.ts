@@ -4,9 +4,11 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import AiBlockNodeView from "./AiBlockNodeView";
 
 // A prompt kept on the page, with what the agent wrote for it inside the
-// block, so it can be generated again when the page changes. `courseId`
-// picks the AI profile the run uses.
-const AiBlock = Node.create<{ courseId: number }>({
+// block, so it can be generated again when the page changes. Its location
+// picks the AI profile and the context the run gets.
+export type AiBlockLocation = { courseId: number; moduleId: number; pageId: number };
+
+const AiBlock = Node.create<AiBlockLocation>({
   name: "aiBlock",
   group: "block",
   content: "block*",
@@ -14,7 +16,7 @@ const AiBlock = Node.create<{ courseId: number }>({
   draggable: true,
 
   addOptions() {
-    return { courseId: 0 };
+    return { courseId: 0, moduleId: 0, pageId: 0 };
   },
 
   addAttributes() {

@@ -130,3 +130,17 @@ gallery based on available content width. Cards show the course colour, module
 status, description and Open module action. Hover and keyboard focus highlight
 the card and opening arrow; Edit and Delete remain accessible on touch screens.
 Status selects and text inputs share a fixed 44px height.
+
+## Switching modules — 6 October 2026
+
+A module's breadcrumb ends in a switcher, so moving between modules
+doesn't mean going back to the course:
+
+- The module name opens the course's modules, in course order, with the
+  current one ticked. Arrow keys move through the list; Escape closes it.
+- Previous and next arrows beside it step to the neighbouring module
+  (dimmed at either end).
+- A course with one module shows the plain name.
+- Source: `courses/components/SiblingSwitcher.tsx` (shared with pages); `routes/ModuleRoute.tsx`
+  loads the course's modules and keeps showing the current module while
+  the next one loads, instead of a loading screen.

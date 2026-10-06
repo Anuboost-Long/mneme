@@ -1,4 +1,4 @@
-import { extractImages } from "../../../shared/lib/htmlImages";
+import type { ImageData } from "../../../shared/lib/htmlImages";
 import type { AgentConnection } from "../../agent-chat/lib/connection/types";
 import {
   acceptsImages,
@@ -51,25 +51,21 @@ export async function runAction(
   connection: AgentConnection,
   action: Pick<AiAction, "prompt">,
   scope: RunScope,
-  contentHtml: string,
+  content: { html: string; images: ImageData[] },
+  context: string,
   profile: AiProfile | null,
   onEvent: (event: TurnEvent) => void
 ) {
-  const { html, images } = await extractImages(contentHtml);
   const attached = acceptsImages(connection);
   const viaStdin = acceptsStdin(connection);
-  if (!viaStdin && html.length > MAX_ARGV_CONTEXT_CHARS) throw new Error(tooLong[scope]);
-  const where = viaStdin ? "provided on stdin" : "below";
-  const task = `${action.prompt}\n\nWork on ${subjects[scope]}, given as HTML ${where}. Reply with only the result, in plain Markdown: no HTML tags (don’t copy the input’s tags), no preamble, no follow-up questions.${imageNote(images.length, attached)}`;
-  const sent = attached ? images : [];
-  if (viaStdin) return runOnce(connection, task, framing, profile, onEvent, html, sent);
-  return runOnce(
-    connection,
-    `${task}\n\n<content>\n${html}\n</content>`,
-    framing,
-    profile,
-    onEvent,
-    undefined,
-    sent
-  );
+  const payload = [context, `<content>\n${content.html}\n</content>`].filter(Boolean).join("\n\n");
+  if (!viaStdin && payload.length > MAX_ARGV_CONTEXT_CHARS) throw new Error(tooLong[scope]);
+  const where = viaStdin ? "on stdin" : "below";
+  const background = context
+    ? " The <context> element ahead of it says where the content comes from (course, module, page, attachments, transcripts): use it to understand the content, but work on the content."
+    : "";
+  const task = `${action.prompt}\n\nWork on ${subjects[scope]}, given as HTML in the <content> element ${where}.${background} Reply with only the result, in plain Markdown: no HTML tags (don’t copy the input’s tags), no preamble, no follow-up questions.${imageNote(content.images.length, attached)}`;
+  const sent = attached ? content.images : [];
+  if (viaStdin) return runOnce(connection, task, framing, profile, onEvent, payload, sent);
+  return runOnce(connection, `${task}\n\n${payload}`, framing, profile, onEvent, undefined, sent);
 }

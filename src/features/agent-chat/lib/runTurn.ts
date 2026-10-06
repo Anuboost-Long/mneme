@@ -526,6 +526,10 @@ export async function runTurn(
 // docs/features/21-ai-quick-actions.md.
 export const MAX_ARGV_CONTEXT_CHARS = 200_000;
 
+export function hasTools(connection: Pick<AgentConnection, "kind" | "args">) {
+  return createInvoker(connection.kind, connection.args).needsMcp;
+}
+
 export function acceptsImages(connection: AgentConnection) {
   return createInvoker(connection.kind, connection.args).withImages !== undefined;
 }
