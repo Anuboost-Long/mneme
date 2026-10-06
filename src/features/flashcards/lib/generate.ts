@@ -40,15 +40,17 @@ export function parseCards(answer: string, pageIds: Set<number>): CardDraft[] {
     throw new Error("The agent’s flashcards couldn’t be read. Try again.");
   }
   if (!Array.isArray(parsed)) throw new Error("The agent didn’t return any flashcards. Try again.");
-  return parsed.flatMap((item) => {
-    const card = item as { front?: unknown; back?: unknown; page_id?: unknown };
-    const front = typeof card.front === "string" ? card.front.trim() : "";
-    const back = typeof card.back === "string" ? card.back.trim() : "";
-    if (!front || !back) return [];
-    const pageId =
-      typeof card.page_id === "number" && pageIds.has(card.page_id) ? card.page_id : null;
-    return [{ front, back, page_id: pageId }];
-  });
+  return parsed.flatMap((item) => readCard(item, pageIds) ?? []);
+}
+
+export function readCard(item: unknown, pageIds: Set<number>): CardDraft | null {
+  const card = item as { front?: unknown; back?: unknown; page_id?: unknown };
+  const front = typeof card.front === "string" ? card.front.trim() : "";
+  const back = typeof card.back === "string" ? card.back.trim() : "";
+  if (!front || !back) return null;
+  const pageId =
+    typeof card.page_id === "number" && pageIds.has(card.page_id) ? card.page_id : null;
+  return { front, back, page_id: pageId };
 }
 
 export async function suggestFlashcards(

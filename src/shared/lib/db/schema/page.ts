@@ -1,12 +1,18 @@
 import { Column, Index, PrimaryKey, Table, Trigger } from "@chain/sdk/schema";
 
 @Table()
-@Trigger("highlight_page_delete", `CREATE TRIGGER highlight_page_delete BEFORE DELETE ON page BEGIN
+@Trigger(
+  "highlight_page_delete",
+  `CREATE TRIGGER highlight_page_delete BEFORE DELETE ON page BEGIN
       DELETE FROM highlight WHERE page_id = OLD.id;
-    END`)
-@Trigger("page_opened_on_insert", `CREATE TRIGGER page_opened_on_insert AFTER INSERT ON page WHEN NEW.opened_at IS NULL BEGIN
+    END`
+)
+@Trigger(
+  "page_opened_on_insert",
+  `CREATE TRIGGER page_opened_on_insert AFTER INSERT ON page WHEN NEW.opened_at IS NULL BEGIN
       UPDATE page SET opened_at = NEW.updated_at WHERE id = NEW.id;
-    END`)
+    END`
+)
 export class Page {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
@@ -58,6 +64,9 @@ export class Page {
   // the same value, which is how a restore finds what to bring back.
   @Index({ name: "page_deleted", where: "deleted_at IS NOT NULL" })
   deleted_at!: string | null;
+
+  // The link or file name the page was imported from; null when made in mneme.
+  source!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

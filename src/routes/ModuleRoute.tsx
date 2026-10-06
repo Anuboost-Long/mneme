@@ -4,6 +4,7 @@ import type { Module as ModuleRecord } from "@/features/courses/lib/module/types
 import { getPages, reorderPages } from "@/features/courses/lib/page/actions";
 import type { Page as PageRecord } from "@/features/courses/lib/page/types";
 import ModulePage from "@/features/courses/pages/ModulePage";
+import { getModulePrep } from "@/features/prepare/lib/prep/actions";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -17,6 +18,7 @@ export default function ModuleRoute() {
   const [pages, setPages] = useState<PageRecord[]>([]);
   const [pagesReady, setPagesReady] = useState(false);
   const [pagesVersion, setPagesVersion] = useState(0);
+  const [summaryPageId, setSummaryPageId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,6 +61,17 @@ export default function ModuleRoute() {
     };
   }, [module?.id, pagesVersion]);
 
+  useEffect(() => {
+    if (!module) return;
+    let active = true;
+    getModulePrep(module.id)
+      .then((prep) => active && setSummaryPageId(prep?.summary_page_id ?? null))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [module?.id]);
+
   function saveModule(saved: ModuleRecord) {
     setModule(saved);
     setModules((current) => current.map((item) => (item.id === saved.id ? saved : item)));
@@ -92,6 +105,7 @@ export default function ModuleRoute() {
       moduleReady={moduleReady}
       pages={pages}
       pagesReady={pagesReady}
+      summaryPageId={summaryPageId}
       onSaveModule={saveModule}
       onDeleteModule={() => navigate(`/courses/${courseId}`, { replace: true })}
       onSavePage={savePage}

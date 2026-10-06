@@ -12,6 +12,7 @@ export type Job = {
   progress: number | null;
   status: "running" | "done" | "failed";
   action?: JobAction;
+  stop?: () => void;
 };
 
 let jobs: Job[] = [];
@@ -25,15 +26,16 @@ function set(id: number, patch: Partial<Job>) {
 
 // Work that keeps going while the user moves around the app. The tray in
 // the app shell shows it and pops up when it ends.
-export function startJob(scope: string, title: string, detail: string) {
+export function startJob(scope: string, title: string, detail: string, stop?: () => void) {
   const id = nextId++;
-  jobs = [...jobs, { id, scope, title, detail, progress: null, status: "running" }];
+  jobs = [...jobs, { id, scope, title, detail, progress: null, status: "running", stop }];
   listeners.forEach((listener) => listener());
   return {
     update: (detail: string, progress: number | null) => set(id, { detail, progress }),
     finish: (title: string, detail: string, action?: JobAction) =>
-      set(id, { title, detail, action, progress: 1, status: "done" }),
-    fail: (title: string, detail: string) => set(id, { title, detail, status: "failed" })
+      set(id, { title, detail, action, progress: 1, status: "done", stop: undefined }),
+    fail: (title: string, detail: string) =>
+      set(id, { title, detail, status: "failed", stop: undefined })
   };
 }
 

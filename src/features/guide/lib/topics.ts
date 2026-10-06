@@ -11,13 +11,25 @@ import iconSearch from "@/features/guide/assets/icon-search.jpg";
 import importAiAnswer from "@/features/guide/assets/import-ai-answer.jpg";
 import importAssignmentPage from "@/features/guide/assets/import-assignment-page.jpg";
 import importAssignmentPreview from "@/features/guide/assets/import-assignment-preview.jpg";
-import importCoursePage from "@/features/guide/assets/import-course-page.jpg";
+import importBrowserWindow from "@/features/guide/assets/import-browser-window.jpg";
 import importFileChosen from "@/features/guide/assets/import-file-chosen.jpg";
+import importFiles from "@/features/guide/assets/import-files.jpg";
 import importFromUrl from "@/features/guide/assets/import-from-url.jpg";
+import importLectureTranscript from "@/features/guide/assets/import-lecture-transcript.jpg";
+import importPastedPicture from "@/features/guide/assets/import-pasted-picture.jpg";
 import importUnsure from "@/features/guide/assets/import-unsure.jpg";
 import moduleImportButton from "@/features/guide/assets/module-import-button.jpg";
 import paletteAsk from "@/features/guide/assets/palette-ask.jpg";
+import prepareChoices from "@/features/guide/assets/prepare-choices.jpg";
+import prepareModule from "@/features/guide/assets/prepare-module.jpg";
+import prepareNotes from "@/features/guide/assets/prepare-notes.jpg";
+import prepareRunning from "@/features/guide/assets/prepare-running.jpg";
 import searchByMeaning from "@/features/guide/assets/search-by-meaning.jpg";
+import studyFlashcards from "@/features/guide/assets/study-flashcards.jpg";
+import studyPreparing from "@/features/guide/assets/study-preparing.jpg";
+import studyReady from "@/features/guide/assets/study-ready.jpg";
+import studyResults from "@/features/guide/assets/study-results.jpg";
+import studySummary from "@/features/guide/assets/study-summary.jpg";
 
 export type GuideScreenshot = { src: string; alt: string; landscape?: boolean };
 
@@ -36,33 +48,76 @@ export type GuideTopic = {
 export const guideTopics: GuideTopic[] = [
   {
     id: "import-file",
-    label: "Import a file",
-    title: "Import a PDF, Word or Markdown file",
+    label: "Import",
+    title: "Import a file, a link, a picture or a lecture",
     summary:
-      "Turn a course brief, a reading or your own notes into a page. mneme works out what kind of page it is and finds its due dates, activities and files.",
-    where: "Any module → Import → From file",
+      "Turn a course brief, an article, a screenshot or a recorded lecture into a page. mneme works out what kind of page it is, finds its due dates, activities and files, and notes where it came from.",
+    where: "Any module → Import, ⌘P → Import, or drop files on a module’s pages",
     place: { label: "Go to your courses", path: "/courses" },
     steps: [
       {
         title: "Open the module and press Import",
         body: [
           "Go to the module the page belongs in. Import sits next to New page, above the pages.",
-          "From the command palette (⌘P), Import PDF or document opens it too while you’re on a module."
+          "From the command palette (⌘P), Import opens it too while you’re on a module. Dropping files on the module’s pages opens it with those files."
         ],
         screenshots: [
           { src: moduleImportButton, alt: "Module 4, with Import beside New page above the pages" }
         ]
       },
       {
-        title: "Choose From file and add the file",
+        title: "Choose From files and add the files",
         body: [
-          "Drop the file on the dialog, or press Choose file…. PDF, Word (.docx) and Markdown files work. Dropping another file replaces it.",
-          "Press Read file."
+          "Drop files on the dialog, or press Choose files…. PDF, Word, Markdown and text files work, and so do pictures, audio and video.",
+          "For one file, press Read file. Add several and each becomes its own page: Import N files brings them in one after the other and lists any that failed, with why."
         ],
         screenshots: [
           {
             src: importFileChosen,
-            alt: "The Import dialog on From file, with a PDF ready to import"
+            alt: "The Import dialog on From files, with a PDF ready to import"
+          },
+          {
+            src: importFiles,
+            alt: "Seven files ready to import: text, a picture, audio and three videos",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Paste a screenshot or text",
+        body: [
+          "Press ⌘V anywhere in Import. A picture or screenshot imports as a picture, a link fills Page URL, and copied text or web content becomes a page.",
+          "A picture’s page shows the picture with the text recognized in it, tables kept as tables."
+        ],
+        screenshots: [
+          { src: importPastedPicture, alt: "A pasted picture ready to import", landscape: true }
+        ]
+      },
+      {
+        title: "Recordings and videos are transcribed",
+        body: [
+          "An audio file becomes a Lecture page with the recording, a video a Lecture page with a player. Their sound is transcribed on this Mac in the background, one at a time, and the corner shows the progress.",
+          "The transcript goes under the recording or video, with any due dates it mentions. A video with no sound says so."
+        ],
+        screenshots: [
+          {
+            src: importLectureTranscript,
+            alt: "A lecture video with its transcript and a due date below it",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Import an article or any website",
+        body: [
+          "On From a link, paste the address and press Fetch page. An article comes in as the article alone, with its author, site and date at the top.",
+          "Notion, Google Docs and pages that come back empty build themselves with JavaScript. Press Open in a browser window, go to the page there, then press Import this page."
+        ],
+        screenshots: [
+          {
+            src: importBrowserWindow,
+            alt: "Notion builds its pages with JavaScript, with Open in a browser window",
+            landscape: true
           }
         ]
       },
@@ -125,31 +180,19 @@ export const guideTopics: GuideTopic[] = [
     title: "Import a page from your school’s site",
     summary:
       "Bring in a Moodle, Canvas or Brightspace page with its activities, files and due dates, including pages that need your login.",
-    where: "Any module → Import → From URL",
+    where: "Any module → Import → From a link",
     place: { label: "School site settings", path: "/settings/general" },
     steps: [
       {
         title: "Paste the page’s address",
         body: [
-          "In Import, stay on From URL, paste the address into Page URL and press Fetch page.",
+          "In Import, stay on From a link, paste the address into Page URL and press Fetch page.",
           "For a page that needs your login, press Sign in to your school site instead. A browser window opens beside mneme: sign in as usual, go to the page, and press Import this page in that window’s toolbar. You stay signed in next time; sign out under Settings → General → School site."
         ],
         screenshots: [
           {
             src: importFromUrl,
-            alt: "The Import dialog on From URL, with Sign in to your school site under Page URL"
-          }
-        ]
-      },
-      {
-        title: "A course page lists its activities and files",
-        body: [
-          "Each quiz, assignment and forum is listed with its kind, such as “Quiz: Factual recall test”. Course files and recordings are listed under Files, and the page reads as a module overview."
-        ],
-        screenshots: [
-          {
-            src: importCoursePage,
-            alt: "The preview of a Moodle course page, with activities and files ticked"
+            alt: "The Import dialog on From a link, with Sign in to your school site under Page URL"
           }
         ]
       },
@@ -364,6 +407,127 @@ export const guideTopics: GuideTopic[] = [
           {
             src: flashcardsStudy,
             alt: "Studying a card with its answer and the four grades",
+            landscape: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prepare",
+    label: "Prepare module",
+    title: "Prepare a module for revision in one go",
+    summary:
+      "mneme reads a whole module, including attached files, text in pictures and recordings, then makes a summary, revision notes, flashcards and a practice quiz.",
+    where: "A module → Prepare module, or ⌘P → Prepare module",
+    place: { label: "Go to your courses", path: "/courses" },
+    steps: [
+      {
+        title: "Choose what to make",
+        body: [
+          "Tick Summary, Revision notes, Flashcards and Practice quiz. Each says what already exists: flashcards are only made for pages without any, and a new summary, notes page or practice quiz replaces the last one.",
+          "The line above Prepare module says about how many agent runs it takes, so you know the cost before you start."
+        ],
+        screenshots: [
+          {
+            src: prepareChoices,
+            alt: "Prepare Module 4 with Summary, Revision notes and Practice quiz ticked, about 4 agent runs",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "It works in the background",
+        body: [
+          "mneme reads every page, the PDF, Word and text files attached to them, the text in their pictures and their recordings’ transcripts, transcribing any recording that has none. Long pages are condensed first and kept, so preparing again is quicker and cheaper.",
+          "Keep working while it runs. Stop in the corner keeps whatever is already made."
+        ],
+        screenshots: [
+          {
+            src: prepareRunning,
+            alt: "Condensing a long page, 1 of 3, with Stop in the corner",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Everything in one place",
+        body: [
+          "Prepared module lists the original material, the exercises and discussions, the Summary and Revision notes pages, your flashcards, the practice quiz and any tasks not yet in Tasks, with Review and add.",
+          "The Summary and Revision notes pages sit at the top of the module, and Listen on the module reads the summary. Study sessions use the same key topics."
+        ],
+        screenshots: [
+          {
+            src: prepareModule,
+            alt: "Prepared module: original material, exercises, summary, revision notes, flashcards, practice quiz and tasks",
+            landscape: true
+          },
+          {
+            src: prepareNotes,
+            alt: "Revision notes: a topic with its key terms and key points",
+            landscape: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "study",
+    label: "Study mode",
+    title: "Revise a module in one study session",
+    summary:
+      "A study session sums up a module’s key topics, runs your due flashcards and a quiz, then shows which topics need more work.",
+    where: "A module → Study, or ⌘P → Study this module",
+    place: { label: "Go to your courses", path: "/courses" },
+    steps: [
+      {
+        title: "Prepare a session",
+        body: [
+          "On a module’s Study screen, New study session asks the agent your AI actions use for a summary of the module, its key topics and a 10-question quiz. If the module has no flashcards yet, it writes some too.",
+          "It’s prepared in the background, so keep working. When it’s ready, a pop-up offers Start session."
+        ],
+        screenshots: [
+          {
+            src: studyPreparing,
+            alt: "A study session being prepared, 3 of 10 questions written",
+            landscape: true
+          },
+          {
+            src: studyReady,
+            alt: "“Your study session is ready” with Start session",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Summary, flashcards, then the quiz",
+        body: [
+          "Read the summary and each topic, with links to the pages it comes from. Then review the flashcards that are due, graded as usual, and take the quiz. Skip to the quiz leaves the cards for later.",
+          "The quiz is saved in Quizzes too, so you can take it again on its own."
+        ],
+        screenshots: [
+          {
+            src: studySummary,
+            alt: "A session’s summary, with the four steps above it",
+            landscape: true
+          },
+          {
+            src: studyFlashcards,
+            alt: "A due flashcard in the session, with Skip to the quiz",
+            landscape: true
+          }
+        ]
+      },
+      {
+        title: "Weak areas and what to review",
+        body: [
+          "Results show your quiz score, your cards right and wrong, and how each topic went. A topic is weak when under 70% of its questions and cards were right.",
+          "Recommended review lists the weak topics, worst first, with the pages to re-read. Study again runs the session once more, and the Study screen keeps each session’s results."
+        ],
+        screenshots: [
+          {
+            src: studyResults,
+            alt: "Results: the quiz score, each topic’s score, and the recommended review",
             landscape: true
           }
         ]

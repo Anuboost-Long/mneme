@@ -31,7 +31,9 @@ export async function createBackup(): Promise<Backup> {
     tasks,
     quizzes,
     quizQuestions,
-    quizAttempts
+    quizAttempts,
+    studySessions,
+    modulePreps
   ] = await getBackupRows();
   const references = new Set([
     ...courses.flatMap((course) => [course.cover, course.icon]),
@@ -62,6 +64,8 @@ export async function createBackup(): Promise<Backup> {
     quizzes,
     quizQuestions,
     quizAttempts,
+    studySessions,
+    modulePreps,
     files
   };
 }
@@ -238,6 +242,7 @@ export async function restoreBackup(backup: Backup) {
       bookmarked: page.bookmarked ?? 0,
       icon: page.icon ?? null,
       position: page.position ?? 0,
+      source: page.source ?? null,
       created_at: page.created_at,
       updated_at: page.updated_at
     });
@@ -299,7 +304,8 @@ export async function restoreBackup(backup: Backup) {
       choices: question.choices,
       answer: question.answer,
       explanation: question.explanation,
-      page_id: question.page_id
+      page_id: question.page_id,
+      topic: question.topic ?? null
     });
   for (const attempt of backup.quizAttempts ?? [])
     await insertIfMissing("quiz_attempt", {
@@ -309,6 +315,32 @@ export async function restoreBackup(backup: Backup) {
       total: attempt.total,
       answers: attempt.answers,
       created_at: attempt.created_at
+    });
+  for (const session of backup.studySessions ?? [])
+    await insertIfMissing("study_session", {
+      id: session.id,
+      module_id: session.module_id,
+      quiz_id: session.quiz_id,
+      overview: session.overview,
+      topics: session.topics,
+      results: session.results,
+      quiz_right: session.quiz_right,
+      quiz_total: session.quiz_total,
+      cards_right: session.cards_right,
+      cards_wrong: session.cards_wrong,
+      finished_at: session.finished_at,
+      created_at: session.created_at
+    });
+  for (const prep of backup.modulePreps ?? [])
+    await insertIfMissing("module_prep", {
+      module_id: prep.module_id,
+      topics: prep.topics,
+      summary_page_id: prep.summary_page_id,
+      notes_page_id: prep.notes_page_id,
+      quiz_id: prep.quiz_id,
+      unread: prep.unread,
+      prepared_at: prep.prepared_at,
+      created_at: prep.created_at
     });
   for (const layout of backup.layouts ?? []) {
     await insertIfMissing("home_layout", {

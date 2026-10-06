@@ -1,26 +1,26 @@
-import { fileImportKind } from "@/features/courses/lib/file-import";
+import { fileExtension } from "@/features/courses/lib/page-files";
 import { formatSize } from "@/shared/lib/formatSize";
 import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 
-const kindLabels = { pdf: "PDF", docx: "DOCX", markdown: "MD" } as const;
+const fileLabel = (file: File) => fileExtension(file.name)?.toUpperCase().slice(0, 4) ?? "FILE";
 
-// The file to import: an empty drop area, or the chosen file as a card
-// that says plainly it's there and that another one replaces it.
+// The files to import: an empty drop area, or each chosen file as a card
+// that says plainly it's there and that choosing again replaces them.
 export default function ImportFileSlot({
-  file,
+  files,
   dragging,
   disabled,
   onChoose,
-  onClear
+  onRemove
 }: Readonly<{
-  file: File | null;
+  files: File[];
   dragging: boolean;
   disabled: boolean;
   onChoose: () => void;
-  onClear: () => void;
+  onRemove: (file: File) => void;
 }>) {
-  if (!file) {
+  if (!files.length) {
     return (
       <div
         className={clsx(
@@ -44,7 +44,9 @@ export default function ImportFileSlot({
           <path d="M12 16V4m0 0-4 4m4-4 4 4M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
         </svg>
         <BodyText>
-          {dragging ? "Drop to import" : "Drop a PDF, Word or Markdown file here"}
+          {dragging
+            ? "Drop to import"
+            : "Drop files here: PDF, Word, Markdown, text, pictures, audio or video"}
         </BodyText>
         <button
           type="button"
@@ -57,42 +59,76 @@ export default function ImportFileSlot({
             "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink"
           )}
         >
-          Choose file…
+          Choose files…
         </button>
       </div>
     );
   }
 
-  const kind = fileImportKind(file);
-  const label = kind ? kindLabels[kind] : "FILE";
+  let hint =
+    files.length > 1
+      ? "Each file becomes its own page."
+      : "Choosing or dropping other files replaces this one.";
+  if (dragging) hint = "Drop to replace these files";
 
   return (
     <div className={clsx("space-y-2")}>
-      <div
-        className={clsx(
-          "flex items-center gap-3 rounded-lg p-3",
-          "border-2",
-          dragging ? "border-dashed border-action bg-action/5" : "border-ink/15 bg-ink/4"
-        )}
-      >
-        <span
-          aria-hidden="true"
-          className={clsx(
-            "flex size-11 shrink-0 items-center justify-center rounded-md",
-            "bg-accent text-chain-navy",
-            "text-xs font-bold tracking-wide"
-          )}
-        >
-          {label}
-        </span>
-        <div className={clsx("min-w-0 flex-1")}>
-          <p className={clsx("truncate text-sm font-medium")}>
-            {dragging ? `Drop to replace ${file.name}` : file.name}
-          </p>
-          <Caption tone="muted">
-            {label} · {formatSize(file.size)} · Ready to import
-          </Caption>
-        </div>
+      <ul className={clsx("space-y-2")}>
+        {files.map((file) => (
+          <li
+            key={`${file.name}-${file.size}-${file.lastModified}`}
+            className={clsx(
+              "flex items-center gap-3 rounded-lg p-3",
+              "border-2",
+              dragging ? "border-dashed border-action bg-action/5" : "border-ink/15 bg-ink/4"
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={clsx(
+                "flex size-11 shrink-0 items-center justify-center rounded-md",
+                "bg-accent text-chain-navy",
+                "text-xs font-bold tracking-wide"
+              )}
+            >
+              {fileLabel(file)}
+            </span>
+            <div className={clsx("min-w-0 flex-1")}>
+              <p className={clsx("truncate text-sm font-medium")}>{file.name}</p>
+              <Caption tone="muted">
+                {fileLabel(file)} · {formatSize(file.size)} · Ready to import
+              </Caption>
+            </div>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onRemove(file)}
+              aria-label={`Remove ${file.name}`}
+              title="Remove file"
+              className={clsx(
+                "grid size-8 shrink-0 place-items-center rounded-md",
+                "text-muted",
+                "hover:bg-ink/5 hover:text-ink focus-visible:outline-1 focus-visible:outline-ink"
+              )}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className={clsx("flex flex-wrap items-center justify-between gap-3")}>
+        <Caption tone="muted">{hint}</Caption>
         <button
           type="button"
           disabled={disabled}
@@ -103,35 +139,9 @@ export default function ImportFileSlot({
             "hover:bg-ink/5 focus-visible:outline-1 focus-visible:outline-ink"
           )}
         >
-          Replace
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={onClear}
-          aria-label={`Remove ${file.name}`}
-          title="Remove file"
-          className={clsx(
-            "grid size-8 shrink-0 place-items-center rounded-md",
-            "text-muted",
-            "hover:bg-ink/5 hover:text-ink focus-visible:outline-1 focus-visible:outline-ink"
-          )}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
+          Choose other files
         </button>
       </div>
-      <Caption tone="muted">Choosing or dropping another file replaces this one.</Caption>
     </div>
   );
 }

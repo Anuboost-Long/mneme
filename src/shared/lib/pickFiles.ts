@@ -24,6 +24,12 @@ const MIME_TYPES: Record<string, string> = {
   m4a: "audio/mp4",
   wav: "audio/wav",
   ogg: "audio/ogg",
+  opus: "audio/ogg",
+  flac: "audio/flac",
+  aiff: "audio/aiff",
+  aif: "audio/aiff",
+  caf: "audio/x-caf",
+  mkv: "video/x-matroska",
   zip: "application/zip",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -49,10 +55,15 @@ function browserPick(extensions: string[] | undefined, multiple: boolean) {
 // Opens the OS file picker as a sheet on this window (it slides down from
 // the title bar on macOS) rather than a free-floating window. Resolves []
 // when the user cancels, or when a picker is already open.
-export async function pickFiles({ extensions, multiple = false }: { extensions?: string[]; multiple?: boolean } = {}): Promise<File[]> {
+export async function pickFiles({
+  extensions,
+  multiple = false
+}: { extensions?: string[]; multiple?: boolean } = {}): Promise<File[]> {
   try {
     const picked = await desktop.files.pick({ extensions, multiple });
-    return picked.map((file) => new File([new Uint8Array(file.bytes)], file.name, { type: mimeType(file.name) }));
+    return picked.map(
+      (file) => new File([new Uint8Array(file.bytes)], file.name, { type: mimeType(file.name) })
+    );
   } catch (error) {
     const code = (error as { code?: string } | null)?.code;
     if (code === "UNAVAILABLE") return [];

@@ -16,10 +16,12 @@ import {
 } from "@/features/courses/lib/page-type/pageTypesState";
 import { storeInlinePageImages } from "@/features/courses/lib/page/actions";
 import { deleteOrphanCards } from "@/features/flashcards/lib/card/actions";
+import { deleteOrphanPreps } from "@/features/prepare/lib/prep/actions";
+import { deleteOrphanQuizzes } from "@/features/quizzes/lib/quiz/actions";
 import { unloadVoiceWhenIdle } from "@/features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "@/features/recently-deleted/lib/deleted-item/actions";
 import { updateSearchIndex } from "@/features/search/lib/searchIndex";
-import { deleteOrphanQuizzes } from "@/features/quizzes/lib/quiz/actions";
+import { deleteOrphanSessions } from "@/features/study/lib/session/actions";
 import { deleteOrphanTasks } from "@/features/tasks/lib/task/actions";
 import { initDb } from "@/shared/lib/db";
 import { useShortcut, useShortcuts } from "@/shared/lib/shortcuts/shortcutsState";
@@ -116,6 +118,8 @@ export default function RootLayout() {
       .then(deleteOrphanCards)
       .then(deleteOrphanTasks)
       .then(deleteOrphanQuizzes)
+      .then(deleteOrphanSessions)
+      .then(deleteOrphanPreps)
       .then(() => {
         void storeInlinePageImages().catch(() => undefined);
         void storeInlineIcons().catch(() => undefined);

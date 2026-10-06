@@ -1,5 +1,5 @@
-import type { QuizQuestionRow } from "@/shared/lib/db/schema/quiz-question";
 import type { QuizRow } from "@/shared/lib/db/schema/quiz";
+import type { QuizQuestionRow } from "@/shared/lib/db/schema/quiz-question";
 
 export enum QuestionKind {
   MultipleChoice = 1,
@@ -7,7 +7,11 @@ export enum QuestionKind {
   ShortAnswer = 3
 }
 
-export const questionKinds = [QuestionKind.MultipleChoice, QuestionKind.TrueFalse, QuestionKind.ShortAnswer];
+export const questionKinds = [
+  QuestionKind.MultipleChoice,
+  QuestionKind.TrueFalse,
+  QuestionKind.ShortAnswer
+];
 
 export const questionKindLabels: Record<QuestionKind, string> = {
   [QuestionKind.MultipleChoice]: "Multiple choice",
@@ -21,7 +25,12 @@ export type Question = Omit<QuizQuestionRow, "kind" | "choices"> & {
   page_title: string | null;
 };
 
-export type QuestionDraft = Pick<Question, "kind" | "prompt" | "choices" | "answer" | "explanation" | "page_id">;
+export type QuestionDraft = Pick<
+  Question,
+  "kind" | "prompt" | "choices" | "answer" | "explanation" | "page_id"
+> & {
+  topic?: string | null;
+};
 
 export type Quiz = QuizRow & {
   page_title: string | null;

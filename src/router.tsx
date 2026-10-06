@@ -12,11 +12,14 @@ import HomeRoute from "./routes/HomeRoute";
 import ModuleHighlightsRoute from "./routes/ModuleHighlightsRoute";
 import ModuleRoute from "./routes/ModuleRoute";
 import PageRoute from "./routes/PageRoute";
+import PrepareRoute from "./routes/PrepareRoute";
 import QuizRoute from "./routes/QuizRoute";
 import QuizzesRoute from "./routes/QuizzesRoute";
 import RecentlyDeletedRoute from "./routes/RecentlyDeletedRoute";
 import RecordingsRoute from "./routes/RecordingsRoute";
 import SettingsRoute from "./routes/SettingsRoute";
+import StudyRoute from "./routes/StudyRoute";
+import StudySessionRoute from "./routes/StudySessionRoute";
 import TasksRoute from "./routes/TasksRoute";
 
 // Add new top-level routes as siblings of HomeRoute/AboutRoute here; nest
@@ -43,6 +46,12 @@ export const router = createBrowserRouter([
       },
       { path: "courses/:courseId/modules/:moduleId/quizzes", element: <QuizzesRoute /> },
       { path: "courses/:courseId/modules/:moduleId/quizzes/:quizId", element: <QuizRoute /> },
+      { path: "courses/:courseId/modules/:moduleId/prepare", element: <PrepareRoute /> },
+      { path: "courses/:courseId/modules/:moduleId/study", element: <StudyRoute /> },
+      {
+        path: "courses/:courseId/modules/:moduleId/study/:sessionId",
+        element: <StudySessionRoute />
+      },
       { path: "courses/:courseId/modules/:moduleId/pages/:pageId", element: <PageRoute /> },
       { path: "settings", element: <SettingsRoute /> },
       { path: "settings/:section", element: <SettingsRoute /> },

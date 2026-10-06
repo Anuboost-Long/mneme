@@ -1,4 +1,11 @@
-import { desktop, type ChainError, type ChainErrorCode, type HttpError, type HttpRequestConfig, type HttpResponse } from "@chain/sdk";
+import {
+  desktop,
+  type ChainError,
+  type ChainErrorCode,
+  type HttpError,
+  type HttpRequestConfig,
+  type HttpResponse
+} from "@chain/sdk";
 
 import { errorMessage } from "./errorMessage";
 
@@ -30,14 +37,22 @@ function toApiError(error: unknown) {
   }
 }
 
+const DEFAULT_HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; mneme)" };
+
 export async function apiRequest<T = unknown>(config: HttpRequestConfig): Promise<HttpResponse<T>> {
   try {
-    return await desktop.http.request<T>(config);
+    return await desktop.http.request<T>({
+      ...config,
+      headers: { ...DEFAULT_HEADERS, ...config.headers }
+    });
   } catch (error) {
     throw toApiError(error);
   }
 }
 
-export function apiGet<T = unknown>(url: string, config: Omit<HttpRequestConfig, "url" | "method" | "data"> = {}) {
+export function apiGet<T = unknown>(
+  url: string,
+  config: Omit<HttpRequestConfig, "url" | "method" | "data"> = {}
+) {
   return apiRequest<T>({ ...config, url, method: "GET" });
 }

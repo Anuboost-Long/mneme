@@ -5,11 +5,13 @@ import type { FlashcardRow } from "@/shared/lib/db/schema/flashcard";
 import type { HomeLayoutRow } from "@/shared/lib/db/schema/home-layout";
 import type { HomeWidgetRow } from "@/shared/lib/db/schema/home-widget";
 import type { ModuleRow } from "@/shared/lib/db/schema/module";
+import type { ModulePrepRow } from "@/shared/lib/db/schema/module-prep";
 import type { PageRow } from "@/shared/lib/db/schema/page";
+import type { QuizRow } from "@/shared/lib/db/schema/quiz";
 import type { QuizAttemptRow } from "@/shared/lib/db/schema/quiz-attempt";
 import type { QuizQuestionRow } from "@/shared/lib/db/schema/quiz-question";
-import type { QuizRow } from "@/shared/lib/db/schema/quiz";
 import type { RecordingRow } from "@/shared/lib/db/schema/recording";
+import type { StudySessionRow } from "@/shared/lib/db/schema/study-session";
 import type { TaskRow } from "@/shared/lib/db/schema/task";
 import { desktop, sql, type Values } from "@chain/sdk";
 
@@ -46,8 +48,22 @@ export function getBackupRows() {
       .orderBy("id")
       .all(),
     desktop.storage.table<QuizRow>("quiz").where(liveQuizzes).orderBy("id").all(),
-    desktop.storage.table<QuizQuestionRow>("quiz_question").where(sql`quiz_id IN (SELECT id FROM quiz WHERE ${liveQuizzes})`).orderBy("id").all(),
-    desktop.storage.table<QuizAttemptRow>("quiz_attempt").where(sql`quiz_id IN (SELECT id FROM quiz WHERE ${liveQuizzes})`).orderBy("id").all()
+    desktop.storage
+      .table<QuizQuestionRow>("quiz_question")
+      .where(sql`quiz_id IN (SELECT id FROM quiz WHERE ${liveQuizzes})`)
+      .orderBy("id")
+      .all(),
+    desktop.storage
+      .table<QuizAttemptRow>("quiz_attempt")
+      .where(sql`quiz_id IN (SELECT id FROM quiz WHERE ${liveQuizzes})`)
+      .orderBy("id")
+      .all(),
+    desktop.storage.table<StudySessionRow>("study_session").where(liveQuizzes).orderBy("id").all(),
+    desktop.storage
+      .table<ModulePrepRow>("module_prep")
+      .where(liveQuizzes)
+      .orderBy("module_id")
+      .all()
   ]);
 }
 
@@ -71,7 +87,9 @@ type RestoredTable =
   | "task"
   | "quiz"
   | "quiz_question"
-  | "quiz_attempt";
+  | "quiz_attempt"
+  | "study_session"
+  | "module_prep";
 
 export async function insertIfMissing(table: RestoredTable, values: Record<string, unknown>) {
   const columns = Object.keys(values);

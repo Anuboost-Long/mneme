@@ -9,16 +9,19 @@ import { QuestionKind, type QuestionDraft } from "./quiz/types";
 const framing =
   "You are writing a practice quiz inside mneme, a study notes app, from the user's own course material. This is not a software task: do not read, search, or change any files on this machine, and do not use any tools.";
 
-const kindNames: Record<QuestionKind, string> = {
+export const kindNames: Record<QuestionKind, string> = {
   [QuestionKind.MultipleChoice]: "multiple_choice",
   [QuestionKind.TrueFalse]: "true_false",
   [QuestionKind.ShortAnswer]: "short_answer"
 };
 
-const kindShapes: Record<QuestionKind, string> = {
-  [QuestionKind.MultipleChoice]: '{"type": "multiple_choice", "question": "...", "choices": ["...", "...", "...", "..."], "answer": <index of the right choice>, "explanation": "...", "page_id": <id>}',
-  [QuestionKind.TrueFalse]: '{"type": "true_false", "question": "a statement", "answer": true or false, "explanation": "...", "page_id": <id>}',
-  [QuestionKind.ShortAnswer]: '{"type": "short_answer", "question": "...", "answer": "a short model answer", "explanation": "...", "page_id": <id>}'
+export const kindShapes: Record<QuestionKind, string> = {
+  [QuestionKind.MultipleChoice]:
+    '{"type": "multiple_choice", "question": "...", "choices": ["...", "...", "...", "..."], "answer": <index of the right choice>, "explanation": "...", "page_id": <id>}',
+  [QuestionKind.TrueFalse]:
+    '{"type": "true_false", "question": "a statement", "answer": true or false, "explanation": "...", "page_id": <id>}',
+  [QuestionKind.ShortAnswer]:
+    '{"type": "short_answer", "question": "...", "answer": "a short model answer", "explanation": "...", "page_id": <id>}'
 };
 
 function shuffled<T>(items: T[], random: () => number) {
@@ -30,13 +33,25 @@ function shuffled<T>(items: T[], random: () => number) {
   return copy;
 }
 
-function text(value: unknown) {
+export function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-type RawQuestion = { type?: unknown; question?: unknown; choices?: unknown; answer?: unknown; explanation?: unknown; page_id?: unknown };
+export type RawQuestion = {
+  type?: unknown;
+  question?: unknown;
+  choices?: unknown;
+  answer?: unknown;
+  explanation?: unknown;
+  page_id?: unknown;
+};
 
-function readQuestion(item: RawQuestion, kinds: QuestionKind[], pageIds: Set<number>, random: () => number): QuestionDraft | null {
+export function readQuestion(
+  item: RawQuestion,
+  kinds: QuestionKind[],
+  pageIds: Set<number>,
+  random: () => number
+): QuestionDraft | null {
   const kind = kinds.find((candidate) => kindNames[candidate] === text(item.type).toLowerCase());
   const prompt = text(item.question);
   if (!kind || !prompt) return null;
@@ -95,7 +110,9 @@ export async function writeQuiz(
   const viaStdin = acceptsStdin(connection);
   const content = material(pages);
   if (!viaStdin && content.length > MAX_ARGV_CONTEXT_CHARS)
-    throw new Error("This material is too long for this agent. Choose Claude or Codex under Run with in the AI actions menu.");
+    throw new Error(
+      "This material is too long for this agent. Choose Claude or Codex under Run with in the AI actions menu."
+    );
   const mix = kinds.map((kind) => kindNames[kind]).join(", ");
   const task = `Write a practice quiz of ${count} questions on the course material ${viaStdin ? "provided on stdin" : "below"}, each page in its own <page> element. Mix these question types: ${mix}. Each question tests something that matters for an exam: a fact, term, cause, comparison or idea, not trivia about the page itself. Use only what the material says. Multiple-choice options are all plausible, with exactly one right. Each explanation says in one or two sentences why the answer is right. Reply with only a JSON array, no other text, of objects shaped like:\n${kinds.map((kind) => kindShapes[kind]).join("\n")}`;
   const profile = await getActiveProfile(courseId);
@@ -114,7 +131,11 @@ export async function writeQuiz(
         }
         if (event.type !== "done") return;
         try {
-          const questions = parseQuestions(event.text, kinds, new Set(pages.map((page) => page.id)));
+          const questions = parseQuestions(
+            event.text,
+            kinds,
+            new Set(pages.map((page) => page.id))
+          );
           if (questions.length) resolve(questions.slice(0, count));
           else reject(new Error("The agent didn’t write any questions. Try again."));
         } catch (error) {
@@ -122,6 +143,8 @@ export async function writeQuiz(
         }
       },
       viaStdin ? content : undefined
-    ).catch(() => reject(new Error(`Couldn’t start ${connection.name}. Check it’s installed and try again.`)));
+    ).catch(() =>
+      reject(new Error(`Couldn’t start ${connection.name}. Check it’s installed and try again.`))
+    );
   });
 }

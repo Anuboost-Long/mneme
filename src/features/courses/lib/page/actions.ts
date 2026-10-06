@@ -97,7 +97,8 @@ export async function createPage(moduleId: number, input: PageInput) {
     progress: clampProgress(input.progress ?? 0),
     bookmarked: input.bookmarked ? 1 : 0,
     icon: await storeIcon(input.icon),
-    cover: input.cover ?? null
+    cover: input.cover ?? null,
+    source: input.source ?? null
   });
   if (!page) throw new Error("The saved page could not be found.");
   if (page.content) await syncHighlightsSafely(page.id, moduleId, page.content);

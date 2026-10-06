@@ -19,6 +19,7 @@
   "dependencies": {
     "@chain/sdk": "file:../chain-sdk/packages/sdk",
     "@floating-ui/dom": "^1.8.0",
+    "@mozilla/readability": "^0.6.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tiptap/extension-details": "^3.31.3",
@@ -61,7 +62,12 @@
     "window": {
       "titleBarStyle": "overlay",
       "titleBarSize": "large",
-      "windowButtons": { "position": { "left": 20, "centerY": 30 } },
+      "windowButtons": {
+        "position": {
+          "left": 20,
+          "centerY": 30
+        }
+      },
       "backgroundColor": "#ffffff"
     },
     "permissions": {

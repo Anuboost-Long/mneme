@@ -29,7 +29,7 @@ const JS_RENDERED_HOSTS: [RegExp, string][] = [
   [/(^|\.)figma\.com$/i, "Figma"]
 ];
 
-function knownJsRenderedHost(url: string): string | undefined {
+export function knownJsRenderedHost(url: string): string | undefined {
   const hostname = new URL(url).hostname;
   return JS_RENDERED_HOSTS.find(([pattern]) => pattern.test(hostname))?.[1];
 }
@@ -64,7 +64,10 @@ export async function storePageImages(
   onProgress?: (saved: number, total: number) => void,
   download: (url: string) => Promise<File | null> = downloadImage
 ): Promise<string> {
-  const document = new DOMParser().parseFromString(html, "text/html");
+  const document = new DOMParser().parseFromString(
+    `<html><body>${html}</body></html>`,
+    "text/html"
+  );
   const images = Array.from(document.querySelectorAll("img")).filter((image) =>
     /^https?:/i.test(image.getAttribute("src") ?? "")
   );
@@ -84,6 +87,15 @@ export function isSignInPage(html: string) {
   );
 }
 
+function hasPageContent(html: string) {
+  const body = new DOMParser().parseFromString(
+    `<html><body>${html}</body></html>`,
+    "text/html"
+  ).body;
+  body.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => heading.remove());
+  return Boolean(body.textContent?.trim()) || body.querySelector("img, video, table") !== null;
+}
+
 function pageTitle(doc: Document): string {
   const parts = doc.title.trim().split(" | ");
   return (parts.length > 1 ? parts.slice(0, -1).join(" | ") : parts[0]) || "Imported page";
@@ -101,5 +113,5 @@ export function parseLmsPage(html: string, sourceUrl: string): ParsedImport {
   const title = pageTitle(doc);
   const root = contentRoot(doc);
   const pageHtml = headerDates(doc, root) + sanitizeChildren(root, sourceUrl);
-  return { title, type: detectType(title), html: pageHtml };
+  return { title, type: detectType(title), html: hasPageContent(pageHtml) ? pageHtml : "" };
 }

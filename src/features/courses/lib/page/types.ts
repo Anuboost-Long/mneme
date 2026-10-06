@@ -48,6 +48,7 @@ export type Page = {
   icon: string | null;
   cover: string | null;
   position: number;
+  source: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -61,6 +62,7 @@ export type PageInput = {
   status?: CompletionStatus;
   progress?: number;
   bookmarked?: boolean;
+  source?: string | null;
 };
 
 export type PageFilter = {

@@ -1,8 +1,7 @@
-import clsx from "clsx";
-import { Link } from "react-router-dom";
-
 import { dismissJob, useJobs, type Job } from "@/shared/lib/backgroundJobs";
 import { Caption } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { Link } from "react-router-dom";
 
 function DismissButton({ job }: Readonly<{ job: Job }>) {
   return (
@@ -16,7 +15,16 @@ function DismissButton({ job }: Readonly<{ job: Job }>) {
         "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
       )}
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
         <path d="M18 6 6 18M6 6l12 12" />
       </svg>
     </button>
@@ -28,7 +36,14 @@ function JobCard({ job }: Readonly<{ job: Job }>) {
     <li className={clsx("rounded-lg border border-ink/15 bg-surface p-3 shadow-lg")}>
       <div className={clsx("flex items-start gap-3")}>
         <div className={clsx("min-w-0 flex-1")}>
-          <p className={clsx("text-sm font-medium wrap-anywhere", job.status === "failed" && "text-danger")}>{job.title}</p>
+          <p
+            className={clsx(
+              "text-sm font-medium wrap-anywhere",
+              job.status === "failed" && "text-danger"
+            )}
+          >
+            {job.title}
+          </p>
           <Caption tone="muted" className={clsx("mt-0.5 block wrap-anywhere")}>
             {job.detail}
           </Caption>
@@ -42,6 +57,18 @@ function JobCard({ job }: Readonly<{ job: Job }>) {
           value={job.progress ?? undefined}
           className={clsx("import-progress mt-3 block h-1.5 w-full")}
         />
+      )}
+      {job.status === "running" && job.stop && (
+        <button
+          type="button"
+          onClick={job.stop}
+          className={clsx(
+            "mt-3 rounded-md border border-ink/15 px-3 py-1.5 text-sm font-medium",
+            "hover:bg-ink/5"
+          )}
+        >
+          Stop
+        </button>
       )}
       {job.status === "done" && job.action && (
         <Link
@@ -64,7 +91,13 @@ function JobCard({ job }: Readonly<{ job: Job }>) {
 export default function JobsTray() {
   const jobs = useJobs();
   return (
-    <section aria-label="Background tasks" aria-live="polite" className={clsx("pointer-events-none fixed right-4 bottom-4 z-50 w-80 max-w-[calc(100vw-2rem)]")}>
+    <section
+      aria-label="Background tasks"
+      aria-live="polite"
+      className={clsx(
+        "pointer-events-none fixed right-4 bottom-4 z-50 w-80 max-w-[calc(100vw-2rem)]"
+      )}
+    >
       {jobs.length > 0 && (
         <ul className={clsx("pointer-events-auto flex flex-col gap-2")}>
           {jobs.map((job) => (

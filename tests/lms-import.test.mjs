@@ -39,8 +39,14 @@ test("readSchoolPage puts each readable frame where its iframe was, with the fra
         html: `<html><head><title></title></head><body><main><h1>Week 3</h1>
           <iframe src="/lesson/7"></iframe></main></body></html>`,
         frames: [
-          { url: "https://canvas.school.edu/lesson/7", html: `<html><body><h2>Sorting</h2><img src="img/sort.png"></body></html>` },
-          { url: "https://canvas.school.edu/extra", html: `<html><body><p>Further reading</p></body></html>` }
+          {
+            url: "https://canvas.school.edu/lesson/7",
+            html: `<html><body><h2>Sorting</h2><img src="img/sort.png"></body></html>`
+          },
+          {
+            url: "https://canvas.school.edu/extra",
+            html: `<html><body><p>Further reading</p></body></html>`
+          }
         ],
         unreadableFrames: ["https://video.example.com/embed/1"]
       })
@@ -56,7 +62,10 @@ test("readSchoolPage puts each readable frame where its iframe was, with the fra
     ["h1", "div", "div"]
   );
   assert.equal(document.querySelector("main h2").textContent, "Sorting");
-  assert.equal(document.querySelector("img").getAttribute("src"), "https://canvas.school.edu/lesson/img/sort.png");
+  assert.equal(
+    document.querySelector("img").getAttribute("src"),
+    "https://canvas.school.edu/lesson/img/sort.png"
+  );
   assert.equal(document.querySelector("main").lastElementChild.textContent, "Further reading");
 });
 
@@ -75,5 +84,23 @@ test("parseLmsPage drops the site's name from the title and keeps Moodle's heade
   assert.equal(
     parsed.html,
     "<p>Opened: Saturday, 22 July 2017</p><p>Due: Tuesday, 14 December 2021, 12:00 AM</p><p>Make a short film.</p>"
+  );
+});
+
+test("parseLmsPage leaves a page with only its title empty, so Import offers the browser window", async () => {
+  const { parseLmsPage } = await import("../src/features/courses/lib/lms-import.ts");
+  assert.equal(
+    parseLmsPage(
+      "<html><head><title>Excalidraw</title></head><body><h1>Excalidraw</h1></body></html>",
+      "https://excalidraw.com"
+    ).html,
+    ""
+  );
+  assert.notEqual(
+    parseLmsPage(
+      '<html><body><h1>Week 3</h1><img src="https://x.edu/a.png"></body></html>',
+      "https://x.edu"
+    ).html,
+    ""
   );
 });

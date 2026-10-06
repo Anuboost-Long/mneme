@@ -28,6 +28,33 @@ function asSibling(page: Page): Sibling {
   return { id: page.id, name: page.title, icon: page.icon };
 }
 
+function PageSource({ source }: Readonly<{ source: string }>) {
+  let host: string | null = null;
+  try {
+    host = /^https?:/i.test(source) ? new URL(source).hostname.replace(/^www\./, "") : null;
+  } catch {
+    host = null;
+  }
+  return (
+    <Typography as="span" variant="caption" tone="muted" className={clsx("mt-2 min-w-0 truncate")}>
+      From{" "}
+      {host ? (
+        <a
+          href={source}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={source}
+          className={clsx("underline underline-offset-4 hover:text-ink")}
+        >
+          {host}
+        </a>
+      ) : (
+        source
+      )}
+    </Typography>
+  );
+}
+
 export default function PageDetailPage({
   course,
   page,
@@ -91,7 +118,14 @@ export default function PageDetailPage({
     if (!page) return;
     return addCommandSource({
       group: "This page",
-      load: async () => [{ id: "page-make-quiz", label: "Make a quiz", detail: page.title, run: () => setDialog("quiz") }]
+      load: async () => [
+        {
+          id: "page-make-quiz",
+          label: "Make a quiz",
+          detail: page.title,
+          run: () => setDialog("quiz")
+        }
+      ]
     });
   }, [page?.id, page?.title]);
 
@@ -236,6 +270,7 @@ export default function PageDetailPage({
                   );
               }}
             />
+            {page.source && <PageSource source={page.source} />}
           </div>
         </div>
         <div className={clsx("flex gap-2")}>

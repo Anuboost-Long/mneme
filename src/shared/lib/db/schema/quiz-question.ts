@@ -26,6 +26,9 @@ export class QuizQuestion {
   explanation!: string | null;
 
   page_id!: number | null;
+
+  // The study-session topic the question tests; null for ordinary quizzes.
+  topic!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

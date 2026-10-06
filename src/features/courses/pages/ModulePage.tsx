@@ -20,7 +20,7 @@ import { pageTypeLabel, pageTypeOptions } from "@/features/courses/lib/page-type
 import { duplicatePage, setPageDone } from "@/features/courses/lib/page/actions";
 import { type Page } from "@/features/courses/lib/page/types";
 import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
-import { textChunks } from "@/features/read-aloud/lib/readableText";
+import { elementChunks, textChunks } from "@/features/read-aloud/lib/readableText";
 import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
 import FindTasksDialog from "@/features/tasks/components/FindTasksDialog";
 import { addCommandSource } from "@/shared/lib/commandSources";
@@ -35,10 +35,32 @@ import DragHandle from "@/shared/ui/DragHandle";
 import ListToolbar, { DATE_GROUP_OPTIONS } from "@/shared/ui/ListToolbar";
 import { BodyText, PageTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
+import {
+  GraduationCap,
+  Headphones,
+  Highlighter,
+  Layers,
+  ListChecks,
+  Pencil,
+  Sparkles,
+  Trash2
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const PAGE_VIEWS = ["list", "gallery"] as const;
+
+const iconButton = clsx(
+  "grid size-9 place-items-center rounded-md text-muted",
+  "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+);
+
+const studyTools = [
+  { label: "Study", path: "study", Icon: GraduationCap },
+  { label: "Flashcards", path: "flashcards", Icon: Layers },
+  { label: "Quizzes", path: "quizzes", Icon: ListChecks },
+  { label: "Highlights", path: "highlights", Icon: Highlighter }
+];
 
 const PAGE_GROUP_VALUES = [...DATE_GROUP_VALUES, "type"] as const;
 const PAGE_GROUP_OPTIONS = [...DATE_GROUP_OPTIONS, { value: "type" as const, label: "By type" }];
@@ -76,6 +98,7 @@ export default function ModulePage({
   moduleReady,
   pages,
   pagesReady,
+  summaryPageId,
   onSaveModule,
   onDeleteModule,
   onSavePage,
@@ -89,6 +112,7 @@ export default function ModulePage({
   moduleReady: boolean;
   pages: Page[];
   pagesReady: boolean;
+  summaryPageId: number | null;
   onSaveModule: (module: Module) => void;
   onDeleteModule: () => void;
   onSavePage: (page: Page) => void;
@@ -98,7 +122,7 @@ export default function ModulePage({
 }>) {
   const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
   const [pageDialog, setPageDialog] = useState<
-    { type: "edit" | "delete" | "move"; page: Page } | "create" | "import" | "import-file" | null
+    { type: "edit" | "delete" | "move"; page: Page } | "create" | "import" | null
   >(null);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<number> | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -107,7 +131,10 @@ export default function ModulePage({
   const [statusError, setStatusError] = useState<string | null>(null);
   const [findingTasks, setFindingTasks] = useState(false);
   const [tasksAdded, setTasksAdded] = useState(0);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const [filesOver, setFilesOver] = useState(false);
   const reader = useReadAloud();
+  const summaryPage = pages.find((page) => page.id === summaryPageId);
   const navigate = useNavigate();
   const pageTarget = useLastValue(typeof pageDialog === "object" ? pageDialog?.page : null);
   const bulkDeleteIds = useLastValue(selectedPageIds);
@@ -124,22 +151,28 @@ export default function ModulePage({
           run: () => setPageDialog("create")
         },
         {
-          id: "module-import-lms",
-          label: "Import from LMS",
-          detail: module.name,
+          id: "module-import",
+          label: "Import",
+          detail: `A link, files or pasted content · ${module.name}`,
           run: () => setPageDialog("import")
-        },
-        {
-          id: "module-import-file",
-          label: "Import PDF or document",
-          detail: module.name,
-          run: () => setPageDialog("import-file")
         },
         {
           id: "module-find-tasks",
           label: "Find tasks",
           detail: module.name,
           run: () => setFindingTasks(true)
+        },
+        {
+          id: "module-prepare",
+          label: "Prepare module",
+          detail: module.name,
+          run: () => navigate(`/courses/${module.course_id}/modules/${module.id}/prepare`)
+        },
+        {
+          id: "module-study",
+          label: "Study this module",
+          detail: module.name,
+          run: () => navigate(`/courses/${module.course_id}/modules/${module.id}/study`)
         },
         {
           id: "module-quizzes",
@@ -381,68 +414,56 @@ export default function ModulePage({
             </BodyText>
           )}
         </div>
-        <div className={clsx("flex gap-2")}>
-          {reader.supported && module.description && (
+        <div className={clsx("flex flex-wrap items-center gap-1")}>
+          {reader.supported && (summaryPage || module.description) && (
             <button
               type="button"
+              aria-label={summaryPage ? "Listen to the summary" : "Listen to the description"}
+              title={summaryPage ? "Listen to the summary" : "Listen to the description"}
               onClick={() =>
-                reader.read([{ text: module.name }, ...textChunks(module.description ?? "")])
+                reader.read([
+                  { text: module.name },
+                  ...(summaryPage
+                    ? elementChunks(
+                        new DOMParser().parseFromString(summaryPage.content ?? "", "text/html").body
+                      ).map(({ text }) => ({ text }))
+                    : textChunks(module.description ?? ""))
+                ])
               }
-              className={clsx(
-                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-                "hover:bg-ink/5"
-              )}
+              className={iconButton}
             >
-              Listen
+              <Headphones aria-hidden="true" className={clsx("size-4")} />
             </button>
           )}
-          <Link
-            to={`/courses/${course.id}/modules/${module.id}/highlights`}
-            className={clsx(
-              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-              "hover:bg-ink/5"
-            )}
-          >
-            Highlights
-          </Link>
-          <Link
-            to={`/courses/${course.id}/modules/${module.id}/flashcards`}
-            className={clsx(
-              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-              "hover:bg-ink/5"
-            )}
-          >
-            Flashcards
-          </Link>
-          <Link
-            to={`/courses/${course.id}/modules/${module.id}/quizzes`}
-            className={clsx(
-              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-              "hover:bg-ink/5"
-            )}
-          >
-            Quizzes
-          </Link>
           <button
             type="button"
+            aria-label="Edit module"
+            title="Edit module"
             onClick={() => setDialog("edit")}
-            className={clsx(
-              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-              "hover:bg-ink/5"
-            )}
+            className={iconButton}
           >
-            Edit module
+            <Pencil aria-hidden="true" className={clsx("size-4")} />
           </button>
           <button
             type="button"
+            aria-label="Delete module"
+            title="Delete module"
             onClick={() => setDialog("delete")}
+            className={clsx(iconButton, "hover:bg-danger/10 hover:text-danger")}
+          >
+            <Trash2 aria-hidden="true" className={clsx("size-4")} />
+          </button>
+          <Link
+            to={`/courses/${course.id}/modules/${module.id}/prepare`}
             className={clsx(
-              "rounded-md px-3 py-2 text-sm text-muted",
-              "hover:bg-danger/10 hover:text-danger"
+              "ml-2 inline-flex h-9 items-center gap-2 rounded-md px-4",
+              "bg-action text-sm font-medium text-on-action",
+              "hover:bg-action/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             )}
           >
-            Delete
-          </button>
+            <Sparkles aria-hidden="true" className={clsx("size-4")} />
+            Prepare module
+          </Link>
         </div>
       </div>
       {module.description && (
@@ -453,6 +474,24 @@ export default function ModulePage({
           {module.description}
         </BodyText>
       )}
+      <div className={clsx("mt-5 border-t border-ink/10 pt-1.5")}>
+        <nav aria-label="Study tools" className={clsx("-ml-3 flex flex-wrap gap-1")}>
+          {studyTools.map(({ label, path, Icon }) => (
+            <Link
+              key={path}
+              to={`/courses/${course.id}/modules/${module.id}/${path}`}
+              className={clsx(
+                "inline-flex h-9 items-center gap-2 rounded-md px-3",
+                "text-sm text-muted",
+                "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+              )}
+            >
+              <Icon aria-hidden="true" className={clsx("size-4")} />
+              {label}
+            </Link>
+          ))}
+        </nav>
+      </div>
       {pages.length > 0 && (
         <ProgressSummary
           done={pages.filter((page) => page.status === CompletionStatus.Completed).length}
@@ -461,7 +500,29 @@ export default function ModulePage({
           className={clsx("mt-6")}
         />
       )}
-      <section aria-label="Pages" className={clsx("@container mt-6 border-t border-ink/10 pt-5")}>
+      <section
+        aria-label="Pages"
+        onDragOver={(event) => {
+          if (!event.dataTransfer.types.includes("Files")) return;
+          event.preventDefault();
+          setFilesOver(true);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            setFilesOver(false);
+        }}
+        onDrop={(event) => {
+          if (!event.dataTransfer.files.length) return;
+          event.preventDefault();
+          setFilesOver(false);
+          setDroppedFiles(Array.from(event.dataTransfer.files));
+          setPageDialog("import");
+        }}
+        className={clsx(
+          "@container mt-6 border-t border-ink/10 pt-5",
+          filesOver && "rounded-md outline-2 outline-offset-4 outline-dashed outline-action"
+        )}
+      >
         <div className={clsx("flex flex-wrap items-center justify-between gap-3")}>
           <Typography as="h2" variant="label">
             Pages
@@ -723,11 +784,14 @@ export default function ModulePage({
         onClose={() => setFindingTasks(false)}
       />
       <LmsImportForm
-        open={pageDialog === "import" || pageDialog === "import-file"}
+        open={pageDialog === "import"}
         courseId={module.course_id}
         moduleId={module.id}
-        initialSource={pageDialog === "import-file" ? "file" : "url"}
-        onClose={() => setPageDialog(null)}
+        initialFiles={droppedFiles}
+        onClose={() => {
+          setPageDialog(null);
+          setDroppedFiles([]);
+        }}
         onImported={(pages) => pages.forEach(onSavePage)}
       />
       <PageForm

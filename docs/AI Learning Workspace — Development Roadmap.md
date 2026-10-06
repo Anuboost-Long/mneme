@@ -802,7 +802,7 @@ Allow students to listen to learning material.
 - [x] Add voice selection.
 - [x] Add language selection.
 - [x] Add "Read Entire Page".
-- [x] Add "Read Module Summary". (Reads the module's description; there's no AI-generated summary yet.)
+- [x] Add "Read Module Summary". (Reads the summary Prepare module writes, or else the module's description.)
 
 ---
 
@@ -1593,6 +1593,8 @@ Later:
 
 # 41. Phase 39 — Study Mode
 
+> **Done — 6 October 2026.** See [Study Mode](features/39-study-mode.md).
+
 ## Goal
 
 Turn existing content into an interactive revision session.
@@ -1615,17 +1617,26 @@ Recommended Review
 
 ## Development Steps
 
-- [ ] Select module.
-- [ ] Generate study session.
-- [ ] Show summary.
-- [ ] Start flashcards.
-- [ ] Start quiz.
-- [ ] Record results.
-- [ ] Identify weak topics.
+- [x] Select module. (Module → Study, or ⌘P → Study this module.)
+- [x] Generate study session. (One agent run in the background: summary, key topics, a 10-question quiz, and cards if the deck is empty.)
+- [x] Show summary. (Overview, then each topic with its pages.)
+- [x] Start flashcards. (The deck’s due cards, at most 20, on the usual schedule.)
+- [x] Start quiz. (Saved as a normal quiz, with each question’s topic.)
+- [x] Record results. (Each topic’s score, quiz score and cards; shown on the Study screen.)
+- [x] Identify weak topics. (Under 70% right, worst first, with the pages to re-read as Recommended review.)
 
 ---
 
 # 42. Phase 40 — Import Entire Module
+
+> **Not built — 7 October 2026, on purpose.** A whole-module import was built for
+> Moodle and Canvas and tried on the Moodle demo and a public Canvas course, then
+> taken out: every school system lays out its module pages its own way, so it had
+> to be written per site (Moodle's course formats, Canvas's markup, Brightspace's
+> and Blackboard's APIs), which doesn't hold up for a product sold to any school.
+> Students import a module's pages one at a time with Import (Phase 42), from a
+> link or the school window. Ideas for later: site support shared and kept up by
+> the community, or crawling the pages a module page links to.
 
 Final import experience:
 
@@ -1659,9 +1670,58 @@ Download Resources
 Ready to Study
 ```
 
+## Research — 6 October 2026
+
+- **Reading many pages through the school window.** chain-sdk's
+  `desktop.browser` reads only the page on screen and doesn't crawl. But
+  mneme can send the open window to each item's address
+  (`open({ url })`), wait for `onNavigate`, then `read()` it, so the
+  student watches it go through the module. `fetch()` downloads files with
+  the signed-in session (GET only, with a size limit). `read()` refuses
+  a PDF or image, so files go through `fetch()`. No new capability is
+  needed for Moodle or Canvas.
+- **Moodle.** The course page arrives as plain HTML. Each section is a
+  list item with its name, and each activity is `li.activity.modtype_<kind>`
+  (`id="module-N"`) linking to `/mod/<kind>/view.php?id=N`. Files go through
+  `/mod/resource/`, which redirects to `pluginfile.php`.
+- **Canvas.** `/courses/:id/modules` arrives as plain HTML (checked on a
+  public course). Each module is `div.context_module` with its name in
+  `aria-label` (skip `#context_module_blank`, a template). Each item is
+  `li.context_module_item` with its kind as a class: `wiki_page`,
+  `assignment`, `discussion_topic`, `quiz`, `attachment`, `external_url`,
+  `context_external_tool`. Its `a.ig-title` links to
+  `/modules/items/:id`, which redirects to the item. External tools (LTI)
+  open on another site, so they can only be kept as links.
+- **Brightspace** builds its content page with JavaScript; the module's
+  table of contents is JSON at `/d2l/api/le/{version}/{orgUnit}/content/toc`,
+  readable with the session's cookies (to verify on a real school).
+  **Blackboard Ultra** is also JavaScript-built (REST at
+  `/learn/api/public/v1/courses/{id}/contents`; later).
+- **Today:** Phase 12 finds a page's activities by kind from their
+  links, but keeps only their names; files are listed with addresses but
+  not downloaded; pages don't remember where they were imported from.
+
+## Development Steps
+
+- [ ] Recognize a module page: a Moodle course or section page, a Canvas modules page, a Brightspace content module; any other page offers its own links.
+- [ ] Read the module's structure: its sections in order, and each item's title, kind (page, assignment, discussion, quiz, file, link, external tool) and address.
+- [ ] Choose which LMS module to import when the page holds several (a Canvas modules page, a Moodle course with weeks).
+- [ ] Preview the structure: items grouped by section with tick boxes and their page type; items mneme can't read (external tools) kept as links.
+- [ ] Choose where it goes: a new mneme module named after the LMS one, or an existing module.
+- [ ] Open each ticked page in turn: the school window goes to it and reads it when loaded; public links are fetched. Progress ("page 3 of 14") and Stop, keeping what's done.
+- [ ] Extract each page with the Phase 10–12 importer: text, pictures, page type, due dates, activities.
+- [ ] Create the pages in the module's order, each remembering its address, so importing the module again skips or updates pages already in.
+- [ ] Download resources with the session: PDFs, slides and documents become attachments on their page; PDF, Word and Markdown can also become pages. Size limit; failures listed with why.
+- [ ] Turn assignments, discussions, quizzes and exercises into tasks with their due dates, linked to their page (Phases 35–36).
+- [ ] Ready to study: what was created and what failed, Open module, and an offer to Prepare Module (Phase 41).
+- [ ] Brightspace through its content table of contents; Blackboard Ultra later.
+- [ ] Try it on the Moodle demo, a public Canvas course and a real school.
+
 ---
 
 # 43. Phase 41 — AI "Prepare Module"
+
+> **Done — 6 October 2026.** See [Prepare Module](features/41-prepare-module.md).
 
 This should eventually become one of the application's signature features.
 
@@ -1711,9 +1771,40 @@ Module 4
 └── Practice Quiz
 ```
 
+## Research — 6 October 2026
+
+- **Most of the pieces exist:** the agent tools read modules, pages,
+  pictures and transcripts (Phase 25); OCR and transcription run on the
+  device (15, 17); Find tasks (36), flashcards (37), quizzes (38) and
+  Study Mode's summary and topics (39) each write one output.
+- **Missing:** a module summary (a Second Release item still owed;
+  Listen reads only the module's description), revision notes, the text
+  of a page's attached PDFs and Word files, and one place that shows what
+  a prepared module contains.
+- **Cost (mneme will be sold):** a free agent loop reads the same
+  material again for every output. mneme should run the steps itself,
+  reading the material once, sending each output's request to the agent,
+  and say up front how many agent runs it takes.
+
+## Development Steps
+
+- [x] ✨ Prepare module on the module and in ⌘P: choose what to make (summary, revision notes, flashcards, quiz, tasks), showing what already exists and how many agent runs it takes.
+- [x] Read the material once: pages, the text of attached PDF, Word, Markdown and text files, text in pictures (on the device), and recording transcripts (transcribing any that have none). List what couldn't be read.
+- [x] Fit the material to the agent: past 60,000 characters, summarize page by page first and keep those summaries for later runs.
+- [x] Identify the important topics, each with its pages, saved on the module so the summary, notes, quiz and Study Mode share them.
+- [x] Identify tasks with Phase 36, and list the ones not yet in Tasks to add with one click.
+- [x] Generate the module summary: a Summary page at the top of the module, also used by Listen (Read Module Summary).
+- [x] Generate revision notes: a page per module with each topic's key terms, definitions and explanations, linked to their pages.
+- [x] Generate flashcards for pages that have none (Phase 37).
+- [x] Generate a practice quiz, its questions tagged by topic (Phases 38–39).
+- [x] Run in the background: each step shows in the jobs tray and is saved as it finishes; Stop keeps finished steps; preparing again replaces only what was chosen.
+- [x] Show the prepared module: original material, exercises and discussions (pages by type), summary, revision notes, flashcards and practice quiz, each a link.
+
 ---
 
 # 44. Phase 42 — Import Anything
+
+> **Done — 7 October 2026.** See [Import Anything](features/42-import-anything.md).
 
 Eventually the application should not depend entirely on LMS content.
 
@@ -1733,6 +1824,36 @@ Plain Text
 ```
 
 Everything becomes learning material inside the same workspace.
+
+## Research — 6 October 2026
+
+- **Already imports:** LMS pages and websites by link (pages built by
+  JavaScript, like Notion and Google Docs, are refused), the signed-in
+  school window, and PDF, Word and Markdown files. Pictures, screenshots
+  and audio only go into an existing page (paste, drop, record), and
+  only recordings made in mneme get transcribed.
+- **Articles:** Mozilla's Readability (Firefox's Reader View, no
+  dependencies, runs on a parsed document) gives the article's title,
+  byline, site, date and clean content.
+- **Pictures:** `desktop.vision` recognizes text and tables on the
+  device (PNG, JPEG, WebP, GIF).
+- **Audio:** `desktop.speech.transcribe` takes any stored audio file:
+  m4a/AAC, mp3, wav, flac, ogg, caf, aiff, but not Opus. Video files
+  (mp4, mov) aren't listed, so a lecture video needs a chain-sdk request
+  for transcribing a video's sound.
+
+## Development Steps
+
+- [x] One Import on the module, in ⌘P and by dropping onto a module: takes a link, files or pasted content and picks the importer by type.
+- [x] Website and article: Readability's content with the title, author, site and date at the top, when the page isn't an LMS page.
+- [x] Pages built by JavaScript: offer to open them in the browser window and import what it shows, instead of refusing.
+- [x] Plain text: paragraphs, with headings found as for Word and Markdown.
+- [x] Image: a page with the picture and its recognized text, tables as tables.
+- [x] Screenshot: paste with ⌘V into Import, or drop a screenshot file; imported as an image.
+- [x] Audio file: a page with the recording and its transcript, transcribed on the device with progress.
+- [x] Lecture recording (video file): the video plays on the page and its sound is transcribed (chain-sdk request for video sound).
+- [x] Several files at once: one page each, with progress.
+- [x] Every import gets Phase 12 detection (type, due dates, activities), remembers its source, and makes flashcards when that setting is on.
 
 ---
 

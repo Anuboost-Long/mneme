@@ -1,23 +1,23 @@
+import { readArticle } from "@/features/courses/lib/article-import";
 import { classifyWithAi } from "@/features/courses/lib/classify-with-ai";
-import {
-  detectContent,
-  kindPageTypes,
-  summaryHtml
-} from "@/features/courses/lib/content-detection";
+import { detectContent, kindPageTypes } from "@/features/courses/lib/content-detection";
 import {
   parseImportFile,
+  pastedImport,
   fileImportKind,
   IMPORTABLE_FILE_EXTENSIONS
 } from "@/features/courses/lib/file-import";
+import { saveMediaImport } from "@/features/courses/lib/import-media";
+import { importFiles, saveImport, type ImportStatus } from "@/features/courses/lib/import-save";
 import {
   fetchLmsPage,
   isSignInPage,
+  knownJsRenderedHost,
   parseLmsPage,
   storePageImages,
   type ParsedImport
 } from "@/features/courses/lib/lms-import";
 import { pageTypeOptions } from "@/features/courses/lib/page-type/pageTypesState";
-import { createPage } from "@/features/courses/lib/page/actions";
 import { type Page } from "@/features/courses/lib/page/types";
 import {
   closeSchoolBrowser,
@@ -31,8 +31,6 @@ import {
   schoolBrowserKnownAvailable,
   watchSchoolBrowser
 } from "@/features/courses/lib/school-browser";
-import { makeFlashcardsForImport } from "@/features/flashcards/lib/autoFlashcards";
-import { addImportedTasks, pageTaskType } from "@/features/tasks/lib/fromImport";
 import { ApiError } from "@/shared/lib/api";
 import { useResetOnOpen } from "@/shared/lib/dialogState";
 import { errorMessage } from "@/shared/lib/errorMessage";
@@ -42,8 +40,9 @@ import { TextInput } from "@/shared/ui/Input";
 import Select from "@/shared/ui/Select";
 import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
-import { useEffect, useState, type DragEvent, type FormEvent } from "react";
+import { useEffect, useState, type ClipboardEvent, type DragEvent, type FormEvent } from "react";
 
+import ImportBatch, { mediaNote } from "./ImportBatch";
 import ImportFileSlot from "./ImportFileSlot";
 import ImportFindings, { pickAll, pickedValues, type Findings } from "./ImportFindings";
 import ImportProgress from "./ImportProgress";
@@ -62,7 +61,7 @@ const readingStages: Record<Source, string[]> = {
   ],
   file: [
     "Opening the file…",
-    "Reading the text…",
+    "Reading the text and pictures…",
     "Laying out headings, lists and tables…",
     "Finding activities, due dates and files…"
   ]
@@ -72,6 +71,12 @@ const schoolStages = ["Reading the page…", "Finding activities, due dates and 
 const signInNeeded = "This page needs you to sign in. Use Sign in to your school site below.";
 
 void schoolBrowserAvailable();
+
+function submitLabel(source: Source, fileCount: number, busy: boolean) {
+  if (busy) return "Reading…";
+  if (source === "url") return "Fetch page";
+  return fileCount > 1 ? `Import ${fileCount} files` : "Read file";
+}
 
 function isHttpUrl(value: string) {
   try {
@@ -86,6 +91,7 @@ export default function LmsImportForm({
   courseId,
   moduleId,
   initialSource = "url",
+  initialFiles,
   onImported,
   onClose
 }: Readonly<{
@@ -93,12 +99,17 @@ export default function LmsImportForm({
   courseId: number;
   moduleId: number;
   initialSource?: Source;
+  initialFiles?: File[];
   onImported: (pages: Page[]) => void;
   onClose: () => void;
 }>) {
   const [source, setSource] = useState<Source>(initialSource);
   const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [importSource, setImportSource] = useState<string | null>(null);
+  const [pasted, setPasted] = useState(false);
+  const [windowOffer, setWindowOffer] = useState<string | null>(null);
+  const [batch, setBatch] = useState<ImportStatus[] | null>(null);
   const [fetched, setFetched] = useState<ParsedImport | null>(null);
   const [findings, setFindings] = useState<Findings>(noFindings);
   const [guess, setGuess] = useState<Guess>();
@@ -112,9 +123,13 @@ export default function LmsImportForm({
   const [fromSchool, setFromSchool] = useState(false);
   const [importedTitles, setImportedTitles] = useState<string[]>([]);
   useResetOnOpen(open, () => {
-    setSource(initialSource);
+    setSource(initialFiles?.length ? "file" : initialSource);
     setUrl("");
-    setFile(null);
+    setFiles([]);
+    setImportSource(null);
+    setPasted(false);
+    setWindowOffer(null);
+    setBatch(null);
     setFetched(null);
     setFindings(noFindings);
     setGuess(undefined);
@@ -125,6 +140,7 @@ export default function LmsImportForm({
     setDragActive(false);
     setFromSchool(false);
     setImportedTitles([]);
+    if (initialFiles?.length) takeFiles(initialFiles);
   });
 
   useEffect(() => {
@@ -149,6 +165,7 @@ export default function LmsImportForm({
             "Couldn’t find any content on this page. Go to the page itself, then try again."
           );
         preview(parsed, page.url);
+        setImportSource(page.url);
         setFromSchool(true);
       } catch (caught) {
         setError(
@@ -170,6 +187,17 @@ export default function LmsImportForm({
       void closeSchoolBrowser();
     };
   }, [schoolOpen]);
+
+  async function openInWindow(address: string) {
+    setError("");
+    try {
+      await openSchoolBrowser(address);
+      setWindowOffer(null);
+      setSchoolOpen(true);
+    } catch (caught) {
+      setError(errorMessage(caught, "Couldn’t open the browser window. Try again."));
+    }
+  }
 
   async function signIn() {
     setError("");
@@ -222,18 +250,80 @@ export default function LmsImportForm({
 
   async function chooseFile() {
     try {
-      const [picked] = await pickFiles({ extensions: IMPORTABLE_FILE_EXTENSIONS });
-      if (!picked) return;
+      const picked = await pickFiles({ extensions: IMPORTABLE_FILE_EXTENSIONS, multiple: true });
+      if (!picked.length) return;
       setError("");
-      setFile(picked);
+      setFiles(picked);
     } catch (error_) {
       setError(errorMessage(error_, "Couldn’t open the file picker. Try again."));
     }
   }
 
+  function takeFiles(chosen: File[]) {
+    const skipped = chosen.filter((item) => !fileImportKind(item)).map((item) => `“${item.name}”`);
+    setError(
+      skipped.length
+        ? `Can’t import ${skipped.join(", ")}. Choose PDF, Word, Markdown or text files, pictures, audio or video.`
+        : ""
+    );
+    const importable = chosen.filter((item) => fileImportKind(item));
+    if (importable.length) setFiles(importable);
+  }
+
   function switchSource(next: Source) {
     setSource(next);
     setError("");
+    setWindowOffer(null);
+  }
+
+  function handlePaste(event: ClipboardEvent<HTMLFormElement>) {
+    if (busy) return;
+    const picture = Array.from(event.clipboardData.files).find((item) =>
+      item.type.startsWith("image/")
+    );
+    if (picture) {
+      event.preventDefault();
+      const stamp = new Date()
+        .toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+        .replace(/[/:]/g, ".");
+      setFiles([
+        new File([picture], `Pasted picture ${stamp}.${picture.type.split("/")[1] || "png"}`, {
+          type: picture.type
+        })
+      ]);
+      setSource("file");
+      setError("");
+      return;
+    }
+    if (event.target instanceof HTMLInputElement) return;
+    const text = event.clipboardData.getData("text/plain").trim();
+    if (!text) return;
+    event.preventDefault();
+    setError("");
+    if (isHttpUrl(text)) {
+      setSource("url");
+      setUrl(text);
+      return;
+    }
+    preview(pastedImport(text, event.clipboardData.getData("text/html")));
+    setImportSource(null);
+    setPasted(true);
+  }
+
+  async function runBatch() {
+    setBatch(files.map(() => ({ state: "waiting" })));
+    await importFiles(
+      files,
+      courseId,
+      moduleId,
+      (index, status) =>
+        setBatch(
+          (current) =>
+            current?.map((item, itemIndex) => (itemIndex === index ? status : item)) ?? null
+        ),
+      (page) => onImported([page])
+    );
+    setBusy(false);
   }
 
   function handleDragOver(event: DragEvent<HTMLFormElement>) {
@@ -246,15 +336,10 @@ export default function LmsImportForm({
     event.preventDefault();
     setDragActive(false);
     if (busy || fetched) return;
-    const dropped = event.dataTransfer.files[0];
-    if (!dropped) return;
+    const dropped = Array.from(event.dataTransfer.files);
+    if (!dropped.length) return;
     setSource("file");
-    if (!fileImportKind(dropped)) {
-      setError(`Can’t import “${dropped.name}” — choose a .md, .docx, or .pdf file.`);
-      return;
-    }
-    setError("");
-    setFile(dropped);
+    takeFiles(dropped);
   }
 
   async function fetchAndParse(event: FormEvent<HTMLFormElement>) {
@@ -262,24 +347,50 @@ export default function LmsImportForm({
     if (busy) return;
     setBusy(true);
     setError("");
+    setWindowOffer(null);
+    const address = url.trim();
     try {
       let parsed: ParsedImport;
       if (source === "url") {
+        if (schoolAvailable && isHttpUrl(address) && knownJsRenderedHost(address)) {
+          setError(
+            `${knownJsRenderedHost(address)} builds its pages with JavaScript, so mneme reads it in a browser window.`
+          );
+          setWindowOffer(address);
+          setBusy(false);
+          return;
+        }
         const html = await fetchLmsPage(url);
         if (schoolAvailable && isSignInPage(html)) throw new Error(signInNeeded);
-        parsed = parseLmsPage(html, url.trim());
+        parsed = readArticle(html, address) ?? parseLmsPage(html, address);
       } else {
-        if (!file) throw new Error("Choose a file to import.");
-        parsed = await parseImportFile(file);
+        if (!files.length) throw new Error("Choose a file to import.");
+        if (files.length > 1) {
+          await runBatch();
+          return;
+        }
+        parsed = await parseImportFile(files[0]);
       }
-      if (!parsed.html) {
-        setError(
-          "Couldn’t find any content there. If it’s a page that loads its content with JavaScript (an app-like site rather than a plain document), this import can’t read it."
-        );
+      setImportSource(source === "url" ? address : files[0].name);
+      setPasted(false);
+      if (parsed.media) {
+        setFetched(parsed);
+        setGuess(undefined);
+        setFindings(noFindings);
         setBusy(false);
         return;
       }
-      preview(parsed, source === "url" ? url.trim() : undefined);
+      if (!parsed.html) {
+        setError(
+          schoolAvailable && source === "url"
+            ? "Couldn’t find any content there. It may build its page with JavaScript: open it in a browser window and import what it shows."
+            : "Couldn’t find any content there. If it’s a page that loads its content with JavaScript (an app-like site rather than a plain document), this import can’t read it."
+        );
+        if (schoolAvailable && source === "url") setWindowOffer(address);
+        setBusy(false);
+        return;
+      }
+      preview(parsed, source === "url" ? address : undefined);
       setBusy(false);
     } catch (caught) {
       const needsSignIn =
@@ -302,8 +413,22 @@ export default function LmsImportForm({
     setBusy(true);
     setError("");
     try {
+      if (fetched.media) {
+        const page = await saveMediaImport({
+          courseId,
+          moduleId,
+          title: fetched.title,
+          type: fetched.type,
+          media: fetched.media
+        });
+        complete(() => {
+          onImported([page]);
+          onClose();
+        });
+        return;
+      }
       const html =
-        source === "url"
+        source === "url" || pasted
           ? await storePageImages(
               fetched.html,
               (done, total) => setSaved({ done, total }),
@@ -316,25 +441,14 @@ export default function LmsImportForm({
         activities: pickedValues(findings.activities),
         files: pickedValues(findings.files)
       };
-      const summary = summaryHtml(picked);
-      const page = await createPage(moduleId, {
-        title: fetched.title,
-        type: fetched.type,
-        content: summary + html
-      });
-      await addImportedTasks({
-        page,
-        pageTask: pageTaskType(fetched.type, guess?.kind),
-        activities: picked.activities,
-        dueDates: picked.dueDates,
+      const page = await saveImport({
         courseId,
-        moduleId
-      }).catch(() => 0);
-      void makeFlashcardsForImport(moduleId, {
-        id: page.id,
-        title: page.title,
-        content: html
-      }).catch(() => undefined);
+        moduleId,
+        parsed: { ...fetched, html },
+        findings: picked,
+        kind: guess?.kind,
+        source: importSource
+      });
       if (fromSchool) {
         onImported([page]);
         setImportedTitles([...importedTitles, page.title]);
@@ -356,11 +470,32 @@ export default function LmsImportForm({
   return (
     <Dialog open={open} title="Import" onClose={onClose} busy={busy}>
       {(close, complete) =>
-        fetched === null && schoolOpen ? (
+        batch ? (
+          <div>
+            <ImportBatch
+              names={files.map((file) => file.name)}
+              statuses={batch}
+              note={mediaNote(files)}
+            />
+            <div className={clsx("mt-8 flex justify-end gap-3 border-t border-ink/10 pt-5")}>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={close}
+                className={clsx(
+                  "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+                  "hover:bg-action/85 disabled:opacity-50"
+                )}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : fetched === null && schoolOpen ? (
           <div>
             <BodyText>
-              Sign in to your school in the window beside mneme, go to the page you want, then press{" "}
-              <strong className={clsx("font-medium")}>Import this page</strong> there.
+              In the window beside mneme, sign in if the site asks, go to the page you want, then
+              press <strong className={clsx("font-medium")}>Import this page</strong> there.
             </BodyText>
             {importedTitles.length > 0 && (
               <div className={clsx("mt-5")}>
@@ -405,6 +540,7 @@ export default function LmsImportForm({
             onDragOver={handleDragOver}
             onDragLeave={() => setDragActive(false)}
             onDrop={handleDrop}
+            onPaste={handlePaste}
           >
             <div
               role="group"
@@ -420,7 +556,7 @@ export default function LmsImportForm({
                   source === "url" ? "bg-ink/10 text-ink" : "text-muted hover:text-ink"
                 )}
               >
-                From URL
+                From a link
               </button>
               <button
                 type="button"
@@ -431,7 +567,7 @@ export default function LmsImportForm({
                   source === "file" ? "bg-ink/10 text-ink" : "text-muted hover:text-ink"
                 )}
               >
-                From file
+                From files
               </button>
             </div>
             <div
@@ -454,17 +590,17 @@ export default function LmsImportForm({
                     placeholder="https://school.edu/course/module/123"
                     hint={
                       schoolAvailable
-                        ? "Paste a public course or module page. For pages that need a login, sign in to your school site."
-                        : "Paste a public course or module page. Pages that require login aren’t supported yet."
+                        ? "A course page, an article or any website. For pages that need a login, sign in to your school site."
+                        : "A public course page, an article or any website. Pages that require login aren’t supported yet."
                     }
                   />
                 ) : (
                   <ImportFileSlot
-                    file={file}
+                    files={files}
                     dragging={dragActive}
                     disabled={busy}
                     onChoose={() => void chooseFile()}
-                    onClear={() => setFile(null)}
+                    onRemove={(removed) => setFiles(files.filter((item) => item !== removed))}
                   />
                 )}
               </fieldset>
@@ -485,7 +621,7 @@ export default function LmsImportForm({
                 <Caption tone="muted" className={clsx("mt-3 text-center")}>
                   {dragActive
                     ? "Drop to import the file instead"
-                    : "or drag a PDF, Word or Markdown file in from anywhere in this window"}
+                    : "Drag files in, or paste a picture or text with ⌘V"}
                 </Caption>
               )}
             </div>
@@ -494,6 +630,18 @@ export default function LmsImportForm({
               <BodyText role="alert" tone="error" className={clsx("mt-4")}>
                 {error}
               </BodyText>
+            )}
+            {windowOffer && (
+              <button
+                type="button"
+                onClick={() => void openInWindow(windowOffer)}
+                className={clsx(
+                  "mt-3 text-sm font-medium underline underline-offset-4",
+                  "hover:text-muted"
+                )}
+              >
+                Open in a browser window
+              </button>
             )}
             <div className={clsx("mt-8 flex justify-end gap-3 border-t border-ink/10 pt-5")}>
               <button
@@ -515,7 +663,7 @@ export default function LmsImportForm({
                   "hover:bg-action/85"
                 )}
               >
-                {busy ? "Reading…" : source === "url" ? "Fetch page" : "Read file"}
+                {submitLabel(source, files.length, busy)}
               </button>
             </div>
           </form>

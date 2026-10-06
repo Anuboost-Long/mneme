@@ -1,9 +1,12 @@
 import { PageType } from "./page/types";
 
+export type ImportMedia = { kind: "audio" | "video"; file: File };
+
 export type ParsedImport = {
   title: string;
   type: PageType;
   html: string;
+  media?: ImportMedia;
 };
 
 const TYPE_PATTERNS: [RegExp, PageType][] = [
@@ -103,7 +106,8 @@ function resolveUrl(
   }
 }
 
-const SECTION_LINE = /^(?:week|module|topic|lesson|lecture|unit|session|part|section|chapter)\s+(?:\d+|[ivx]+|[a-z])\b/i;
+const SECTION_LINE =
+  /^(?:week|module|topic|lesson|lecture|unit|session|part|section|chapter)\s+(?:\d+|[ivx]+|[a-z])\b/i;
 const MAX_HEADING_LINE = 80;
 
 function isHeadingLine(element: Element) {
@@ -111,7 +115,10 @@ function isHeadingLine(element: Element) {
   const text = (element.textContent ?? "").replace(/\s+/g, " ").trim();
   if (!text || text.length > MAX_HEADING_LINE || /[.!?,;]$/.test(text)) return false;
   if (SECTION_LINE.test(text)) return true;
-  const bold = Array.from(element.querySelectorAll("strong, b"), (part) => part.textContent ?? "").join("");
+  const bold = Array.from(
+    element.querySelectorAll("strong, b"),
+    (part) => part.textContent ?? ""
+  ).join("");
   return bold.replace(/\s+/g, " ").trim() === text;
 }
 
@@ -169,7 +176,10 @@ const ACTIVITY_WORDS = [
   "problem set",
   "knowledge check"
 ].join("|");
-const ACTIVITY_NAME = new RegExp(String.raw`^(${ACTIVITY_WORDS})s?\b\s*([\d.]+[a-z]?)?\s*([:.\-–—]\s*\S.*)?$`, "i");
+const ACTIVITY_NAME = new RegExp(
+  String.raw`^(${ACTIVITY_WORDS})s?\b\s*([\d.]+[a-z]?)?\s*([:.\-–—]\s*\S.*)?$`,
+  "i"
+);
 const NAMED_BY_MARKUP = "h1, h2, h3, h4, h5, h6, a, strong, b";
 const MAX_ACTIVITY_LENGTH = 100;
 const MAX_ACTIVITIES = 30;

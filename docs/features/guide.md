@@ -28,7 +28,7 @@ screenshots from the app, so features stay findable as more ship.
 1. Take the screenshots in the dev build with `npx chain inspect`
    (`--focus`, then `--screenshot`), stopping at previews so nothing is
    saved.
-2. Shrink them to 720 px wide JPEGs in `src/features/guide/assets/`,
+2. Shrink them to 1600 px wide JPEGs in `src/features/guide/assets/`,
    named for what they show.
 3. Add the topic to `guideTopics` in `src/features/guide/lib/topics.ts`.
 

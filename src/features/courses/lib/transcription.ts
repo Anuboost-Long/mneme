@@ -77,12 +77,8 @@ export function transcribeOptions(
 }
 
 // Transcribes with the engine and language the user last picked in a
-// transcript panel, or the first available ones, and saves the transcript
-// on the recording. Returns its text.
-export async function transcribeRecording(
-  recording: Recording,
-  onProgress: (progress: number) => void
-) {
+// transcript panel, or the first available ones.
+export async function transcribeFile(reference: string, onProgress: (progress: number) => void) {
   const [deviceLocales, installed] = await Promise.all([
     desktop.speech.locales().catch(() => [] as string[]),
     refreshExtensions()
@@ -98,10 +94,16 @@ export async function transcribeRecording(
       "No transcription engine is set up. Add a speech model in Settings, Extensions."
     );
   const locales = model ? (model.languages ?? ["", ...WHISPER_LANGUAGES]) : system;
-  const transcript = await desktop.speech.transcribe(
-    recording.file_reference,
+  return desktop.speech.transcribe(
+    reference,
     transcribeOptions(model, preferredLocale(locales)),
     onProgress
   );
-  return saveTranscript(recording.id, transcript);
+}
+
+export async function transcribeRecording(
+  recording: Recording,
+  onProgress: (progress: number) => void
+) {
+  return saveTranscript(recording.id, await transcribeFile(recording.file_reference, onProgress));
 }
