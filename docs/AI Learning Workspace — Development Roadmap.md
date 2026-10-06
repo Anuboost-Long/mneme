@@ -1575,17 +1575,19 @@ Later:
 
 # 40. Phase 38 — AI Quiz
 
+> **Done — 6 October 2026.** See [AI Quiz](features/38-ai-quiz.md).
+
 ## Development Steps
 
-- [ ] Generate multiple-choice questions.
-- [ ] Generate true/false questions.
-- [ ] Generate short-answer questions.
-- [ ] Hide answers initially.
-- [ ] Submit response.
-- [ ] Show explanation.
-- [ ] Track score.
-- [ ] Generate quiz from page.
-- [ ] Generate quiz from module.
+- [x] Generate multiple-choice questions. (Options shuffled so the right one moves around.)
+- [x] Generate true/false questions.
+- [x] Generate short-answer questions. (The student marks themselves against the model answer.)
+- [x] Hide answers initially.
+- [x] Submit response. (Check answer; keys 1–4 pick an option.)
+- [x] Show explanation. (With a link to the page it came from.)
+- [x] Track score. (Every finished attempt; the Quizzes screen shows last and best.)
+- [x] Generate quiz from page. (New quiz → Questions from, or ⌘P → Make a quiz on the page.)
+- [x] Generate quiz from module. (Module → Quizzes → New quiz.)
 
 ---
 

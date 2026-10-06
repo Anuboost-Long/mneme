@@ -12,6 +12,8 @@ import HomeRoute from "./routes/HomeRoute";
 import ModuleHighlightsRoute from "./routes/ModuleHighlightsRoute";
 import ModuleRoute from "./routes/ModuleRoute";
 import PageRoute from "./routes/PageRoute";
+import QuizRoute from "./routes/QuizRoute";
+import QuizzesRoute from "./routes/QuizzesRoute";
 import RecentlyDeletedRoute from "./routes/RecentlyDeletedRoute";
 import RecordingsRoute from "./routes/RecordingsRoute";
 import SettingsRoute from "./routes/SettingsRoute";
@@ -39,6 +41,8 @@ export const router = createBrowserRouter([
         path: "courses/:courseId/modules/:moduleId/flashcards/review",
         element: <FlashcardReviewRoute />
       },
+      { path: "courses/:courseId/modules/:moduleId/quizzes", element: <QuizzesRoute /> },
+      { path: "courses/:courseId/modules/:moduleId/quizzes/:quizId", element: <QuizRoute /> },
       { path: "courses/:courseId/modules/:moduleId/pages/:pageId", element: <PageRoute /> },
       { path: "settings", element: <SettingsRoute /> },
       { path: "settings/:section", element: <SettingsRoute /> },

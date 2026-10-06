@@ -142,6 +142,12 @@ export default function ModulePage({
           run: () => setFindingTasks(true)
         },
         {
+          id: "module-quizzes",
+          label: "Quizzes",
+          detail: module.name,
+          run: () => navigate(`/courses/${module.course_id}/modules/${module.id}/quizzes`)
+        },
+        {
           id: "module-flashcards",
           label: "Flashcards",
           detail: module.name,
@@ -407,6 +413,15 @@ export default function ModulePage({
             )}
           >
             Flashcards
+          </Link>
+          <Link
+            to={`/courses/${course.id}/modules/${module.id}/quizzes`}
+            className={clsx(
+              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+              "hover:bg-ink/5"
+            )}
+          >
+            Quizzes
           </Link>
           <button
             type="button"

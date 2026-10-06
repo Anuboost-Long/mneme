@@ -6,6 +6,9 @@ import type { HomeLayoutRow } from "@/shared/lib/db/schema/home-layout";
 import type { HomeWidgetRow } from "@/shared/lib/db/schema/home-widget";
 import type { ModuleRow } from "@/shared/lib/db/schema/module";
 import type { PageRow } from "@/shared/lib/db/schema/page";
+import type { QuizAttemptRow } from "@/shared/lib/db/schema/quiz-attempt";
+import type { QuizQuestionRow } from "@/shared/lib/db/schema/quiz-question";
+import type { QuizRow } from "@/shared/lib/db/schema/quiz";
 import type { RecordingRow } from "@/shared/lib/db/schema/recording";
 import type { TaskRow } from "@/shared/lib/db/schema/task";
 
@@ -22,5 +25,8 @@ export type Backup = {
   pageTypes?: CustomPageTypeRow[];
   flashcards?: FlashcardRow[];
   tasks?: TaskRow[];
+  quizzes?: QuizRow[];
+  quizQuestions?: QuizQuestionRow[];
+  quizAttempts?: QuizAttemptRow[];
   files?: Record<string, Uint8Array>;
 };

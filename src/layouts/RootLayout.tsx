@@ -18,6 +18,7 @@ import { deleteOrphanCards } from "@/features/flashcards/lib/card/actions";
 import { unloadVoiceWhenIdle } from "@/features/read-aloud/lib/downloadedVoicePlayer";
 import { purgeExpiredItems } from "@/features/recently-deleted/lib/deleted-item/actions";
 import { updateSearchIndex } from "@/features/search/lib/searchIndex";
+import { deleteOrphanQuizzes } from "@/features/quizzes/lib/quiz/actions";
 import { deleteOrphanTasks } from "@/features/tasks/lib/task/actions";
 import { initDb } from "@/shared/lib/db";
 import { useShortcut, useShortcuts } from "@/shared/lib/shortcuts/shortcutsState";
@@ -113,6 +114,7 @@ export default function RootLayout() {
       .then(purgeExpiredItems)
       .then(deleteOrphanCards)
       .then(deleteOrphanTasks)
+      .then(deleteOrphanQuizzes)
       .then(() => {
         void storeInlinePageImages().catch(() => undefined);
         void storeInlineIcons().catch(() => undefined);

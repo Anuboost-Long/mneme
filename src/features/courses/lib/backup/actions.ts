@@ -28,7 +28,10 @@ export async function createBackup(): Promise<Backup> {
     layouts,
     pageTypes,
     flashcards,
-    tasks
+    tasks,
+    quizzes,
+    quizQuestions,
+    quizAttempts
   ] = await getBackupRows();
   const references = new Set([
     ...courses.flatMap((course) => [course.cover, course.icon]),
@@ -56,6 +59,9 @@ export async function createBackup(): Promise<Backup> {
     pageTypes,
     flashcards,
     tasks,
+    quizzes,
+    quizQuestions,
+    quizAttempts,
     files
   };
 }
@@ -274,6 +280,36 @@ export async function restoreBackup(backup: Backup) {
       updated_at: task.updated_at
     });
   }
+  for (const quiz of backup.quizzes ?? [])
+    await insertIfMissing("quiz", {
+      id: quiz.id,
+      module_id: quiz.module_id,
+      page_id: quiz.page_id,
+      title: quiz.title,
+      created_at: quiz.created_at,
+      updated_at: quiz.updated_at
+    });
+  for (const question of backup.quizQuestions ?? [])
+    await insertIfMissing("quiz_question", {
+      id: question.id,
+      quiz_id: question.quiz_id,
+      position: question.position,
+      kind: question.kind,
+      prompt: question.prompt,
+      choices: question.choices,
+      answer: question.answer,
+      explanation: question.explanation,
+      page_id: question.page_id
+    });
+  for (const attempt of backup.quizAttempts ?? [])
+    await insertIfMissing("quiz_attempt", {
+      id: attempt.id,
+      quiz_id: attempt.quiz_id,
+      score: attempt.score,
+      total: attempt.total,
+      answers: attempt.answers,
+      created_at: attempt.created_at
+    });
   for (const layout of backup.layouts ?? []) {
     await insertIfMissing("home_layout", {
       name: layout.name,

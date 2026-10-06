@@ -11,16 +11,18 @@ import type { Course } from "@/features/courses/lib/course/types";
 import { pageTypeLabel } from "@/features/courses/lib/page-type/pageTypesState";
 import { setPageDone, updatePage } from "@/features/courses/lib/page/actions";
 import type { Page } from "@/features/courses/lib/page/types";
+import NewQuizDialog from "@/features/quizzes/components/NewQuizDialog";
 import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
 import { elementChunk, elementChunks } from "@/features/read-aloud/lib/readableText";
 import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
+import { addCommandSource } from "@/shared/lib/commandSources";
 import { errorMessage } from "@/shared/lib/errorMessage";
 import { useFileUrl } from "@/shared/lib/useFileUrl";
 import CourseIcon from "@/shared/ui/CourseIcon";
 import { BodyText, PageTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function asSibling(page: Page): Sibling {
   return { id: page.id, name: page.title, icon: page.icon };
@@ -49,7 +51,8 @@ export default function PageDetailPage({
   onChangeCourseProfile: (id: number | null) => Promise<void>;
   onDeletePage: () => void;
 }>) {
-  const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
+  const [dialog, setDialog] = useState<"edit" | "delete" | "quiz" | null>(null);
+  const navigate = useNavigate();
   const [audioView, setAudioView] = useState<"closed" | "download" | "play">("closed");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [doneError, setDoneError] = useState<string | null>(null);
@@ -84,6 +87,14 @@ export default function PageDetailPage({
   }
 
   useEffect(() => setAudioView("closed"), [page?.id]);
+
+  useEffect(() => {
+    if (!page) return;
+    return addCommandSource({
+      group: "This page",
+      load: async () => [{ id: "page-make-quiz", label: "Make a quiz", detail: page.title, run: () => setDialog("quiz") }]
+    });
+  }, [page?.id, page?.title]);
 
   function listen() {
     setAudioView("closed");
@@ -404,6 +415,15 @@ export default function PageDetailPage({
         page={page}
         onClose={() => setDialog(null)}
         onDelete={onDeletePage}
+      />
+      <NewQuizDialog
+        open={dialog === "quiz"}
+        courseId={course.id}
+        module={{ id: page.module_id, name: moduleName ?? "Module" }}
+        pages={modulePages}
+        pageId={page.id}
+        onCreated={(quizId) => navigate(`/courses/${course.id}/modules/${page.module_id}/quizzes/${quizId}`)}
+        onClose={() => setDialog(null)}
       />
     </div>
   );

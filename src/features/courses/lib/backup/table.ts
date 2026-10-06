@@ -6,11 +6,15 @@ import type { HomeLayoutRow } from "@/shared/lib/db/schema/home-layout";
 import type { HomeWidgetRow } from "@/shared/lib/db/schema/home-widget";
 import type { ModuleRow } from "@/shared/lib/db/schema/module";
 import type { PageRow } from "@/shared/lib/db/schema/page";
+import type { QuizAttemptRow } from "@/shared/lib/db/schema/quiz-attempt";
+import type { QuizQuestionRow } from "@/shared/lib/db/schema/quiz-question";
+import type { QuizRow } from "@/shared/lib/db/schema/quiz";
 import type { RecordingRow } from "@/shared/lib/db/schema/recording";
 import type { TaskRow } from "@/shared/lib/db/schema/task";
 import { desktop, sql, type Values } from "@chain/sdk";
 
 const livePageIds = sql`page_id IN (SELECT id FROM page WHERE deleted_at IS NULL)`;
+const liveQuizzes = sql`module_id IN (SELECT id FROM module WHERE deleted_at IS NULL)`;
 
 export function getBackupRows() {
   return Promise.all([
@@ -40,7 +44,10 @@ export function getBackupRows() {
           AND (module_id IS NULL OR module_id IN (SELECT id FROM module WHERE deleted_at IS NULL))`
       )
       .orderBy("id")
-      .all()
+      .all(),
+    desktop.storage.table<QuizRow>("quiz").where(liveQuizzes).orderBy("id").all(),
+    desktop.storage.table<QuizQuestionRow>("quiz_question").where(sql`quiz_id IN (SELECT id FROM quiz WHERE ${liveQuizzes})`).orderBy("id").all(),
+    desktop.storage.table<QuizAttemptRow>("quiz_attempt").where(sql`quiz_id IN (SELECT id FROM quiz WHERE ${liveQuizzes})`).orderBy("id").all()
   ]);
 }
 
@@ -55,7 +62,16 @@ export async function insertHomeWidgets(rows: HomeWidgetRow[]) {
 }
 
 type RestoredTable =
-  "course" | "module" | "page" | "home_layout" | "custom_page_type" | "flashcard" | "task";
+  | "course"
+  | "module"
+  | "page"
+  | "home_layout"
+  | "custom_page_type"
+  | "flashcard"
+  | "task"
+  | "quiz"
+  | "quiz_question"
+  | "quiz_attempt";
 
 export async function insertIfMissing(table: RestoredTable, values: Record<string, unknown>) {
   const columns = Object.keys(values);

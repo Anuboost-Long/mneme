@@ -2,7 +2,7 @@ import type { Course } from "@/features/courses/lib/course/types";
 import type { Module } from "@/features/courses/lib/module/types";
 import type { Page } from "@/features/courses/lib/page/types";
 import CardForm from "@/features/flashcards/components/CardForm";
-import DeckHeader from "@/features/flashcards/components/DeckHeader";
+import ModuleSubpageHeader from "@/features/courses/components/ModuleSubpageHeader";
 import DeckMissing from "@/features/flashcards/components/DeckMissing";
 import {
   makeFlashcards,
@@ -79,7 +79,7 @@ export default function FlashcardsPage({
 
   return (
     <div className={clsx("px-4 py-5 sm:px-6")}>
-      <DeckHeader course={course} module={module} current="Flashcards" />
+      <ModuleSubpageHeader course={course} module={module} trail={[{ label: "Flashcards" }]} />
       <div className={clsx("mt-6 flex flex-wrap items-end justify-between gap-4")}>
         <div className={clsx("min-w-0")}>
           <PageTitle className={clsx("wrap-anywhere")}>{module.name} flashcards</PageTitle>

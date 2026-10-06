@@ -18,7 +18,7 @@ function pageText(page: Pick<Page, "content">) {
   return (document.body.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
-function material(pages: Pick<Page, "id" | "title" | "content">[]) {
+export function material(pages: Pick<Page, "id" | "title" | "content">[]) {
   const budget = Math.floor(MATERIAL_CHARACTERS / Math.max(pages.length, 1));
   return pages
     .map(

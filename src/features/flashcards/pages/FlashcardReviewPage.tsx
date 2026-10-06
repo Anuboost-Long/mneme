@@ -1,6 +1,6 @@
 import type { Course } from "@/features/courses/lib/course/types";
 import type { Module } from "@/features/courses/lib/module/types";
-import DeckHeader from "@/features/flashcards/components/DeckHeader";
+import ModuleSubpageHeader from "@/features/courses/components/ModuleSubpageHeader";
 import DeckMissing from "@/features/flashcards/components/DeckMissing";
 import { deckCounts, reviewCard } from "@/features/flashcards/lib/card/actions";
 import type { Flashcard } from "@/features/flashcards/lib/card/types";
@@ -107,7 +107,11 @@ export default function FlashcardReviewPage({
 
   return (
     <div className={clsx("px-4 py-5 sm:px-6")}>
-      <DeckHeader course={course} module={module} current="Study" />
+      <ModuleSubpageHeader
+        course={course}
+        module={module}
+        trail={[{ label: "Flashcards", to: `/courses/${course.id}/modules/${module.id}/flashcards` }, { label: "Study" }]}
+      />
       <div className={clsx("mt-6 flex items-baseline justify-between gap-4")}>
         <PageTitle className={clsx("min-w-0 wrap-anywhere")}>{module.name}</PageTitle>
         {card && (
