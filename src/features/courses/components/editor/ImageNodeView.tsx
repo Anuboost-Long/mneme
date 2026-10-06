@@ -1,11 +1,17 @@
+import { useOpenedOnce } from "@/shared/lib/dialogState";
+import { hideUntilPlaced, placePopover } from "@/shared/lib/placePopover";
+import { BodyText } from "@/shared/ui/Typography";
 import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
 import clsx from "clsx";
-import { useId, useRef, useState, type PointerEvent as ReactPointerEvent, type ToggleEvent } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ToggleEvent
+} from "react";
 import { createPortal } from "react-dom";
 
-import { useOpenedOnce } from "../../../../shared/lib/dialogState";
-import { hideUntilPlaced, placePopover } from "../../../../shared/lib/placePopover";
-import { BodyText } from "../../../../shared/ui/Typography";
 import type { ImageAiAction, ImageAlign } from "./AlignableImage";
 import ExtractTableDialog from "./ExtractTableDialog";
 import ExtractTextDialog, { type ExtractPlacement } from "./ExtractTextDialog";
@@ -20,7 +26,11 @@ const aligns: { value: ImageAlign; label: string; path: string }[] = [
 
 const MIN_WIDTH = 80;
 
-const captionAligns: Record<ImageAlign, string> = { left: "text-left", center: "text-center", right: "text-right" };
+const captionAligns: Record<ImageAlign, string> = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right"
+};
 
 const menuItem = clsx(
   "flex w-full items-center rounded-md px-3 py-2 text-left",
@@ -110,7 +120,12 @@ export default function ImageNodeView({
   function insertTables(html: string, placement: ExtractPlacement) {
     setExtracting(null);
     const range = placementRange(placement);
-    if (range) editor.chain().focus().insertContentAt(range.to === undefined ? range.from : range, html).run();
+    if (range)
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(range.to === undefined ? range.from : range, html)
+        .run();
   }
 
   return (
@@ -207,7 +222,17 @@ export default function ImageNodeView({
             "hover:bg-ink/5 hover:text-ink"
           )}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
           </svg>
         </button>
@@ -233,18 +258,38 @@ export default function ImageNodeView({
           popover="auto"
           onBeforeToggle={(event) => hideUntilPlaced(event.currentTarget, event.newState)}
           onToggle={placeMenu}
-          className={clsx("fixed m-0 w-48 rounded-lg", "border border-ink/20 bg-surface shadow-lg", "p-1 text-sm text-ink")}
+          className={clsx(
+            "fixed m-0 w-48 rounded-lg",
+            "border border-ink/20 bg-surface shadow-lg",
+            "p-1 text-sm text-ink"
+          )}
         >
-          <button type="button" onClick={() => choose(() => void runAi("explain"))} className={menuItem}>
+          <button
+            type="button"
+            onClick={() => choose(() => void runAi("explain"))}
+            className={menuItem}
+          >
             Explain image
           </button>
-          <button type="button" onClick={() => choose(() => void runAi("summarize"))} className={menuItem}>
+          <button
+            type="button"
+            onClick={() => choose(() => void runAi("summarize"))}
+            className={menuItem}
+          >
             Summarize image
           </button>
-          <button type="button" onClick={() => choose(() => setExtracting("text"))} className={clsx(menuItem, "mt-1 border-t border-ink/10")}>
+          <button
+            type="button"
+            onClick={() => choose(() => setExtracting("text"))}
+            className={clsx(menuItem, "mt-1 border-t border-ink/10")}
+          >
             Extract text
           </button>
-          <button type="button" onClick={() => choose(() => setExtracting("table"))} className={menuItem}>
+          <button
+            type="button"
+            onClick={() => choose(() => setExtracting("table"))}
+            className={menuItem}
+          >
             Extract table
           </button>
         </div>

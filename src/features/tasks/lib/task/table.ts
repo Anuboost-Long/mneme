@@ -1,6 +1,6 @@
+import type { TaskRow } from "@/shared/lib/db/schema/task";
 import { desktop, sql } from "@chain/sdk";
 
-import type { TaskRow } from "../../../../shared/lib/db/schema/task";
 import type { Task, TaskDraft, TaskFilter } from "./types";
 
 const taskTable = () => desktop.storage.table<TaskRow>("task");

@@ -1,16 +1,8 @@
-import clsx from "clsx";
-import { useState } from "react";
-import { Link } from "react-router-dom";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import { rowAction } from "../../../shared/ui/rowAction";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption, PageTitle, SectionTitle } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/course/types";
-import TaskCheck from "../components/TaskCheck";
-import TaskForm from "../components/TaskForm";
-import { completeTask, deleteTask } from "../lib/task/actions";
+import type { Course } from "@/features/courses/lib/course/types";
+import FindTasksDialog from "@/features/tasks/components/FindTasksDialog";
+import TaskCheck from "@/features/tasks/components/TaskCheck";
+import TaskForm from "@/features/tasks/components/TaskForm";
+import { completeTask, deleteTask } from "@/features/tasks/lib/task/actions";
 import {
   dueLabel,
   localDay,
@@ -19,7 +11,15 @@ import {
   taskTypeLabels,
   type Task,
   type TaskGroup
-} from "../lib/task/types";
+} from "@/features/tasks/lib/task/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import { rowAction } from "@/shared/ui/rowAction";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption, PageTitle, SectionTitle } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const openGroups: TaskGroup[] = ["overdue", "today", "week", "later", "undated"];
 
@@ -49,17 +49,23 @@ function TaskItem({
         <TaskCheck title={task.title} done={done} disabled={busy} onChange={onToggle} />
       </span>
       <div className={clsx("min-w-0 flex-1")}>
-        <p className={clsx("text-sm font-medium wrap-anywhere", done && "text-muted line-through")}>{task.title}</p>
+        <p className={clsx("text-sm font-medium wrap-anywhere", done && "text-muted line-through")}>
+          {task.title}
+        </p>
         <Caption tone="muted" className={clsx("mt-1 flex flex-wrap gap-x-3 gap-y-1")}>
           <span>{taskTypeLabels[task.type]}</span>
           {task.due_on && (
-            <span className={clsx(overdue && "font-medium text-danger")}>{dueLabel(task.due_on, today)}</span>
+            <span className={clsx(overdue && "font-medium text-danger")}>
+              {dueLabel(task.due_on, today)}
+            </span>
           )}
           {where && <span className={clsx("max-w-full truncate")}>{where}</span>}
           {task.page_id && task.page_title && task.course_id && task.module_id && (
             <Link
               to={`/courses/${task.course_id}/modules/${task.module_id}/pages/${task.page_id}`}
-              className={clsx("max-w-full truncate hover:text-ink hover:underline underline-offset-4")}
+              className={clsx(
+                "max-w-full truncate hover:text-ink hover:underline underline-offset-4"
+              )}
             >
               {task.page_title}
             </Link>
@@ -87,6 +93,7 @@ export default function TasksPage({
   const [courseFilter, setCourseFilter] = useState(0);
   const [dialog, setDialog] = useState<Dialog>({ kind: "new" });
   const [open, setOpen] = useState(false);
+  const [finding, setFinding] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
@@ -97,7 +104,9 @@ export default function TasksPage({
     const group = taskGroup(task, today);
     grouped.set(group, [...(grouped.get(group) ?? []), task]);
   }
-  const done = [...(grouped.get("done") ?? [])].sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
+  const done = [...(grouped.get("done") ?? [])].sort((a, b) =>
+    (b.completed_at ?? "").localeCompare(a.completed_at ?? "")
+  );
   const openCount = visible.length - done.length;
   const overdueCount = grouped.get("overdue")?.length ?? 0;
   const weekCount = (grouped.get("today")?.length ?? 0) + (grouped.get("week")?.length ?? 0);
@@ -149,13 +158,30 @@ export default function TasksPage({
                   .join(" · ")}
           </BodyText>
         </div>
-        <button
-          type="button"
-          onClick={() => show({ kind: "new" })}
-          className={clsx("rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action", "hover:bg-action/85")}
-        >
-          New task
-        </button>
+        <div className={clsx("flex gap-2")}>
+          {courses.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setFinding(true)}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+                "hover:bg-ink/5"
+              )}
+            >
+              Find tasks
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => show({ kind: "new" })}
+            className={clsx(
+              "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+              "hover:bg-action/85"
+            )}
+          >
+            New task
+          </button>
+        </div>
       </div>
       {courses.length > 0 && tasks.length > 0 && (
         <div className={clsx("mt-5 w-full sm:w-64")}>
@@ -164,7 +190,10 @@ export default function TasksPage({
             compact
             value={courseFilter}
             onChange={setCourseFilter}
-            options={[{ value: 0, label: "All courses" }, ...courses.map((course) => ({ value: course.id, label: course.name }))]}
+            options={[
+              { value: 0, label: "All courses" },
+              ...courses.map((course) => ({ value: course.id, label: course.name }))
+            ]}
           />
         </div>
       )}
@@ -182,7 +211,8 @@ export default function TasksPage({
         <div className={clsx("mt-6 border-t border-ink/10 py-16 text-center sm:py-24")}>
           <SectionTitle>No tasks yet</SectionTitle>
           <BodyText tone="muted" className={clsx("mx-auto mt-2 max-w-sm")}>
-            Import a module page with activities, or add a task of your own with New task.
+            Find tasks looks through a module’s pages for work to do, or add one of your own with
+            New task.
           </BodyText>
         </div>
       )}
@@ -197,7 +227,10 @@ export default function TasksPage({
                   as="h2"
                   id={`tasks-${group}`}
                   tone="muted"
-                  className={clsx("border-b border-ink/10 pb-2 font-medium", group === "overdue" && "text-danger")}
+                  className={clsx(
+                    "border-b border-ink/10 pb-2 font-medium",
+                    group === "overdue" && "text-danger"
+                  )}
                 >
                   {taskGroupLabels[group]} · {items.length}
                 </Caption>
@@ -220,6 +253,13 @@ export default function TasksPage({
           )}
         </div>
       )}
+      <FindTasksDialog
+        open={finding}
+        courses={courses}
+        courseId={courseFilter || undefined}
+        onAdded={() => void reload()}
+        onClose={() => setFinding(false)}
+      />
       <TaskForm
         open={open && dialog.kind !== "delete"}
         task={dialog.kind === "edit" ? dialog.task : null}
@@ -234,7 +274,9 @@ export default function TasksPage({
         message={dialog.kind === "delete" ? `“${dialog.task.title}” is deleted for good.` : ""}
         confirmLabel="Delete task"
         failure="Couldn’t delete this task. Try again."
-        onConfirm={() => (dialog.kind === "delete" ? deleteTask(dialog.task.id) : Promise.resolve())}
+        onConfirm={() =>
+          dialog.kind === "delete" ? deleteTask(dialog.task.id) : Promise.resolve()
+        }
         onClose={() => setOpen(false)}
         onDeleted={() => {
           setOpen(false);

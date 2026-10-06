@@ -1,5 +1,5 @@
-import type { AiActionRow } from "../../../../shared/lib/db/schema/ai-action";
-import type { PageType } from "../../../courses/lib/page/types";
+import type { PageType } from "@/features/courses/lib/page/types";
+import type { AiActionRow } from "@/shared/lib/db/schema/ai-action";
 
 export enum ActionScope {
   Page = 1,

@@ -1,18 +1,17 @@
+import { cancelCompile, compilePageAudio } from "@/features/audiobook/lib/page-audio/actions";
+import type { PageAudio } from "@/features/audiobook/lib/page-audio/types";
+import { useExtensions } from "@/features/extensions/lib/extensionsState";
+import type { ReadableChunk } from "@/features/read-aloud/lib/readableText";
+import { downloadedVoices, RATES } from "@/features/read-aloud/lib/useReadAloud";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { languageName } from "@/shared/lib/languageName";
+import Dialog from "@/shared/ui/Dialog";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { languageName } from "../../../shared/lib/languageName";
-import Dialog from "../../../shared/ui/Dialog";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { useExtensions } from "../../extensions/lib/extensionsState";
-import type { ReadableChunk } from "../../read-aloud/lib/readableText";
-import { downloadedVoices, RATES } from "../../read-aloud/lib/useReadAloud";
-import { cancelCompile, compilePageAudio } from "../lib/page-audio/actions";
-import type { PageAudio } from "../lib/page-audio/types";
 
 export default function CreateAudioDialog({
   open,

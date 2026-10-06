@@ -1,12 +1,17 @@
+import { Typography } from "@/shared/ui/Typography";
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
 import clsx from "clsx";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
-import { Typography } from "../Typography";
 import Calendar from "./Calendar";
 import { isDayOutOfBounds, parseIsoDate, toIsoDate, type DateBounds } from "./calendarGrid";
 
-const shownDate = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+const shownDate = new Intl.DateTimeFormat(undefined, {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  year: "numeric"
+});
 
 export default function DateField({
   label,
@@ -31,7 +36,11 @@ export default function DateField({
   useEffect(() => {
     if (!open) return;
     function dismissOnOutside(event: PointerEvent) {
-      if (event.target instanceof Node && (trigger.current?.contains(event.target) || panel.current?.contains(event.target))) return;
+      if (
+        event.target instanceof Node &&
+        (trigger.current?.contains(event.target) || panel.current?.contains(event.target))
+      )
+        return;
       setOpen(false);
     }
     document.addEventListener("pointerdown", dismissOnOutside);
@@ -83,7 +92,18 @@ export default function DateField({
           "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink"
         )}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={clsx("shrink-0 text-muted")}>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className={clsx("shrink-0 text-muted")}
+        >
           <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
           <path d="M3.5 10h17M8 3v4M16 3v4" />
         </svg>
@@ -102,7 +122,9 @@ export default function DateField({
           )}
         >
           <Calendar value={value} bounds={bounds} onSelect={pick} onEscape={close} />
-          <div className={clsx("mt-3 flex items-center justify-between border-t border-ink/10 pt-3")}>
+          <div
+            className={clsx("mt-3 flex items-center justify-between border-t border-ink/10 pt-3")}
+          >
             <button
               type="button"
               onClick={() => pick(todayIso)}
@@ -118,7 +140,10 @@ export default function DateField({
               type="button"
               onClick={() => pick(null)}
               disabled={!value}
-              className={clsx("rounded-md px-3 py-1.5 text-xs text-muted", "enabled:hover:bg-danger/10 enabled:hover:text-danger disabled:opacity-40")}
+              className={clsx(
+                "rounded-md px-3 py-1.5 text-xs text-muted",
+                "enabled:hover:bg-danger/10 enabled:hover:text-danger disabled:opacity-40"
+              )}
             >
               Clear date
             </button>

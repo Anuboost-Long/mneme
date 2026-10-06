@@ -1,4 +1,5 @@
-import { deleteSetting, getSettingId, putSetting } from "../../../../shared/lib/settings/actions";
+import { deleteSetting, getSettingId, putSetting } from "@/shared/lib/settings/actions";
+
 import {
   deleteProfileEverywhere,
   getCourseProfile,

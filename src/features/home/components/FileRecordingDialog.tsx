@@ -1,22 +1,22 @@
+import { getModuleDestinations } from "@/features/courses/lib/module/actions";
+import { appendToPage, createPage, erasePage } from "@/features/courses/lib/page/actions";
+import { PageType } from "@/features/courses/lib/page/types";
+import { createRecording, renameRecording } from "@/features/courses/lib/recording/actions";
+import { transcriptHtml, type RecordedAudio } from "@/features/courses/lib/recording/types";
+import { transcribeError, transcribeRecording } from "@/features/courses/lib/transcription";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import { pageLink } from "@/features/home/widgets/parts";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { formatDuration } from "@/shared/lib/formatDuration";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { formatDuration } from "../../../shared/lib/formatDuration";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getModuleDestinations } from "../../courses/lib/module/actions";
-import { appendToPage, createPage, erasePage } from "../../courses/lib/page/actions";
-import { PageType } from "../../courses/lib/page/types";
-import { createRecording, renameRecording } from "../../courses/lib/recording/actions";
-import { transcriptHtml, type RecordedAudio } from "../../courses/lib/recording/types";
-import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
-import { useWidgetData } from "../lib/useWidgetData";
-import { pageLink } from "../widgets/parts";
 import PagePicker, { type PageTarget } from "./PagePicker";
 
 export type Take = RecordedAudio;
@@ -247,8 +247,8 @@ export default function FileRecordingDialog({
             return (
               <div className={clsx("space-y-5")}>
                 <BodyText tone="muted">
-                  {formatDuration(take?.durationMs ?? 0)} recorded. Add it to the end of a page, start a
-                  new page with it, or keep it in Recordings and add it to a page later.
+                  {formatDuration(take?.durationMs ?? 0)} recorded. Add it to the end of a page,
+                  start a new page with it, or keep it in Recordings and add it to a page later.
                 </BodyText>
                 <TextInput
                   label="Name"

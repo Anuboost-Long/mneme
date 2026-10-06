@@ -1,16 +1,15 @@
-import { desktop, type Microphone, type RecordingAvailability } from "@chain/sdk";
-import clsx from "clsx";
-import { useEffect, useState } from "react";
-
-import Select from "../../../shared/ui/Select";
-import { Caption } from "../../../shared/ui/Typography";
 import {
   AUTOMATIC_MICROPHONE,
   recorderAvailability,
   useRecordingMicrophone,
   useRecordingOption,
   type RecordingOption
-} from "../../courses/lib/useAudioRecorder";
+} from "@/features/courses/lib/useAudioRecorder";
+import Select from "@/shared/ui/Select";
+import { Caption } from "@/shared/ui/Typography";
+import { desktop, type Microphone, type RecordingAvailability } from "@chain/sdk";
+import clsx from "clsx";
+import { useEffect, useState } from "react";
 
 const options: { option: RecordingOption; label: string; hint: string }[] = [
   {
@@ -59,7 +58,8 @@ function OptionCheckbox({ option, label, hint }: Readonly<(typeof options)[numbe
 
 function MicrophoneSelect({ microphones }: Readonly<{ microphones: Microphone[] }>) {
   const [microphone, setMicrophone] = useRecordingMicrophone();
-  const connected = microphone === AUTOMATIC_MICROPHONE || microphones.some(({ id }) => id === microphone);
+  const connected =
+    microphone === AUTOMATIC_MICROPHONE || microphones.some(({ id }) => id === microphone);
   return (
     <div>
       <Select

@@ -1,3 +1,13 @@
+import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
+import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { compactHtml } from "@/features/ai-actions/lib/context";
+import { markdownToEditorHtml } from "@/features/ai-actions/lib/editorHtml";
+import { runAction } from "@/features/ai-actions/lib/runAction";
+import { buildActionContext } from "@/features/ai-context/lib/builder";
+import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { extractImages } from "@/shared/lib/htmlImages";
+import { Caption } from "@/shared/ui/Typography";
 import {
   getHTMLFromFragment,
   NodeViewContent,
@@ -7,16 +17,6 @@ import {
 import clsx from "clsx";
 import { useEffect, useRef, useState, type SubmitEvent } from "react";
 
-import { errorMessage } from "../../../../shared/lib/errorMessage";
-import { extractImages } from "../../../../shared/lib/htmlImages";
-import { Caption } from "../../../../shared/ui/Typography";
-import { buildActionContext } from "../../../ai-context/lib/builder";
-import { getActionConnection } from "../../../ai-actions/lib/action/actions";
-import { compactHtml } from "../../../ai-actions/lib/context";
-import { markdownToEditorHtml } from "../../../ai-actions/lib/editorHtml";
-import { runAction } from "../../../ai-actions/lib/runAction";
-import { acceptsImages } from "../../../agent-chat/lib/runTurn";
-import { getActiveProfile } from "../../../ai-profiles/lib/profile/actions";
 import type { AiBlockLocation } from "./AiBlock";
 
 export default function AiBlockNodeView({
@@ -69,7 +69,13 @@ export default function AiBlockNodeView({
       const location = extension.options as AiBlockLocation;
       const profile = await getActiveProfile(location.courseId);
       const content = await extractImages(pageWithoutBlock(position));
-      const context = await buildActionContext(location, "page", content.images, acceptsImages(connection), profile);
+      const context = await buildActionContext(
+        location,
+        "page",
+        content.images,
+        acceptsImages(connection),
+        profile
+      );
       const handle = await runAction(
         connection,
         { prompt: prompt.trim() },

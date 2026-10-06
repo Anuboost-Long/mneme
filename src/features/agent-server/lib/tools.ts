@@ -1,10 +1,7 @@
-import { extractImages, toBase64 } from "../../../shared/lib/htmlImages";
-import { activeSearchModel, searchByMeaning } from "../../search/lib/searchIndex";
-import { AgentPermission } from "./permissions";
-import { pageTypeLabels } from "../../courses/components/PageForm";
-import { completionStatusLabels } from "../../courses/lib/completion-status";
-import { getCourse, getCourses } from "../../courses/lib/course/actions";
-import { getModule, getModules } from "../../courses/lib/module/actions";
+import { pageTypeLabels } from "@/features/courses/components/PageForm";
+import { completionStatusLabels } from "@/features/courses/lib/completion-status";
+import { getCourse, getCourses } from "@/features/courses/lib/course/actions";
+import { getModule, getModules } from "@/features/courses/lib/module/actions";
 import {
   getPage,
   getPages,
@@ -14,10 +11,14 @@ import {
   insertBlocks,
   movePage,
   updatePage
-} from "../../courses/lib/page/actions";
-import { PageType, type Page } from "../../courses/lib/page/types";
-import { getPageRecordings, getRecording } from "../../courses/lib/recording/actions";
-import type { Recording } from "../../courses/lib/recording/types";
+} from "@/features/courses/lib/page/actions";
+import { PageType, type Page } from "@/features/courses/lib/page/types";
+import { getPageRecordings, getRecording } from "@/features/courses/lib/recording/actions";
+import type { Recording } from "@/features/courses/lib/recording/types";
+import { activeSearchModel, searchByMeaning } from "@/features/search/lib/searchIndex";
+import { extractImages, toBase64 } from "@/shared/lib/htmlImages";
+
+import { AgentPermission } from "./permissions";
 
 // A result that's already MCP content, e.g. images the agent should see,
 // rather than data to send as JSON text.
@@ -294,9 +295,20 @@ export const tools: Tool[] = [
       type: "object",
       properties: {
         id: { type: "number", description: "Page id." },
-        html: { type: "string", description: "The blocks to add, as HTML (paragraphs, headings, lists, tables...)." },
-        position: { type: "string", enum: ["start", "end"], description: "Where to add them when after_text isn't given. Defaults to end." },
-        after_text: { type: "string", description: "Add them right after the first block containing this text (case-insensitive)." }
+        html: {
+          type: "string",
+          description: "The blocks to add, as HTML (paragraphs, headings, lists, tables...)."
+        },
+        position: {
+          type: "string",
+          enum: ["start", "end"],
+          description: "Where to add them when after_text isn't given. Defaults to end."
+        },
+        after_text: {
+          type: "string",
+          description:
+            "Add them right after the first block containing this text (case-insensitive)."
+        }
       },
       required: ["id", "html"]
     },
@@ -311,10 +323,14 @@ export const tools: Tool[] = [
     check: (args) => requirePage(requireNumber(args, "id")),
     execute: async (args) =>
       pageSummary(
-        await insertBlocks((await requirePage(requireNumber(args, "id"))).id, requireString(args, "html"), {
-          after: optionalString(args, "after_text"),
-          at: args.position === "start" ? "start" : "end"
-        })
+        await insertBlocks(
+          (await requirePage(requireNumber(args, "id"))).id,
+          requireString(args, "html"),
+          {
+            after: optionalString(args, "after_text"),
+            at: args.position === "start" ? "start" : "end"
+          }
+        )
       )
   },
   {
@@ -330,7 +346,8 @@ export const tools: Tool[] = [
       required: ["id", "module_id"]
     },
     permission: AgentPermission.Move,
-    describeCall: (args) => `Move page ${pageRef(args, "id")} to module ${pageRef(args, "module_id")}.`,
+    describeCall: (args) =>
+      `Move page ${pageRef(args, "id")} to module ${pageRef(args, "module_id")}.`,
     check: async (args) => {
       await requirePage(requireNumber(args, "id"));
       await requireModule(requireNumber(args, "module_id"));
@@ -348,7 +365,10 @@ export const tools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        page_id: { type: "number", description: "Page id: every recording on that page, oldest first." },
+        page_id: {
+          type: "number",
+          description: "Page id: every recording on that page, oldest first."
+        },
         recording_id: { type: "number", description: "Recording id: just that recording." }
       }
     },
@@ -373,7 +393,10 @@ export const tools: Tool[] = [
       type: "object",
       properties: {
         page_id: { type: "number", description: "The page being summarized." },
-        module_id: { type: "number", description: "The module being summarized, when it's the whole module." },
+        module_id: {
+          type: "number",
+          description: "The module being summarized, when it's the whole module."
+        },
         content: { type: "string", description: "The summary as HTML." },
         title: { type: "string", description: "Page title, if not the default." }
       },
@@ -381,7 +404,10 @@ export const tools: Tool[] = [
     },
     permission: AgentPermission.Create,
     describeCall: (args) => {
-      const source = typeof args.page_id === "number" ? `page #${args.page_id}` : `module ${pageRef(args, "module_id")}`;
+      const source =
+        typeof args.page_id === "number"
+          ? `page #${args.page_id}`
+          : `module ${pageRef(args, "module_id")}`;
       return `Save a summary of ${source} as a new page.`;
     },
     check: async (args) => {
@@ -398,12 +424,24 @@ export const tools: Tool[] = [
       const pageId = optionalNumber(args, "page_id");
       if (pageId !== undefined) {
         const source = await requirePage(pageId);
-        return pageSummary(await createPageAfter(source.id, { title: title || `Summary: ${source.title}`, type: PageType.Notes, content }));
+        return pageSummary(
+          await createPageAfter(source.id, {
+            title: title || `Summary: ${source.title}`,
+            type: PageType.Notes,
+            content
+          })
+        );
       }
       const moduleId = optionalNumber(args, "module_id");
       if (moduleId === undefined) throw new Error('Pass "page_id" or "module_id".');
       const module = await requireModule(moduleId);
-      return pageSummary(await createPage(module.id, { title: title || `Summary: ${module.name}`, type: PageType.Notes, content }));
+      return pageSummary(
+        await createPage(module.id, {
+          title: title || `Summary: ${module.name}`,
+          type: PageType.Notes,
+          content
+        })
+      );
     }
   },
   {

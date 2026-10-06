@@ -1,4 +1,5 @@
-import { dueAfter, Grade, nextSchedule } from "../schedule";
+import { dueAfter, Grade, nextSchedule } from "@/features/flashcards/lib/schedule";
+
 import { deleteCardRow, insertCards, recordReview, setCardText } from "./table";
 import type { CardDraft, DeckCounts, Flashcard } from "./types";
 
@@ -25,7 +26,12 @@ export async function editCard(id: number, front: string, back: string, pageId: 
 
 export async function reviewCard(card: Flashcard, grade: Grade, now = new Date()) {
   const schedule = nextSchedule(card, grade);
-  await recordReview(card.id, schedule, dueAfter(schedule.interval_days, now), grade !== Grade.Again);
+  await recordReview(
+    card.id,
+    schedule,
+    dueAfter(schedule.interval_days, now),
+    grade !== Grade.Again
+  );
   return schedule;
 }
 

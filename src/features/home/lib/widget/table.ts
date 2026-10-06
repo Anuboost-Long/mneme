@@ -1,7 +1,7 @@
+import { savePositions } from "@/shared/lib/db/positions";
+import type { HomeWidgetRow } from "@/shared/lib/db/schema/home-widget";
 import { desktop, sql } from "@chain/sdk";
 
-import { savePositions } from "../../../../shared/lib/db/positions";
-import type { HomeWidgetRow } from "../../../../shared/lib/db/schema/home-widget";
 import type { NewWidget, Widget, WidgetConfig, WidgetSize } from "./types";
 
 const widgetTable = () => desktop.storage.table<HomeWidgetRow>("home_widget");

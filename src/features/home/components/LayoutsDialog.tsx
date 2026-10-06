@@ -1,15 +1,14 @@
+import { deleteLayout, getLayouts, saveLayout } from "@/features/home/lib/layout/actions";
+import type { SavedLayout } from "@/features/home/lib/layout/types";
+import type { NewWidget } from "@/features/home/lib/widget/types";
+import { layoutPresets } from "@/features/home/widgets/catalog";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState, type SubmitEvent } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextInput } from "../../../shared/ui/Input";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { deleteLayout, getLayouts, saveLayout } from "../lib/layout/actions";
-import type { SavedLayout } from "../lib/layout/types";
-import type { NewWidget } from "../lib/widget/types";
-import { layoutPresets } from "../widgets/catalog";
 
 const rowButton = clsx(
   "h-8 rounded-md",
@@ -36,11 +35,21 @@ function LayoutRow({
         <Caption tone="muted">{count === 1 ? "1 widget" : `${count} widgets`}</Caption>
       </div>
       {onDelete && (
-        <button type="button" aria-label={`Delete the ${name} layout`} onClick={onDelete} className={quietButton}>
+        <button
+          type="button"
+          aria-label={`Delete the ${name} layout`}
+          onClick={onDelete}
+          className={quietButton}
+        >
           Delete
         </button>
       )}
-      <button type="button" aria-label={`Apply the ${name} layout`} onClick={onApply} className={rowButton}>
+      <button
+        type="button"
+        aria-label={`Apply the ${name} layout`}
+        onClick={onApply}
+        className={rowButton}
+      >
         Apply
       </button>
     </li>
@@ -88,7 +97,9 @@ export default function LayoutsDialog({
     setSaved("");
     try {
       const layout = await saveLayout(name, current);
-      setLayouts((list) => [...(list ?? []), layout].sort((left, right) => left.name.localeCompare(right.name)));
+      setLayouts((list) =>
+        [...(list ?? []), layout].sort((left, right) => left.name.localeCompare(right.name))
+      );
       setSaved(`Saved “${layout.name}”.`);
       setName("");
     } catch (error_) {
@@ -130,7 +141,11 @@ export default function LayoutsDialog({
                 }}
                 fieldClassName={clsx("min-w-0 flex-1")}
               />
-              <button type="submit" disabled={saving || !name.trim()} className={clsx(rowButton, "disabled:opacity-50")}>
+              <button
+                type="submit"
+                disabled={saving || !name.trim()}
+                className={clsx(rowButton, "disabled:opacity-50")}
+              >
                 Save
               </button>
             </form>

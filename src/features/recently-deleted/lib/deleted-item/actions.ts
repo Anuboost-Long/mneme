@@ -1,6 +1,7 @@
-import { eraseCourse } from "../../../courses/lib/course/actions";
-import { eraseModule } from "../../../courses/lib/module/actions";
-import { erasePage } from "../../../courses/lib/page/actions";
+import { eraseCourse } from "@/features/courses/lib/course/actions";
+import { eraseModule } from "@/features/courses/lib/module/actions";
+import { erasePage } from "@/features/courses/lib/page/actions";
+
 import { getDeletedItems, restoreDeleted } from "./table";
 import { daysLeft, type DeletedItem } from "./types";
 

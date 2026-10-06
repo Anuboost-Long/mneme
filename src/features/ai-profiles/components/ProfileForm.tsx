@@ -1,12 +1,3 @@
-import clsx from "clsx";
-import { useState, type SubmitEvent } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
 import {
   AnswerLength,
   answerLengths,
@@ -16,9 +7,17 @@ import {
   Tone,
   tones,
   toggles
-} from "../lib/preferences";
-import { createProfile, updateProfile } from "../lib/profile/actions";
-import type { AiProfile, ProfileInput } from "../lib/profile/types";
+} from "@/features/ai-profiles/lib/preferences";
+import { createProfile, updateProfile } from "@/features/ai-profiles/lib/profile/actions";
+import type { AiProfile, ProfileInput } from "@/features/ai-profiles/lib/profile/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useState, type SubmitEvent } from "react";
 
 const anyLanguage = "";
 
@@ -114,7 +113,12 @@ export default function ProfileForm({
   }
 
   return (
-    <Dialog open={open} title={profile ? "Edit profile" : "New profile"} onClose={onClose} busy={busy}>
+    <Dialog
+      open={open}
+      title={profile ? "Edit profile" : "New profile"}
+      onClose={onClose}
+      busy={busy}
+    >
       {(close, complete) => (
         <form onSubmit={(event) => save(event, complete)}>
           <fieldset disabled={busy} className={clsx("space-y-6")}>

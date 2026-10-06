@@ -1,28 +1,24 @@
-import clsx from "clsx";
-import { useEffect, useState, type DragEvent, type FormEvent } from "react";
-
-import { ApiError } from "../../../shared/lib/api";
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { pickFiles } from "../../../shared/lib/pickFiles";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
-import { classifyWithAi } from "../lib/classify-with-ai";
-import { detectContent, kindPageTypes, summaryHtml } from "../lib/content-detection";
-import { parseImportFile, fileImportKind, IMPORTABLE_FILE_EXTENSIONS } from "../lib/file-import";
+import { classifyWithAi } from "@/features/courses/lib/classify-with-ai";
+import {
+  detectContent,
+  kindPageTypes,
+  summaryHtml
+} from "@/features/courses/lib/content-detection";
+import {
+  parseImportFile,
+  fileImportKind,
+  IMPORTABLE_FILE_EXTENSIONS
+} from "@/features/courses/lib/file-import";
 import {
   fetchLmsPage,
   isSignInPage,
   parseLmsPage,
   storePageImages,
   type ParsedImport
-} from "../lib/lms-import";
-import { makeFlashcardsForImport } from "../../flashcards/lib/autoFlashcards";
-import { addImportedTasks, pageTaskType } from "../../tasks/lib/fromImport";
-import { createPage } from "../lib/page/actions";
-import { type Page } from "../lib/page/types";
+} from "@/features/courses/lib/lms-import";
+import { pageTypeOptions } from "@/features/courses/lib/page-type/pageTypesState";
+import { createPage } from "@/features/courses/lib/page/actions";
+import { type Page } from "@/features/courses/lib/page/types";
 import {
   closeSchoolBrowser,
   downloadSchoolImage,
@@ -34,12 +30,24 @@ import {
   schoolBrowserAvailable,
   schoolBrowserKnownAvailable,
   watchSchoolBrowser
-} from "../lib/school-browser";
+} from "@/features/courses/lib/school-browser";
+import { makeFlashcardsForImport } from "@/features/flashcards/lib/autoFlashcards";
+import { addImportedTasks, pageTaskType } from "@/features/tasks/lib/fromImport";
+import { ApiError } from "@/shared/lib/api";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { pickFiles } from "@/shared/lib/pickFiles";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useEffect, useState, type DragEvent, type FormEvent } from "react";
+
 import ImportFileSlot from "./ImportFileSlot";
 import ImportFindings, { pickAll, pickedValues, type Findings } from "./ImportFindings";
-import KindGuess, { type Guess } from "./KindGuess";
 import ImportProgress from "./ImportProgress";
-import { pageTypeOptions } from "../lib/page-type/pageTypesState";
+import KindGuess, { type Guess } from "./KindGuess";
 
 type Source = "url" | "file";
 
@@ -136,11 +144,19 @@ export default function LmsImportForm({
       try {
         const page = await readSchoolPage();
         const parsed = parseLmsPage(page.html, page.url);
-        if (!parsed.html) throw new Error("Couldn’t find any content on this page. Go to the page itself, then try again.");
+        if (!parsed.html)
+          throw new Error(
+            "Couldn’t find any content on this page. Go to the page itself, then try again."
+          );
         preview(parsed, page.url);
         setFromSchool(true);
       } catch (caught) {
-        setError(errorMessage(caught, "Couldn’t read this page. Wait for it to finish loading, then try again."));
+        setError(
+          errorMessage(
+            caught,
+            "Couldn’t read this page. Wait for it to finish loading, then try again."
+          )
+        );
         void enableImport(true);
       }
       setBusy(false);
@@ -267,8 +283,12 @@ export default function LmsImportForm({
       setBusy(false);
     } catch (caught) {
       const needsSignIn =
-        schoolAvailable && caught instanceof ApiError && (caught.status === 401 || caught.status === 403);
-      setError(needsSignIn ? signInNeeded : errorMessage(caught, "Couldn’t import that. Try again."));
+        schoolAvailable &&
+        caught instanceof ApiError &&
+        (caught.status === 401 || caught.status === 403);
+      setError(
+        needsSignIn ? signInNeeded : errorMessage(caught, "Couldn’t import that. Try again.")
+      );
       setBusy(false);
     }
   }
@@ -310,7 +330,11 @@ export default function LmsImportForm({
         courseId,
         moduleId
       }).catch(() => 0);
-      void makeFlashcardsForImport(moduleId, { id: page.id, title: page.title, content: html }).catch(() => undefined);
+      void makeFlashcardsForImport(moduleId, {
+        id: page.id,
+        title: page.title,
+        content: html
+      }).catch(() => undefined);
       if (fromSchool) {
         onImported([page]);
         setImportedTitles([...importedTitles, page.title]);
@@ -345,7 +369,10 @@ export default function LmsImportForm({
                 </Typography>
                 <ul className={clsx("mt-2 divide-y divide-ink/10 rounded-md border border-ink/15")}>
                   {importedTitles.map((title, index) => (
-                    <li key={`${index}-${title}`} className={clsx("px-3 py-2 text-sm wrap-anywhere")}>
+                    <li
+                      key={`${index}-${title}`}
+                      className={clsx("px-3 py-2 text-sm wrap-anywhere")}
+                    >
                       {title}
                     </li>
                   ))}

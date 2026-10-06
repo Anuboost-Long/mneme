@@ -1,7 +1,6 @@
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { Caption } from "../../../shared/ui/Typography";
 
 const TICK_MS = 250;
 const CEILING = 0.92;

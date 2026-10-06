@@ -1,10 +1,9 @@
+import { pageContentPreview } from "@/features/courses/lib/page/types";
+import { getDeletedPages } from "@/features/recently-deleted/lib/deleted-item/actions";
+import type { DeletedItem, DeletedPage } from "@/features/recently-deleted/lib/deleted-item/types";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { Caption } from "../../../shared/ui/Typography";
-import { pageContentPreview } from "../../courses/lib/page/types";
-import { getDeletedPages } from "../lib/deleted-item/actions";
-import type { DeletedItem, DeletedPage } from "../lib/deleted-item/types";
 
 function groupByModule(pages: DeletedPage[]) {
   const groups = new Map<number, DeletedPage[]>();

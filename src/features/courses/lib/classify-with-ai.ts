@@ -1,5 +1,6 @@
-import { runOnce } from "../../agent-chat/lib/runTurn";
-import { getActionConnection } from "../../ai-actions/lib/action/actions";
+import { runOnce } from "@/features/agent-chat/lib/runTurn";
+import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+
 import { CONTENT_KINDS, pageOutline, type ContentKind } from "./content-detection";
 
 const framing =
@@ -12,7 +13,8 @@ function kindIn(answer: string): ContentKind | undefined {
 
 export async function classifyWithAi(title: string, html: string): Promise<ContentKind> {
   const connection = await getActionConnection();
-  if (!connection) throw new Error("No agent connected yet. Add one in Agent chat, then try again.");
+  if (!connection)
+    throw new Error("No agent connected yet. Add one in Agent chat, then try again.");
   const question = `What kind of course page is this? Reply with exactly one word from: ${CONTENT_KINDS.join(", ")}.\n\n${pageOutline(title, html)}`;
   return new Promise((resolve, reject) => {
     runOnce(connection, question, framing, null, (event) => {
@@ -20,7 +22,10 @@ export async function classifyWithAi(title: string, html: string): Promise<Conte
       if (event.type !== "done") return;
       const kind = kindIn(event.text);
       if (kind) resolve(kind);
-      else reject(new Error(`${connection.name} didn’t name a page type. Choose the type yourself.`));
-    }).catch(() => reject(new Error(`Couldn’t start ${connection.name}. Check it’s installed and try again.`)));
+      else
+        reject(new Error(`${connection.name} didn’t name a page type. Choose the type yourself.`));
+    }).catch(() =>
+      reject(new Error(`Couldn’t start ${connection.name}. Check it’s installed and try again.`))
+    );
   });
 }

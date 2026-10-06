@@ -1,7 +1,7 @@
+import type { NewWidget } from "@/features/home/lib/widget/types";
+import type { HomeLayoutRow } from "@/shared/lib/db/schema/home-layout";
 import { desktop, sql } from "@chain/sdk";
 
-import type { HomeLayoutRow } from "../../../../shared/lib/db/schema/home-layout";
-import type { NewWidget } from "../widget/types";
 import type { SavedLayout } from "./types";
 
 const layoutTable = () => desktop.storage.table<HomeLayoutRow>("home_layout");
@@ -17,12 +17,16 @@ function toLayout(row: HomeLayoutRow): SavedLayout {
 }
 
 export async function getLayouts() {
-  const rows = await layoutTable().orderBy(sql`name COLLATE NOCASE`, "id").all();
+  const rows = await layoutTable()
+    .orderBy(sql`name COLLATE NOCASE`, "id")
+    .all();
   return rows.map(toLayout);
 }
 
 export async function hasLayoutNamed(name: string) {
-  return !!(await layoutTable().where(sql`name = ${name} COLLATE NOCASE`).first());
+  return !!(await layoutTable()
+    .where(sql`name = ${name} COLLATE NOCASE`)
+    .first());
 }
 
 export async function insertLayout(name: string, widgets: NewWidget[]) {

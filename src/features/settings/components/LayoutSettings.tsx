@@ -1,8 +1,8 @@
+import type { Appearance } from "@/shared/lib/appearance";
+import { useAppearance } from "@/shared/providers/AppearanceProvider";
+import { BodyText, SectionTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 
-import type { Appearance } from "../../../shared/lib/appearance";
-import { useAppearance } from "../../../shared/providers/AppearanceProvider";
-import { BodyText, SectionTitle } from "../../../shared/ui/Typography";
 import OptionCards from "./OptionCards";
 
 const line = (width: string, strong = false) => (
@@ -94,7 +94,11 @@ export default function LayoutSettings() {
           value={appearance.compact ? "compact" : "comfortable"}
           onChange={(density) => changeAppearance({ compact: density === "compact" })}
           options={[
-            { value: "comfortable", label: "Comfortable", preview: <DensityPreview compact={false} /> },
+            {
+              value: "comfortable",
+              label: "Comfortable",
+              preview: <DensityPreview compact={false} />
+            },
             { value: "compact", label: "Compact", preview: <DensityPreview compact /> }
           ]}
         />

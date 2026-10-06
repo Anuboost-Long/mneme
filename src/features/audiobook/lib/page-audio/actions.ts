@@ -1,7 +1,7 @@
+import { sentences, type ReadableChunk } from "@/features/read-aloud/lib/readableText";
+import type { ReadAloudVoice } from "@/features/read-aloud/lib/useReadAloud";
 import { desktop, sql, type SqlFragment } from "@chain/sdk";
 
-import { sentences, type ReadableChunk } from "../../../read-aloud/lib/readableText";
-import type { ReadAloudVoice } from "../../../read-aloud/lib/useReadAloud";
 import { deletePageAudioRows, getPageAudio, getPageAudios, replacePageAudio } from "./table";
 import type { PageAudio } from "./types";
 

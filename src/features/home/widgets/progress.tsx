@@ -1,11 +1,11 @@
+import { CompletionStatus, completionStatusLabels } from "@/features/courses/lib/completion-status";
+import { countPages, countPagesBy, getModuleProgress } from "@/features/home/lib/dashboard/actions";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import { getStreak, getStudyDays } from "@/shared/lib/study-day/actions";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 
-import { getStreak, getStudyDays } from "../../../shared/lib/study-day/actions";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { Caption } from "../../../shared/ui/Typography";
-import { CompletionStatus, completionStatusLabels } from "../../courses/lib/completion-status";
-import { countPages, countPagesBy, getModuleProgress } from "../lib/dashboard/actions";
-import { useWidgetData } from "../lib/useWidgetData";
 import { ProgressLine, RowLink, Rows, rowsFor, Stat, WidgetNote } from "./parts";
 import { pageFilter } from "./study";
 import type { WidgetProps } from "./types";

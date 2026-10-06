@@ -1,6 +1,6 @@
+import type { AgentActivityRow } from "@/shared/lib/db/schema/agent-activity";
 import { desktop } from "@chain/sdk";
 
-import type { AgentActivityRow } from "../../../../shared/lib/db/schema/agent-activity";
 import type { AgentActivity, NewActivity } from "./types";
 
 const KEPT_ACTIVITY = 1000;

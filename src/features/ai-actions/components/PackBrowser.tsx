@@ -1,15 +1,15 @@
+import { ActionScope, type ActionInput } from "@/features/ai-actions/lib/action/types";
+import { installCatalogPack } from "@/features/ai-actions/lib/pack/actions";
+import { packCatalog } from "@/features/ai-actions/lib/pack/catalog";
+import { PackArea, packAreaLabels, type CatalogPack } from "@/features/ai-actions/lib/pack/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useId, useState } from "react";
 
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
-import { ActionScope, type ActionInput } from "../lib/action/types";
-import { installCatalogPack } from "../lib/pack/actions";
-import { packCatalog } from "../lib/pack/catalog";
-import { PackArea, packAreaLabels, type CatalogPack } from "../lib/pack/types";
 import ActionIcon from "./ActionIcon";
 
 const scopeTags: Partial<Record<ActionScope, string>> = {

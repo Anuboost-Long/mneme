@@ -1,7 +1,7 @@
+import { getActions } from "@/features/ai-actions/lib/action/actions";
+import type { AiAction } from "@/features/ai-actions/lib/action/types";
 import { desktop } from "@chain/sdk";
 
-import { getActions } from "../action/actions";
-import type { AiAction } from "../action/types";
 import { packCatalog } from "./catalog";
 import { packFileText, readPackFile } from "./file";
 import { deletePackRow, getPackNames, insertPack } from "./table";

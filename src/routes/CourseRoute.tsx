@@ -1,12 +1,11 @@
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { getModules, reorderModules } from "@/features/courses/lib/module/actions";
+import type { Module } from "@/features/courses/lib/module/types";
+import { getModulePageProgress } from "@/features/courses/lib/page/actions";
+import type { PageProgress } from "@/features/courses/lib/page/types";
+import CoursePage from "@/features/courses/pages/CoursePage";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-import { useCourses } from "../features/courses/lib/coursesState";
-import { getModules, reorderModules } from "../features/courses/lib/module/actions";
-import type { Module } from "../features/courses/lib/module/types";
-import { getModulePageProgress } from "../features/courses/lib/page/actions";
-import type { PageProgress } from "../features/courses/lib/page/types";
-import CoursePage from "../features/courses/pages/CoursePage";
 
 export default function CourseRoute() {
   const { courseId } = useParams();

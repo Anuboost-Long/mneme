@@ -1,4 +1,4 @@
-import { parseStoredDate } from "../../../../shared/lib/date";
+import { parseStoredDate } from "@/shared/lib/date";
 
 export const KEEP_DAYS = 30;
 

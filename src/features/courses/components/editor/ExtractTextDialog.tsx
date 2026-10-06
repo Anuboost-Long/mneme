@@ -1,10 +1,9 @@
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { extractText } from "@/shared/lib/ocr";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { useResetOnOpen } from "../../../../shared/lib/dialogState";
-import { extractText } from "../../../../shared/lib/ocr";
-import Dialog from "../../../../shared/ui/Dialog";
-import { BodyText, Caption } from "../../../../shared/ui/Typography";
 
 export type ExtractPlacement = "below" | "replace";
 

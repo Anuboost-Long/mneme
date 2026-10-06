@@ -26,8 +26,12 @@ test("a data folder's table is imported only from inside that folder", async () 
     for (const [, specifier] of source.matchAll(
       /from\s+["']([^"']*\/([\w-]+)\/table(?:\/[\w-]+)?)["']/g
     )) {
-      const folder = new URL(specifier.replace(/\/table(\/[\w-]+)?$/, "/"), new URL(path, src))
-        .href;
+      const folderPath = specifier.replace(/\/table(\/[\w-]+)?$/, "/");
+      const folder = (
+        folderPath.startsWith("@/")
+          ? new URL(folderPath.slice(2), src)
+          : new URL(folderPath, new URL(path, src))
+      ).href;
       if (!new URL(path, src).href.startsWith(folder)) outsiders.push(`${path} -> ${specifier}`);
     }
   }

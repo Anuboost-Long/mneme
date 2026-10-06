@@ -1,10 +1,9 @@
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { getModuleCounts } from "@/features/courses/lib/module/actions";
+import { getCoursePageProgress } from "@/features/courses/lib/page/actions";
+import type { PageProgress } from "@/features/courses/lib/page/types";
+import CoursesPage from "@/features/courses/pages/CoursesPage";
 import { useEffect, useState } from "react";
-
-import { useCourses } from "../features/courses/lib/coursesState";
-import { getModuleCounts } from "../features/courses/lib/module/actions";
-import { getCoursePageProgress } from "../features/courses/lib/page/actions";
-import type { PageProgress } from "../features/courses/lib/page/types";
-import CoursesPage from "../features/courses/pages/CoursesPage";
 
 export default function CoursesRoute() {
   const { courses, create, save, remove, reorder } = useCourses();

@@ -1,15 +1,14 @@
+import { createConnection, getConnections } from "@/features/agent-chat/lib/connection/actions";
+import type { AgentConnection } from "@/features/agent-chat/lib/connection/types";
+import { detectAgents, type DetectedAgent } from "@/features/agent-chat/lib/detectAgents";
+import { parseArgs, presets, type KnownAgent } from "@/features/agent-chat/lib/presets";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { TextArea, TextInput } from "@/shared/ui/Input";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextArea, TextInput } from "../../../shared/ui/Input";
-import { BodyText } from "../../../shared/ui/Typography";
-import { createConnection, getConnections } from "../lib/connection/actions";
-import type { AgentConnection } from "../lib/connection/types";
-import { detectAgents, type DetectedAgent } from "../lib/detectAgents";
-import { parseArgs, presets, type KnownAgent } from "../lib/presets";
 
 function Chevron() {
   return (

@@ -1,8 +1,7 @@
+import { ConversationMode } from "@/features/agent-chat/lib/conversation/types";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useId } from "react";
-
-import { Caption } from "../../../shared/ui/Typography";
-import { ConversationMode } from "../lib/conversation/types";
 
 const modes = [
   {
@@ -21,12 +20,19 @@ export default function ModeSwitch({
   mode,
   disabled,
   onChange
-}: Readonly<{ mode: ConversationMode; disabled: boolean; onChange: (mode: ConversationMode) => void }>) {
+}: Readonly<{
+  mode: ConversationMode;
+  disabled: boolean;
+  onChange: (mode: ConversationMode) => void;
+}>) {
   const name = useId();
   const current = modes.find((item) => item.value === mode) ?? modes[0];
 
   return (
-    <fieldset disabled={disabled} className={clsx("flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1")}>
+    <fieldset
+      disabled={disabled}
+      className={clsx("flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1")}
+    >
       <legend className={clsx("sr-only")}>Mode</legend>
       <div className={clsx("inline-flex shrink-0 rounded-md border border-ink/20 p-0.5")}>
         {modes.map((item) => (

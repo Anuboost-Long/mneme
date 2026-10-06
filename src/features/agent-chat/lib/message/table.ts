@@ -1,6 +1,5 @@
+import type { AgentMessageRow } from "@/shared/lib/db/schema/agent-message";
 import { desktop, type Values } from "@chain/sdk";
-
-import type { AgentMessageRow } from "../../../../shared/lib/db/schema/agent-message";
 
 const messageTable = () => desktop.storage.table<AgentMessageRow>("agent_message");
 

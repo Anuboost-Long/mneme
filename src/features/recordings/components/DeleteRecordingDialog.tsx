@@ -1,6 +1,6 @@
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import { deleteRecordingFromPage } from "../../courses/lib/page/actions";
-import type { RecordingListItem } from "../../courses/lib/recording/types";
+import { deleteRecordingFromPage } from "@/features/courses/lib/page/actions";
+import type { RecordingListItem } from "@/features/courses/lib/recording/types";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
 
 export default function DeleteRecordingDialog({
   open,
@@ -21,8 +21,8 @@ export default function DeleteRecordingDialog({
         !recording
           ? ""
           : recording.page_title === null
-          ? `“${recording.name}” and its transcript will be permanently deleted. This can’t be undone.`
-          : `“${recording.name}” and its transcript will be permanently deleted, and removed from “${recording.page_title}”. This can’t be undone.`
+            ? `“${recording.name}” and its transcript will be permanently deleted. This can’t be undone.`
+            : `“${recording.name}” and its transcript will be permanently deleted, and removed from “${recording.page_title}”. This can’t be undone.`
       }
       confirmLabel="Delete recording"
       failure="Couldn’t delete this recording. Try again."

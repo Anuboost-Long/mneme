@@ -1,5 +1,6 @@
-import { getSettingId, putSetting } from "../../../../shared/lib/settings/actions";
-import { getConnections } from "../../../agent-chat/lib/connection/actions";
+import { getConnections } from "@/features/agent-chat/lib/connection/actions";
+import { getSettingId, putSetting } from "@/shared/lib/settings/actions";
+
 import {
   deleteActionRow,
   insertAction,

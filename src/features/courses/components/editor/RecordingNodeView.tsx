@@ -1,29 +1,25 @@
-import { desktop } from "@chain/sdk";
-import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
-import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
-
-import { useOpenedOnce } from "../../../../shared/lib/dialogState";
-import { errorMessage } from "../../../../shared/lib/errorMessage";
-import { formatDuration } from "../../../../shared/lib/formatDuration";
-import { usePlayback } from "../../../../shared/lib/usePlayback";
-import CassetteDeck, {
-  DeckIcon,
-  DeckKey,
-  type ReelMotion
-} from "../../../../shared/ui/CassetteDeck";
-import ConfirmDeleteDialog from "../../../../shared/ui/ConfirmDeleteDialog";
-import PlaybackDeck, { PlaybackKeys } from "../../../../shared/ui/PlaybackDeck";
-import { Caption } from "../../../../shared/ui/Typography";
-import SoundSettingsButton from "../../../recordings/components/SoundSettingsButton";
 import {
   createRecording,
   deleteRecording,
   getRecording,
   renameRecording
-} from "../../lib/recording/actions";
-import type { Recording } from "../../lib/recording/types";
-import { useAudioRecorder, type RecorderStatus } from "../../lib/useAudioRecorder";
+} from "@/features/courses/lib/recording/actions";
+import type { Recording } from "@/features/courses/lib/recording/types";
+import { useAudioRecorder, type RecorderStatus } from "@/features/courses/lib/useAudioRecorder";
+import SoundSettingsButton from "@/features/recordings/components/SoundSettingsButton";
+import { useOpenedOnce } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { formatDuration } from "@/shared/lib/formatDuration";
+import { usePlayback } from "@/shared/lib/usePlayback";
+import CassetteDeck, { DeckIcon, DeckKey, type ReelMotion } from "@/shared/ui/CassetteDeck";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import PlaybackDeck, { PlaybackKeys } from "@/shared/ui/PlaybackDeck";
+import { Caption } from "@/shared/ui/Typography";
+import { desktop } from "@chain/sdk";
+import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+
 import { insertParagraphs } from "./insertParagraphs";
 import MicrophoneAccessDialog from "./MicrophoneAccessDialog";
 import MicrophoneNotice from "./MicrophoneNotice";

@@ -1,9 +1,9 @@
+import type { Conversation } from "@/features/agent-chat/lib/conversation/types";
+import { useLastValue } from "@/shared/lib/dialogState";
 import clsx from "clsx";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useLastValue } from "../../../shared/lib/dialogState";
-import type { Conversation } from "../lib/conversation/types";
 import ConversationForm from "./ConversationForm";
 
 export default function ConversationActions({

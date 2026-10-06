@@ -1,6 +1,6 @@
+import { fileExtension, storePageFile } from "@/features/courses/lib/page-files";
 import { desktop, sql, type SqlFragment } from "@chain/sdk";
 
-import { fileExtension, storePageFile } from "../page-files";
 import {
   deleteAttachmentRows,
   getAttachment,
@@ -92,11 +92,27 @@ export async function saveAttachmentCopy(attachment: Attachment) {
   });
 }
 
-const textExtensions = new Set(["txt", "md", "markdown", "csv", "tsv", "json", "xml", "yaml", "yml", "html", "htm", "tex", "rtf"]);
+const textExtensions = new Set([
+  "txt",
+  "md",
+  "markdown",
+  "csv",
+  "tsv",
+  "json",
+  "xml",
+  "yaml",
+  "yml",
+  "html",
+  "htm",
+  "tex",
+  "rtf"
+]);
 const maxTextBytes = 200_000;
 
 export async function readAttachmentText(attachment: Attachment): Promise<string | null> {
-  const isText = attachment.mime_type?.startsWith("text/") || textExtensions.has(fileExtension(attachment.file_name) ?? "");
+  const isText =
+    attachment.mime_type?.startsWith("text/") ||
+    textExtensions.has(fileExtension(attachment.file_name) ?? "");
   if (!isText || (attachment.size_bytes ?? 0) > maxTextBytes) return null;
   try {
     return new TextDecoder().decode(await desktop.files.read(attachment.file_path));

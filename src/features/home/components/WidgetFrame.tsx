@@ -1,8 +1,7 @@
+import type { WidgetSize } from "@/features/home/lib/widget/types";
+import DragHandle from "@/shared/ui/DragHandle";
 import clsx from "clsx";
 import { useRef, type KeyboardEvent, type PointerEvent, type ReactNode, type Ref } from "react";
-
-import DragHandle from "../../../shared/ui/DragHandle";
-import type { WidgetSize } from "../lib/widget/types";
 
 export const sizeLabels: Record<WidgetSize, string> = {
   small: "Small",

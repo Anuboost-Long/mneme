@@ -1,8 +1,9 @@
-import { pageTypeOptions } from "../../courses/lib/page-type/pageTypesState";
-import { CompletionStatus, completionStatusLabels } from "../../courses/lib/completion-status";
-import type { Course } from "../../courses/lib/course/types";
-import { pageSorts } from "../lib/dashboard/types";
-import type { NewWidget, WidgetConfig } from "../lib/widget/types";
+import { CompletionStatus, completionStatusLabels } from "@/features/courses/lib/completion-status";
+import type { Course } from "@/features/courses/lib/course/types";
+import { pageTypeOptions } from "@/features/courses/lib/page-type/pageTypesState";
+import { pageSorts } from "@/features/home/lib/dashboard/types";
+import type { NewWidget, WidgetConfig } from "@/features/home/lib/widget/types";
+
 import { BookshelfWidget } from "./Bookshelf";
 import {
   AiUsageWidget,

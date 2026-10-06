@@ -1,4 +1,4 @@
-import type { CompletionStatus } from "../completion-status";
+import type { CompletionStatus } from "@/features/courses/lib/completion-status";
 
 export type Course = {
   id: number;

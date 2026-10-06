@@ -1,6 +1,6 @@
+import type { RecordingRow } from "@/shared/lib/db/schema/recording";
 import { desktop, sql, type SqlFragment, type Values } from "@chain/sdk";
 
-import type { RecordingRow } from "../../../../shared/lib/db/schema/recording";
 import type { RecordingListItem } from "./types";
 
 const recordingTable = () => desktop.storage.table<RecordingRow>("recording");

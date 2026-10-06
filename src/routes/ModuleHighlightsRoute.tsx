@@ -1,14 +1,13 @@
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { getModuleHighlights } from "@/features/courses/lib/highlight/actions";
+import type { Highlight } from "@/features/courses/lib/highlight/types";
+import { getModule } from "@/features/courses/lib/module/actions";
+import type { Module as ModuleRecord } from "@/features/courses/lib/module/types";
+import { getPages } from "@/features/courses/lib/page/actions";
+import type { Page as PageRecord } from "@/features/courses/lib/page/types";
+import ModuleHighlightsPage from "@/features/courses/pages/ModuleHighlightsPage";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
-import { useCourses } from "../features/courses/lib/coursesState";
-import { getModuleHighlights } from "../features/courses/lib/highlight/actions";
-import type { Highlight } from "../features/courses/lib/highlight/types";
-import { getModule } from "../features/courses/lib/module/actions";
-import type { Module as ModuleRecord } from "../features/courses/lib/module/types";
-import { getPages } from "../features/courses/lib/page/actions";
-import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import ModuleHighlightsPage from "../features/courses/pages/ModuleHighlightsPage";
 
 export default function ModuleHighlightsRoute() {
   const { courseId, moduleId } = useParams();

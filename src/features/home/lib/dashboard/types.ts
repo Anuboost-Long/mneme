@@ -1,5 +1,5 @@
-import type { CompletionStatus } from "../../../courses/lib/completion-status";
-import type { PageType } from "../../../courses/lib/page/types";
+import type { CompletionStatus } from "@/features/courses/lib/completion-status";
+import type { PageType } from "@/features/courses/lib/page/types";
 
 export type RecentPage = {
   id: number;

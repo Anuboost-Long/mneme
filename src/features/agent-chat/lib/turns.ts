@@ -1,4 +1,5 @@
-import { errorMessage } from "../../../shared/lib/errorMessage";
+import { errorMessage } from "@/shared/lib/errorMessage";
+
 import type { ChatAttachment } from "./attachments";
 import { getConnections } from "./connection/actions";
 import { getConversation } from "./conversation/actions";

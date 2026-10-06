@@ -1,10 +1,9 @@
+import { searchPageLinks } from "@/features/courses/lib/page/actions";
+import { getPages } from "@/features/home/lib/dashboard/actions";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import { Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { Caption, Typography } from "../../../shared/ui/Typography";
-import { searchPageLinks } from "../../courses/lib/page/actions";
-import { getPages } from "../lib/dashboard/actions";
-import { useWidgetData } from "../lib/useWidgetData";
 
 export type PageTarget = {
   id: number;

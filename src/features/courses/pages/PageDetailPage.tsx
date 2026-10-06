@@ -1,27 +1,26 @@
+import AudiobookBar from "@/features/audiobook/components/AudiobookBar";
+import CreateAudioDialog from "@/features/audiobook/components/CreateAudioDialog";
+import type { PageAudio } from "@/features/audiobook/lib/page-audio/types";
+import DeletePage from "@/features/courses/components/DeletePage";
+import PageEditor from "@/features/courses/components/editor/PageEditor";
+import PageForm from "@/features/courses/components/PageForm";
+import SiblingSwitcher, { type Sibling } from "@/features/courses/components/SiblingSwitcher";
+import { StatusChip } from "@/features/courses/components/StatusPicker";
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import type { Course } from "@/features/courses/lib/course/types";
+import { pageTypeLabel } from "@/features/courses/lib/page-type/pageTypesState";
+import { setPageDone, updatePage } from "@/features/courses/lib/page/actions";
+import type { Page } from "@/features/courses/lib/page/types";
+import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
+import { elementChunk, elementChunks } from "@/features/read-aloud/lib/readableText";
+import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { useFileUrl } from "@/shared/lib/useFileUrl";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { BodyText, PageTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { useFileUrl } from "../../../shared/lib/useFileUrl";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
-import AudiobookBar from "../../audiobook/components/AudiobookBar";
-import CreateAudioDialog from "../../audiobook/components/CreateAudioDialog";
-import type { PageAudio } from "../../audiobook/lib/page-audio/types";
-import ReadAloudBar from "../../read-aloud/components/ReadAloudBar";
-import { elementChunk, elementChunks } from "../../read-aloud/lib/readableText";
-import { useReadAloud } from "../../read-aloud/lib/useReadAloud";
-import DeletePage from "../components/DeletePage";
-import PageEditor from "../components/editor/PageEditor";
-import PageForm from "../components/PageForm";
-import SiblingSwitcher, { type Sibling } from "../components/SiblingSwitcher";
-import { pageTypeLabel } from "../lib/page-type/pageTypesState";
-import { StatusChip } from "../components/StatusPicker";
-import { CompletionStatus } from "../lib/completion-status";
-import type { Course } from "../lib/course/types";
-import { setPageDone, updatePage } from "../lib/page/actions";
-import type { Page } from "../lib/page/types";
 
 function asSibling(page: Page): Sibling {
   return { id: page.id, name: page.title, icon: page.icon };

@@ -1,13 +1,13 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import type { NewWidget, WidgetSize } from "@/features/home/lib/widget/types";
+import { newWidget, widgetCatalog, widgetTitle } from "@/features/home/widgets/catalog";
+import { widgetCategories } from "@/features/home/widgets/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import Dialog from "../../../shared/ui/Dialog";
-import { BodyText } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/course/types";
-import type { NewWidget, WidgetSize } from "../lib/widget/types";
-import { newWidget, widgetCatalog, widgetTitle } from "../widgets/catalog";
-import { widgetCategories } from "../widgets/types";
 import { sizeLabels } from "./WidgetFrame";
 
 // The preview is drawn at the widget's real size on Home's grid.

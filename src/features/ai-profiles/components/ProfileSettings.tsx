@@ -1,20 +1,26 @@
-import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
-
-import { useLastValue, useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { rowAction } from "../../../shared/ui/rowAction";
-import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
-import { answerLengths, explanationLevels, languages, toggles, tones } from "../lib/preferences";
+import {
+  answerLengths,
+  explanationLevels,
+  languages,
+  toggles,
+  tones
+} from "@/features/ai-profiles/lib/preferences";
 import {
   deleteProfile,
   getDefaultProfileId,
   getProfiles,
   setDefaultProfileId
-} from "../lib/profile/actions";
-import type { AiProfile } from "../lib/profile/types";
+} from "@/features/ai-profiles/lib/profile/actions";
+import type { AiProfile } from "@/features/ai-profiles/lib/profile/types";
+import { useLastValue, useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { rowAction } from "@/shared/ui/rowAction";
+import { BodyText, Caption, SectionTitle } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+
 import ProfileForm from "./ProfileForm";
 
 function summary(profile: AiProfile) {
@@ -41,7 +47,12 @@ function DeleteProfile({
   profile,
   onClose,
   onDelete
-}: Readonly<{ open: boolean; profile: AiProfile | null; onClose: () => void; onDelete: () => void }>) {
+}: Readonly<{
+  open: boolean;
+  profile: AiProfile | null;
+  onClose: () => void;
+  onDelete: () => void;
+}>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useResetOnOpen(open, () => {
@@ -252,7 +263,11 @@ export default function ProfileSettings() {
           )}
         </div>
       </div>
-      <ProfileForm open={dialog?.kind === "create"} onClose={() => setDialog(null)} onSave={saved} />
+      <ProfileForm
+        open={dialog?.kind === "create"}
+        onClose={() => setDialog(null)}
+        onSave={saved}
+      />
       <ProfileForm
         open={dialog?.kind === "edit"}
         profile={dialogProfile}

@@ -1,6 +1,6 @@
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
 import { desktop } from "@chain/sdk";
 
-import { CompletionStatus } from "../../../courses/lib/completion-status";
 import type {
   OpenModule,
   PageFilter,

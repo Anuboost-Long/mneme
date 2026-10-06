@@ -1,6 +1,6 @@
+import { PageType, pageTypeLabels, pageTypes } from "@/features/courses/lib/page/types";
 import { useSyncExternalStore } from "react";
 
-import { PageType, pageTypeLabels, pageTypes } from "../page/types";
 import { getCustomPageTypes } from "./actions";
 import { customTypeValue, type CustomPageType } from "./types";
 

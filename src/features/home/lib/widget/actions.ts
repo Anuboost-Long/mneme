@@ -1,4 +1,5 @@
-import { claimSetting } from "../../../../shared/lib/settings/actions";
+import { claimSetting } from "@/shared/lib/settings/actions";
+
 import {
   deleteAllWidgets,
   deleteWidgetRow,

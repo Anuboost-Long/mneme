@@ -1,11 +1,11 @@
+import { updateCourse } from "@/features/courses/lib/course/actions";
+import type { Course } from "@/features/courses/lib/course/types";
+import { useOpenedOnce } from "@/shared/lib/dialogState";
 import clsx from "clsx";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMatch, useNavigate } from "react-router-dom";
 
-import { useOpenedOnce } from "../../../shared/lib/dialogState";
-import { updateCourse } from "../lib/course/actions";
-import type { Course } from "../lib/course/types";
 import CourseForm from "./CourseForm";
 import DeleteCourse from "./DeleteCourse";
 

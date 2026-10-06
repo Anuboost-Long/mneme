@@ -1541,13 +1541,16 @@ AI could automatically create:
 ☐ Assignment
 ```
 
+> **Done — 6 October 2026.** See
+> [Automatic Task Extraction](features/36-task-extraction.md).
+
 ## Development Steps
 
-- [ ] Detect task candidates.
-- [ ] Show task preview.
-- [ ] Ask user which tasks to create.
-- [ ] Detect due dates.
-- [ ] Link tasks to source page.
+- [x] Detect task candidates. (Tasks → Find tasks, or ⌘P → Find tasks on a module: pages that are work and activities named in pages; Ask AI to look too finds what the rules miss.)
+- [x] Show task preview. (Each with its type, due date and the page it came from; ones already in Tasks aren't offered.)
+- [x] Ask user which tasks to create. (Tick boxes, all ticked; Add N tasks.)
+- [x] Detect due dates. (From the page's due lines: a page task takes the earliest, an activity the line that names it.)
+- [x] Link tasks to source page. (The Tasks screen links back to it.)
 
 ---
 

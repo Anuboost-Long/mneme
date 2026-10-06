@@ -1,26 +1,11 @@
-import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
-
-import { useLastValue, useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { pickFiles } from "../../../shared/lib/pickFiles";
-import { claimSetting } from "../../../shared/lib/settings/actions";
-import { useDragReorder } from "../../../shared/lib/useDragReorder";
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import Dialog from "../../../shared/ui/Dialog";
-import DragHandle from "../../../shared/ui/DragHandle";
-import { rowAction } from "../../../shared/ui/rowAction";
-import Tour, { type TourStep } from "../../../shared/ui/Tour";
-import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
 import {
   deleteAction,
   duplicateAction,
   getActions,
   saveActionOrder,
   setActionEnabled
-} from "../lib/action/actions";
-import { ActionOutput, ActionScope, type AiAction } from "../lib/action/types";
+} from "@/features/ai-actions/lib/action/actions";
+import { ActionOutput, ActionScope, type AiAction } from "@/features/ai-actions/lib/action/types";
 import {
   exportPack,
   exportStandaloneActions,
@@ -28,8 +13,23 @@ import {
   installPack,
   readPackFile,
   removePack
-} from "../lib/pack/actions";
-import type { ActionPack, PackContent } from "../lib/pack/types";
+} from "@/features/ai-actions/lib/pack/actions";
+import type { ActionPack, PackContent } from "@/features/ai-actions/lib/pack/types";
+import { useLastValue, useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { pickFiles } from "@/shared/lib/pickFiles";
+import { claimSetting } from "@/shared/lib/settings/actions";
+import { useDragReorder } from "@/shared/lib/useDragReorder";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import Dialog from "@/shared/ui/Dialog";
+import DragHandle from "@/shared/ui/DragHandle";
+import { rowAction } from "@/shared/ui/rowAction";
+import Tour, { type TourStep } from "@/shared/ui/Tour";
+import { BodyText, Caption, SectionTitle } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+
 import ActionForm from "./ActionForm";
 import ActionIcon from "./ActionIcon";
 import PackBrowser, { PackActionList } from "./PackBrowser";
@@ -93,7 +93,12 @@ function DeleteAction({
   action,
   onClose,
   onDelete
-}: Readonly<{ open: boolean; action: AiAction | null; onClose: () => void; onDelete: () => void }>) {
+}: Readonly<{
+  open: boolean;
+  action: AiAction | null;
+  onClose: () => void;
+  onDelete: () => void;
+}>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useResetOnOpen(open, () => {
@@ -198,7 +203,12 @@ function ImportPack({
   }
 
   return (
-    <Dialog open={open} title={pack ? `Install “${pack.name}”?` : "Import pack"} busy={busy} onClose={onClose}>
+    <Dialog
+      open={open}
+      title={pack ? `Install “${pack.name}”?` : "Import pack"}
+      busy={busy}
+      onClose={onClose}
+    >
       {(close, complete) => (
         <>
           {pack ? (
@@ -618,7 +628,11 @@ export default function ActionSettings() {
           );
         })}
       </div>
-      <ActionForm open={dialog?.kind === "create"} onClose={() => setDialog(null)} onSave={closeAndReload} />
+      <ActionForm
+        open={dialog?.kind === "create"}
+        onClose={() => setDialog(null)}
+        onSave={closeAndReload}
+      />
       <ActionForm
         open={dialog?.kind === "edit"}
         action={dialogAction}
@@ -633,9 +647,7 @@ export default function ActionSettings() {
       />
       <PackBrowser
         open={dialog?.kind === "browse"}
-        installedKeys={
-          new Set(packs.flatMap((pack) => (pack.catalogKey ? [pack.catalogKey] : [])))
-        }
+        installedKeys={new Set(packs.flatMap((pack) => (pack.catalogKey ? [pack.catalogKey] : [])))}
         onInstalled={() => void load()}
         onClose={() => setDialog(null)}
       />
@@ -649,7 +661,9 @@ export default function ActionSettings() {
         open={dialog?.kind === "remove"}
         title="Remove pack?"
         message={
-          removing ? `“${removing.pack.name}” and its ${removing.count} actions will be removed from the AI actions menu. Your pages aren’t affected.` : ""
+          removing
+            ? `“${removing.pack.name}” and its ${removing.count} actions will be removed from the AI actions menu. Your pages aren’t affected.`
+            : ""
         }
         confirmLabel="Remove pack"
         failure="Couldn’t remove the pack. Try again."

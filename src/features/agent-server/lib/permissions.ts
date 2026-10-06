@@ -1,4 +1,4 @@
-import { getSetting, putSetting } from "../../../shared/lib/settings/actions";
+import { getSetting, putSetting } from "@/shared/lib/settings/actions";
 
 export enum AgentPermission {
   Read = 1,
@@ -18,26 +18,43 @@ export const agentPermissions: AgentPermission[] = [
   AgentPermission.Internet
 ];
 
-export const permissionDetails: Record<AgentPermission, { name: string; covers: string; action?: string }> = {
+export const permissionDetails: Record<
+  AgentPermission,
+  { name: string; covers: string; action?: string }
+> = {
   [AgentPermission.Read]: {
     name: "Read",
-    covers: "Open, list and search your courses, modules and pages, with their pictures and transcripts. Never asks."
+    covers:
+      "Open, list and search your courses, modules and pages, with their pictures and transcripts. Never asks."
   },
-  [AgentPermission.Create]: { name: "Create", covers: "Create pages and summaries.", action: "create pages" },
+  [AgentPermission.Create]: {
+    name: "Create",
+    covers: "Create pages and summaries.",
+    action: "create pages"
+  },
   [AgentPermission.Edit]: {
     name: "Edit",
-    covers: "Add to pages and change their title, type or status. Replacing a page’s content always asks.",
+    covers:
+      "Add to pages and change their title, type or status. Replacing a page’s content always asks.",
     action: "edit pages"
   },
-  [AgentPermission.Move]: { name: "Move", covers: "Move pages to another module.", action: "move pages" },
+  [AgentPermission.Move]: {
+    name: "Move",
+    covers: "Move pages to another module.",
+    action: "move pages"
+  },
   [AgentPermission.Delete]: {
     name: "Delete",
     covers: "No agent tool deletes anything yet. When one does, it will always ask."
   },
-  [AgentPermission.Internet]: { name: "Use the internet", covers: "No agent tool uses the internet yet." }
+  [AgentPermission.Internet]: {
+    name: "Use the internet",
+    covers: "No agent tool uses the internet yet."
+  }
 };
 
-export const canAlwaysAllow = (permission: AgentPermission) => permissionDetails[permission].action !== undefined;
+export const canAlwaysAllow = (permission: AgentPermission) =>
+  permissionDetails[permission].action !== undefined;
 
 const trustedKey = "agent.trusted-permissions";
 

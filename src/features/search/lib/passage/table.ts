@@ -1,6 +1,6 @@
+import type { PagePassageRow } from "@/shared/lib/db/schema/page-passage";
 import { desktop } from "@chain/sdk";
 
-import type { PagePassageRow } from "../../../../shared/lib/db/schema/page-passage";
 import type { PageToIndex, Passage, SearchablePassage } from "./types";
 
 function encodeVector(vector: Float32Array) {
@@ -33,15 +33,31 @@ export async function getPagePassages(pageId: number, model: string): Promise<Pa
     .where({ page_id: pageId, model })
     .orderBy("position")
     .all();
-  return rows.map(({ position, text, vector }) => ({ position, text, vector: decodeVector(vector) }));
+  return rows.map(({ position, text, vector }) => ({
+    position,
+    text,
+    vector: decodeVector(vector)
+  }));
 }
 
-export function replacePagePassages(pageId: number, model: string, sourceUpdatedAt: string, passages: Passage[]) {
+export function replacePagePassages(
+  pageId: number,
+  model: string,
+  sourceUpdatedAt: string,
+  passages: Passage[]
+) {
   return desktop.storage.transaction(async (tx) => {
     const table = tx.table<PagePassageRow>("page_passage");
     await table.delete({ page_id: pageId });
     for (const { position, text, vector } of passages)
-      await table.insert({ page_id: pageId, position, text, vector: encodeVector(vector), model, source_updated_at: sourceUpdatedAt });
+      await table.insert({
+        page_id: pageId,
+        position,
+        text,
+        vector: encodeVector(vector),
+        model,
+        source_updated_at: sourceUpdatedAt
+      });
   });
 }
 

@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-
-import { useCourses } from "../features/courses/lib/coursesState";
+import { useCourses } from "@/features/courses/lib/coursesState";
 import {
   addWidget,
   getWidgets,
@@ -9,10 +7,11 @@ import {
   replaceWidgets,
   restoreWidget,
   updateWidget
-} from "../features/home/lib/widget/actions";
-import type { NewWidget, Widget } from "../features/home/lib/widget/types";
-import HomePage from "../features/home/pages/HomePage";
-import { defaultWidgets, layoutPresets } from "../features/home/widgets/catalog";
+} from "@/features/home/lib/widget/actions";
+import type { NewWidget, Widget } from "@/features/home/lib/widget/types";
+import HomePage from "@/features/home/pages/HomePage";
+import { defaultWidgets, layoutPresets } from "@/features/home/widgets/catalog";
+import { useEffect, useRef, useState } from "react";
 
 export default function HomeRoute() {
   const { courses, create } = useCourses();

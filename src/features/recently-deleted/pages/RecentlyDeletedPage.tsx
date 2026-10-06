@@ -1,12 +1,16 @@
+import DeletedItemPreview from "@/features/recently-deleted/components/DeletedItemPreview";
+import {
+  daysLeft,
+  deletedItemKey,
+  KEEP_DAYS,
+  type DeletedItem
+} from "@/features/recently-deleted/lib/deleted-item/types";
+import { useLastValue } from "@/shared/lib/dialogState";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { BodyText, Caption, PageTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { useLastValue } from "../../../shared/lib/dialogState";
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { BodyText, Caption, PageTitle } from "../../../shared/ui/Typography";
-import DeletedItemPreview from "../components/DeletedItemPreview";
-import { daysLeft, deletedItemKey, KEEP_DAYS, type DeletedItem } from "../lib/deleted-item/types";
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 

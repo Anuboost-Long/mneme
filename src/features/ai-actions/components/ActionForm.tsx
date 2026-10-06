@@ -1,15 +1,20 @@
+import { createAction, updateAction } from "@/features/ai-actions/lib/action/actions";
+import {
+  ActionOutput,
+  ActionScope,
+  type ActionInput,
+  type AiAction
+} from "@/features/ai-actions/lib/action/types";
+import { pageTypeLabels } from "@/features/courses/components/PageForm";
+import { pageTypes, type PageType } from "@/features/courses/lib/page/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { TextArea, TextInput } from "@/shared/ui/Input";
+import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState, type SubmitEvent } from "react";
 
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextArea, TextInput } from "../../../shared/ui/Input";
-import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
-import { pageTypeLabels } from "../../courses/components/PageForm";
-import { pageTypes, type PageType } from "../../courses/lib/page/types";
-import { createAction, updateAction } from "../lib/action/actions";
-import { ActionOutput, ActionScope, type ActionInput, type AiAction } from "../lib/action/types";
 import ActionIcon, { actionIconLabels, actionIcons } from "./ActionIcon";
 
 const scopeOptions: { value: ActionScope; label: string; hint: string }[] = [

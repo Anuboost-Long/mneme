@@ -1,20 +1,25 @@
-import clsx from "clsx";
-import { useState, type SubmitEvent } from "react";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import { TextInput } from "../../../shared/ui/Input";
-import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
 import {
   countPagesOfType,
   createCustomPageType,
   deleteCustomPageType,
   renameCustomPageType
-} from "../lib/page-type/actions";
-import { loadCustomPageTypes, useCustomPageTypes } from "../lib/page-type/pageTypesState";
-import { customTypeValue, type CustomPageType } from "../lib/page-type/types";
+} from "@/features/courses/lib/page-type/actions";
+import {
+  loadCustomPageTypes,
+  useCustomPageTypes
+} from "@/features/courses/lib/page-type/pageTypesState";
+import { customTypeValue, type CustomPageType } from "@/features/courses/lib/page-type/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import { TextInput } from "@/shared/ui/Input";
+import { BodyText, Caption, SectionTitle } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useState, type SubmitEvent } from "react";
 
-const button = clsx("h-9 shrink-0 rounded-md border border-ink/15 px-3 text-sm font-medium", "hover:bg-ink/5");
+const button = clsx(
+  "h-9 shrink-0 rounded-md border border-ink/15 px-3 text-sm font-medium",
+  "hover:bg-ink/5"
+);
 
 export default function PageTypeSettings() {
   const custom = useCustomPageTypes();
@@ -50,7 +55,10 @@ export default function PageTypeSettings() {
 
   async function askToDelete(type: CustomPageType) {
     setError("");
-    setDeleting({ ...type, pages: await countPagesOfType(customTypeValue(type.id)).catch(() => 0) });
+    setDeleting({
+      ...type,
+      pages: await countPagesOfType(customTypeValue(type.id)).catch(() => 0)
+    });
   }
 
   return (
@@ -90,7 +98,11 @@ export default function PageTypeSettings() {
                 ) : (
                   <div className={clsx("flex items-center gap-3")}>
                     <span className={clsx("min-w-0 flex-1 truncate text-sm")}>{type.name}</span>
-                    <button type="button" onClick={() => setEditing({ id: type.id, name: type.name })} className={button}>
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ id: type.id, name: type.name })}
+                      className={button}
+                    >
                       Rename
                     </button>
                     <button

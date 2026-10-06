@@ -1,30 +1,32 @@
+import CommandPalette from "@/app/CommandPalette";
+import NavBar from "@/app/NavBar";
+import Sidebar from "@/app/Sidebar";
+import AgentChatPanel from "@/features/agent-chat/components/AgentChatPanel";
+import { subscribeAssistant } from "@/features/agent-chat/lib/assistant";
+import { cleanUpConversations } from "@/features/agent-chat/lib/conversation/actions";
+import ApprovalPrompt from "@/features/agent-server/components/ApprovalPrompt";
+import CourseForm from "@/features/courses/components/CourseForm";
+import { getCourses } from "@/features/courses/lib/course/actions";
+import { coursesAtom, creatingCourseAtom, useCourses } from "@/features/courses/lib/coursesState";
+import { storeInlineIcons } from "@/features/courses/lib/icon/actions";
+import {
+  loadCustomPageTypes,
+  useCustomPageTypes
+} from "@/features/courses/lib/page-type/pageTypesState";
+import { storeInlinePageImages } from "@/features/courses/lib/page/actions";
+import { deleteOrphanCards } from "@/features/flashcards/lib/card/actions";
+import { unloadVoiceWhenIdle } from "@/features/read-aloud/lib/downloadedVoicePlayer";
+import { purgeExpiredItems } from "@/features/recently-deleted/lib/deleted-item/actions";
+import { updateSearchIndex } from "@/features/search/lib/searchIndex";
+import { deleteOrphanTasks } from "@/features/tasks/lib/task/actions";
+import { initDb } from "@/shared/lib/db";
+import { useShortcut, useShortcuts } from "@/shared/lib/shortcuts/shortcutsState";
+import { useSidebarMode } from "@/shared/providers/SidebarModeProvider";
+import { BodyText, PageTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useAtom, useSetAtom } from "jotai";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
-
-import CommandPalette from "../app/CommandPalette";
-import NavBar from "../app/NavBar";
-import Sidebar from "../app/Sidebar";
-import AgentChatPanel from "../features/agent-chat/components/AgentChatPanel";
-import { subscribeAssistant } from "../features/agent-chat/lib/assistant";
-import { cleanUpConversations } from "../features/agent-chat/lib/conversation/actions";
-import ApprovalPrompt from "../features/agent-server/components/ApprovalPrompt";
-import CourseForm from "../features/courses/components/CourseForm";
-import { getCourses } from "../features/courses/lib/course/actions";
-import { coursesAtom, creatingCourseAtom, useCourses } from "../features/courses/lib/coursesState";
-import { storeInlineIcons } from "../features/courses/lib/icon/actions";
-import { storeInlinePageImages } from "../features/courses/lib/page/actions";
-import { loadCustomPageTypes, useCustomPageTypes } from "../features/courses/lib/page-type/pageTypesState";
-import { deleteOrphanCards } from "../features/flashcards/lib/card/actions";
-import { unloadVoiceWhenIdle } from "../features/read-aloud/lib/downloadedVoicePlayer";
-import { purgeExpiredItems } from "../features/recently-deleted/lib/deleted-item/actions";
-import { updateSearchIndex } from "../features/search/lib/searchIndex";
-import { deleteOrphanTasks } from "../features/tasks/lib/task/actions";
-import { initDb } from "../shared/lib/db";
-import { useShortcut, useShortcuts } from "../shared/lib/shortcuts/shortcutsState";
-import { useSidebarMode } from "../shared/providers/SidebarModeProvider";
-import { BodyText, PageTitle } from "../shared/ui/Typography";
 
 const SEARCH_INDEX_INTERVAL_MS = 120_000;
 

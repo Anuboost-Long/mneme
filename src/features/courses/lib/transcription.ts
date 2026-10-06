@@ -1,17 +1,17 @@
-import { desktop, type TranscribeOptions } from "@chain/sdk";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
 import {
   transcriptionModels,
   VAD,
   WHISPER_LANGUAGES,
   type TranscriptionExtension
-} from "../../extensions/lib/catalog";
+} from "@/features/extensions/lib/catalog";
 import {
   isReady,
   onlyDownloadedFor,
   refreshExtensions
-} from "../../extensions/lib/extensionsState";
+} from "@/features/extensions/lib/extensionsState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { desktop, type TranscribeOptions } from "@chain/sdk";
+
 import { saveTranscript } from "./recording/actions";
 import type { Recording } from "./recording/types";
 

@@ -1,15 +1,14 @@
-import clsx from "clsx";
-import { useEffect, useState, type SubmitEvent } from "react";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { TextInput } from "../../../shared/ui/Input";
-import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
 import {
   getSchoolSite,
   putSchoolSite,
   schoolBrowserAvailable,
   signOutOfSchoolSite
-} from "../lib/school-browser";
+} from "@/features/courses/lib/school-browser";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { TextInput } from "@/shared/ui/Input";
+import { BodyText, Caption, SectionTitle } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useEffect, useState, type SubmitEvent } from "react";
 
 export default function SchoolSiteSettings() {
   const [available, setAvailable] = useState(false);
@@ -87,7 +86,10 @@ export default function SchoolSiteSettings() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className={clsx("mt-5 text-sm font-medium underline underline-offset-4", "hover:text-muted")}
+          className={clsx(
+            "mt-5 text-sm font-medium underline underline-offset-4",
+            "hover:text-muted"
+          )}
         >
           Sign out of the school site
         </button>

@@ -1,20 +1,19 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import type { RecordingListItem } from "@/features/courses/lib/recording/types";
+import DeleteRecordingDialog from "@/features/recordings/components/DeleteRecordingDialog";
+import RecordingBar from "@/features/recordings/components/RecordingBar";
+import RecordingDetails from "@/features/recordings/components/RecordingDetails";
+import { timeAgo } from "@/shared/lib/date";
+import { DATE_GROUP_VALUES, groupByDate, type DateGroupBy } from "@/shared/lib/dateGroups";
+import { useLastValue } from "@/shared/lib/dialogState";
+import { formatDuration } from "@/shared/lib/formatDuration";
+import { useListView, type SortOption } from "@/shared/lib/useListView";
+import { useStoredChoice } from "@/shared/lib/useStoredChoice";
+import ListToolbar from "@/shared/ui/ListToolbar";
+import { BodyText, Caption, PageTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-import { timeAgo } from "../../../shared/lib/date";
-import { DATE_GROUP_VALUES, groupByDate, type DateGroupBy } from "../../../shared/lib/dateGroups";
-import { useLastValue } from "../../../shared/lib/dialogState";
-import { formatDuration } from "../../../shared/lib/formatDuration";
-import { useListView, type SortOption } from "../../../shared/lib/useListView";
-import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
-import ListToolbar from "../../../shared/ui/ListToolbar";
-import { BodyText, Caption, PageTitle } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/course/types";
-import type { RecordingListItem } from "../../courses/lib/recording/types";
-import DeleteRecordingDialog from "../components/DeleteRecordingDialog";
-import RecordingBar from "../components/RecordingBar";
-import RecordingDetails from "../components/RecordingDetails";
 
 type SortKey = "newest" | "oldest" | "longest" | "name";
 

@@ -1,12 +1,19 @@
+import type { Box, PdfTextRun } from "@/shared/lib/pdf";
 import type { RecognizedDocument } from "@chain/sdk";
 
 import { escapeAttr, escapeHtml } from "./import-sanitize";
 import { recognizedBlocks, tableHtml } from "./recognized-document";
-import type { Box, PdfTextRun } from "../../../shared/lib/pdf";
 
 // `x` is where the line starts, so a list item's wrapped second line can
 // be told apart from the next paragraph.
-type PdfLine = { text: string; x: number; y: number; height: number; bold: boolean; italic: boolean };
+type PdfLine = {
+  text: string;
+  x: number;
+  y: number;
+  height: number;
+  bold: boolean;
+  italic: boolean;
+};
 
 const SYMBOL_FONT = /wingdings|webdings|dingbats|symbol/i;
 const BOLD_FONT = /bold|black|heavy|semibold|demi/i;
@@ -25,7 +32,9 @@ function buildLines(items: PdfTextRun[]): PdfLine[] {
     if (ordered.length === 0) return;
     const height = Math.max(...ordered.map((run) => run.height)) || 10;
     const isMarker = (run: PdfTextRun) =>
-      /^\d{1,3}$/.test(run.str.trim()) && run.height < height * 0.8 && run.transform[5] > ordered[0].transform[5] + 1;
+      /^\d{1,3}$/.test(run.str.trim()) &&
+      run.height < height * 0.8 &&
+      run.transform[5] > ordered[0].transform[5] + 1;
     let text = "";
     let end = ordered[0].transform[4];
     for (const [index, run] of ordered.entries()) {
@@ -33,13 +42,19 @@ function buildLines(items: PdfTextRun[]): PdfLine[] {
       const marker = isMarker(run);
       let str = run.str;
       if (marker) str = `[${run.str.trim()}]`;
-      else if (index === 0 && run.str.trim().length === 1 && SYMBOL_FONT.test(run.font ?? "")) str = "•";
-      text += (text && !marker && gap > run.height * 0.2 && !/\s$/.test(text) && !/^\s/.test(str) ? " " : "") + str;
+      else if (index === 0 && run.str.trim().length === 1 && SYMBOL_FONT.test(run.font ?? ""))
+        str = "•";
+      text +=
+        (text && !marker && gap > run.height * 0.2 && !/\s$/.test(text) && !/^\s/.test(str)
+          ? " "
+          : "") + str;
       end = run.transform[4] + run.width;
     }
     if (!text.trim()) return;
     const first = ordered[0];
-    const words = ordered.filter((run) => run.str.trim() && !isMarker(run) && !SYMBOL_FONT.test(run.font ?? ""));
+    const words = ordered.filter(
+      (run) => run.str.trim() && !isMarker(run) && !SYMBOL_FONT.test(run.font ?? "")
+    );
     lines.push({
       text: text.trim(),
       x: first.transform[4],
@@ -52,7 +67,12 @@ function buildLines(items: PdfTextRun[]): PdfLine[] {
 
   for (const item of items) {
     const current = runs.find((run) => run.str.trim());
-    if (current && item.str.trim() && Math.abs(item.transform[5] - current.transform[5]) > Math.max(current.height, item.height) / 2) flush();
+    if (
+      current &&
+      item.str.trim() &&
+      Math.abs(item.transform[5] - current.transform[5]) > Math.max(current.height, item.height) / 2
+    )
+      flush();
     runs.push(item);
     if (item.hasEOL) flush();
   }
@@ -63,7 +83,9 @@ function buildLines(items: PdfTextRun[]): PdfLine[] {
 // A bullet glyph written far from its text ends up as a line of its own;
 // it belongs in front of the text at the same height.
 function attachLoneBullets(lines: PdfLine[]): PdfLine[] {
-  const lone = lines.filter((line) => BULLET_PATTERN.test(line.text) && !line.text.replace(BULLET_PATTERN, "").trim());
+  const lone = lines.filter(
+    (line) => BULLET_PATTERN.test(line.text) && !line.text.replace(BULLET_PATTERN, "").trim()
+  );
   for (const glyph of lone) {
     const owner = lines.find(
       (line) =>
@@ -114,7 +136,8 @@ function stripRunningHeadersFooters(pages: PdfLine[][]): PdfLine[][] {
       .filter(
         ([, count]) =>
           pages.length >= 3 &&
-          (count[0] + count[1] >= pages.length / 2 || count.some((onSide, side) => sides[side] >= 3 && onSide > sides[side] / 2))
+          (count[0] + count[1] >= pages.length / 2 ||
+            count.some((onSide, side) => sides[side] >= 3 && onSide > sides[side] / 2))
       )
       .map(([key]) => key)
   );
@@ -125,7 +148,10 @@ function stripRunningHeadersFooters(pages: PdfLine[][]): PdfLine[][] {
   });
 }
 
-function splitFootnotes(lines: PdfLine[], bodyHeight: number): { body: PdfLine[]; notes: string[] } {
+function splitFootnotes(
+  lines: PdfLine[],
+  bodyHeight: number
+): { body: PdfLine[]; notes: string[] } {
   const fromBottom = [...lines].sort((a, b) => a.y - b.y);
   const smallCount = fromBottom.findIndex((line) => line.height >= bodyHeight * 0.85);
   const bottom = fromBottom.slice(0, smallCount === -1 ? fromBottom.length : smallCount).reverse();
@@ -136,7 +162,8 @@ function splitFootnotes(lines: PdfLine[], bodyHeight: number): { body: PdfLine[]
   for (const line of noteLines) {
     const last = notes.length - 1;
     if (FOOTNOTE_PATTERN.test(line.text) || last === -1) notes.push(line.text);
-    else if (/(?:https?:\/\/|www\.)\S*$/.test(notes[last]) && !/\s/.test(line.text)) notes[last] += line.text;
+    else if (/(?:https?:\/\/|www\.)\S*$/.test(notes[last]) && !/\s/.test(line.text))
+      notes[last] += line.text;
     else notes[last] = joinText(notes[last], line.text);
   }
   return { body: lines.filter((line) => !noteLines.includes(line)), notes };
@@ -173,7 +200,8 @@ export type PdfPageContent = {
 // Wingdings export, and the control characters a symbol font's glyph can
 // come through as (a book's ■ read as U+0002); a dash or asterisk only
 // counts with a space after it.
-const BULLET_PATTERN = /^(?:[•◦▪▫■□●○◆◇▶►‣⁃∙·\u0001-\u0008\u000E-\u001F\uF076\uF0A7\uF0A8\uF0B7\uF0D8\uF0FC]\s*|[-–—*]\s+)/u;
+const BULLET_PATTERN =
+  /^(?:[•◦▪▫■□●○◆◇▶►‣⁃∙·\u0001-\u0008\u000E-\u001F\uF076\uF0A7\uF0A8\uF0B7\uF0D8\uF0FC]\s*|[-–—*]\s+)/u;
 const NUMBERED_PATTERN = /^(?:\d{1,3}|[a-z])[.)]\s+/;
 
 // A line continues the list item above it when it starts to the right of
@@ -197,22 +225,40 @@ type HeadingBlock = Extract<Block, { kind: "heading" }>;
 function headingRank(line: PdfLine, bodyHeight: number, standsAlone: boolean): number[] | null {
   if (line.text.length >= 120) return null;
   const larger = line.height > bodyHeight * 1.15;
-  const boldLine = line.bold && standsAlone && line.height >= bodyHeight * 0.95 && !/[.,;:]$/.test(line.text);
+  const boldLine =
+    line.bold && standsAlone && line.height >= bodyHeight * 0.95 && !/[.,;:]$/.test(line.text);
   if (!larger && !boldLine) return null;
   const caps = line.text === line.text.toUpperCase() && /\p{Lu}/u.test(line.text);
   return [-Math.round(line.height), caps ? 0 : 1, line.bold ? 0 : 1, line.italic ? 1 : 0];
 }
 
-function continuesHeading(last: Block | undefined, line: PdfLine, bodyHeight: number): last is HeadingBlock {
-  return last?.kind === "heading" && headingRank(line, bodyHeight, true)?.join() === last.rank.join();
+function continuesHeading(
+  last: Block | undefined,
+  line: PdfLine,
+  bodyHeight: number
+): last is HeadingBlock {
+  return (
+    last?.kind === "heading" && headingRank(line, bodyHeight, true)?.join() === last.rank.join()
+  );
 }
 
-function lineBlock(line: PdfLine, last: Block | undefined, bodyHeight: number, standsAlone: boolean): Block | null {
+function lineBlock(
+  line: PdfLine,
+  last: Block | undefined,
+  bodyHeight: number,
+  standsAlone: boolean
+): Block | null {
   const kind = listKind(line.text);
   if (kind) {
     const pattern = kind === "bullet" ? BULLET_PATTERN : NUMBERED_PATTERN;
     const number = kind === "numbered" ? Number.parseInt(line.text, 10) : Number.NaN;
-    return { kind, text: line.text.replace(pattern, ""), x: line.x, y: line.y, number: Number.isNaN(number) ? undefined : number };
+    return {
+      kind,
+      text: line.text.replace(pattern, ""),
+      x: line.x,
+      y: line.y,
+      number: Number.isNaN(number) ? undefined : number
+    };
   }
   if (continuesItem(last, line) || continuesHeading(last, line, bodyHeight)) {
     last.text = last.text ? joinText(last.text, line.text) : line.text;
@@ -232,7 +278,12 @@ function groupLinesIntoBlocks(lines: PdfLine[], bodyHeight: number): Block[] {
   let previousY: number | null = null;
   for (const line of lines) {
     const broke = previousY !== null && previousY - line.y > line.height * 1.8;
-    const block = lineBlock(line, broke ? undefined : blocks[blocks.length - 1], bodyHeight, previousY === null || broke);
+    const block = lineBlock(
+      line,
+      broke ? undefined : blocks[blocks.length - 1],
+      bodyHeight,
+      previousY === null || broke
+    );
     if (block) blocks.push(block);
     previousY = line.y;
   }
@@ -252,7 +303,11 @@ function placeBlocks(text: Block[], inserted: Block[]): Block[] {
 
 // Recognized tables replace the text-layer lines inside them. A page with
 // no text layer (a scan) takes everything recognized instead of its image.
-function pageBlocks(lines: PdfLine[], bodyHeight: number, { runs, images, height, recognized }: PdfPageContent): Block[] {
+function pageBlocks(
+  lines: PdfLine[],
+  bodyHeight: number,
+  { runs, images, height, recognized }: PdfPageContent
+): Block[] {
   const pdfY = (top: number) => height * (1 - top);
   const tables = recognized?.tables ?? [];
   const insideTable = (line: PdfLine) =>
@@ -261,21 +316,36 @@ function pageBlocks(lines: PdfLine[], bodyHeight: number, { runs, images, height
   // the table wins over a picture of it.
   const figures = images.filter(
     ({ covers }) =>
-      !covers || !tables.some(({ box }) => pdfY(box.y + box.height) < covers.top && pdfY(box.y) > covers.bottom)
+      !covers ||
+      !tables.some(
+        ({ box }) => pdfY(box.y + box.height) < covers.top && pdfY(box.y) > covers.bottom
+      )
   );
   const insideFigure = (line: PdfLine) =>
-    figures.some(({ covers }) => covers && line.y >= covers.bottom - 2 && line.y <= covers.top + 2 && line.x >= covers.left - 2 && line.x <= covers.right);
+    figures.some(
+      ({ covers }) =>
+        covers &&
+        line.y >= covers.bottom - 2 &&
+        line.y <= covers.top + 2 &&
+        line.x >= covers.left - 2 &&
+        line.x <= covers.right
+    );
   const everything = recognized ? recognizedBlocks(recognized) : [];
   const scanned = runs.length === 0 && everything.length > 0;
   const recognizedHtml = scanned
     ? everything
     : tables.map((table) => ({ top: table.box.y, html: tableHtml(table) }));
   const inserted: Block[] = [
-    ...(scanned ? [] : figures.map((image): Block => ({ kind: "image", src: image.src, y: image.top }))),
+    ...(scanned
+      ? []
+      : figures.map((image): Block => ({ kind: "image", src: image.src, y: image.top }))),
     ...recognizedHtml.map(({ top, html }): Block => ({ kind: "html", html, y: pdfY(top) }))
   ];
   return placeBlocks(
-    groupLinesIntoBlocks(lines.filter((line) => !insideTable(line) && !insideFigure(line)), bodyHeight),
+    groupLinesIntoBlocks(
+      lines.filter((line) => !insideTable(line) && !insideFigure(line)),
+      bodyHeight
+    ),
     inserted
   );
 }
@@ -309,8 +379,7 @@ function renderBlocks(blocks: Block[], levels: Map<string, number>): string {
     else if (block.kind === "heading") {
       const level = levels.get(block.rank.join()) ?? 2;
       html.push(`<h${level}>${escapeHtml(block.text)}</h${level}>`);
-    }
-    else html.push(`<p>${escapeHtml(block.text)}</p>`);
+    } else html.push(`<p>${escapeHtml(block.text)}</p>`);
   }
   flushList();
   return html.join("");
@@ -318,7 +387,8 @@ function renderBlocks(blocks: Block[], levels: Map<string, number>): string {
 
 function bodyHeightOf(lines: PdfLine[]): number {
   const characters = new Map<number, number>();
-  for (const { height, text } of lines) characters.set(height, (characters.get(height) ?? 0) + text.length);
+  for (const { height, text } of lines)
+    characters.set(height, (characters.get(height) ?? 0) + text.length);
   return [...characters].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 10;
 }
 
@@ -351,15 +421,24 @@ function compareRanks(a: number[], b: number[]): number {
 }
 
 function headingLevels(headings: HeadingBlock[]): Map<string, number> {
-  const ranks = [...new Map(headings.map(({ rank }) => [rank.join(), rank])).values()].sort(compareRanks);
+  const ranks = [...new Map(headings.map(({ rank }) => [rank.join(), rank])).values()].sort(
+    compareRanks
+  );
   return new Map(ranks.map((rank, index) => [rank.join(), Math.min(index + 2, 6)]));
 }
 
-function titleHeading(blocks: Block[], firstPageEnd: number, bodyHeight: number): HeadingBlock | undefined {
+function titleHeading(
+  blocks: Block[],
+  firstPageEnd: number,
+  bodyHeight: number
+): HeadingBlock | undefined {
   const headings = blocks.filter((block): block is HeadingBlock => block.kind === "heading");
   const [top] = [...headings].sort((a, b) => compareRanks(a.rank, b.rank));
-  if (!top || -top.rank[0] <= bodyHeight * 1.15 || blocks.indexOf(top) >= firstPageEnd) return undefined;
-  return headings.filter(({ rank }) => rank.join() === top.rank.join()).length === 1 ? top : undefined;
+  if (!top || -top.rank[0] <= bodyHeight * 1.15 || blocks.indexOf(top) >= firstPageEnd)
+    return undefined;
+  return headings.filter(({ rank }) => rank.join() === top.rank.join()).length === 1
+    ? top
+    : undefined;
 }
 
 const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"]+/g;
@@ -393,7 +472,9 @@ function notesHtml(notes: string[]): string {
 // the text, and a paragraph cut by a page break is joined back up. The
 // title is the document's own title heading, when it has one.
 export function pdfPagesToHtml(pages: PdfPageContent[]): { html: string; title?: string } {
-  const pageLines = stripRunningHeadersFooters(pages.map(({ runs }) => buildLines(readingRuns(runs))));
+  const pageLines = stripRunningHeadersFooters(
+    pages.map(({ runs }) => buildLines(readingRuns(runs)))
+  );
   const bodyHeight = bodyHeightOf(pageLines.flat());
   const blocks: Block[] = [];
   const notes: string[] = [];
@@ -406,6 +487,8 @@ export function pdfPagesToHtml(pages: PdfPageContent[]): { html: string; title?:
   });
   const title = titleHeading(blocks, firstPageEnd, bodyHeight);
   const body = blocks.filter((block) => block !== title);
-  const levels = headingLevels(body.filter((block): block is HeadingBlock => block.kind === "heading"));
+  const levels = headingLevels(
+    body.filter((block): block is HeadingBlock => block.kind === "heading")
+  );
   return { html: renderBlocks(body, levels) + notesHtml(notes), title: title?.text };
 }

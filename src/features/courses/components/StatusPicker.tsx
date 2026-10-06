@@ -1,16 +1,26 @@
-import { useId, useRef, type ReactNode, type ToggleEvent } from "react";
+import {
+  CompletionStatus,
+  completionStatuses,
+  completionStatusLabels
+} from "@/features/courses/lib/completion-status";
+import { hideUntilPlaced, placePopover } from "@/shared/lib/placePopover";
 import clsx from "clsx";
-import { hideUntilPlaced, placePopover } from "../../../shared/lib/placePopover";
-import { CompletionStatus, completionStatuses, completionStatusLabels } from "../lib/completion-status";
+import { useId, useRef, type ReactNode, type ToggleEvent } from "react";
 
 export const statusMarkerStyles: Record<CompletionStatus, string> = {
   [CompletionStatus.NotStarted]: "border border-ink/20 bg-surface text-muted",
   [CompletionStatus.InProgress]: "border-2 border-accent bg-surface text-ink",
   [CompletionStatus.Completed]: "bg-accent text-chain-navy",
-  [CompletionStatus.RevisionNeeded]: "border-2 border-dashed border-accent bg-surface text-ink",
+  [CompletionStatus.RevisionNeeded]: "border-2 border-dashed border-accent bg-surface text-ink"
 };
 
-export default function StatusPicker({ status, itemLabel, onChange, triggerClassName, children }: Readonly<{
+export default function StatusPicker({
+  status,
+  itemLabel,
+  onChange,
+  triggerClassName,
+  children
+}: Readonly<{
   status: CompletionStatus;
   itemLabel: string;
   onChange: (status: CompletionStatus) => void;
@@ -24,7 +34,9 @@ export default function StatusPicker({ status, itemLabel, onChange, triggerClass
   function placePicker(event: ToggleEvent<HTMLDivElement>) {
     if (event.newState !== "open" || !trigger.current) return;
     placePopover(event.currentTarget, trigger.current, "start");
-    event.currentTarget.querySelector<HTMLButtonElement>("[aria-pressed=true]")?.focus({ preventScroll: true });
+    event.currentTarget
+      .querySelector<HTMLButtonElement>("[aria-pressed=true]")
+      ?.focus({ preventScroll: true });
   }
 
   function choose(option: CompletionStatus) {
@@ -34,15 +46,59 @@ export default function StatusPicker({ status, itemLabel, onChange, triggerClass
 
   return (
     <>
-      <button ref={trigger} type="button" popoverTarget={id} aria-label={`${itemLabel}: ${completionStatusLabels[status]}. Change status`} className={triggerClassName}>
+      <button
+        ref={trigger}
+        type="button"
+        popoverTarget={id}
+        aria-label={`${itemLabel}: ${completionStatusLabels[status]}. Change status`}
+        className={triggerClassName}
+      >
         {children}
       </button>
-      <div ref={picker} id={id} popover="auto" onBeforeToggle={(event) => hideUntilPlaced(event.currentTarget, event.newState)} onToggle={placePicker} className={clsx("fixed m-0 w-52 rounded-lg", "border border-ink/20 bg-surface shadow-lg", "p-1 text-sm text-ink")}>
+      <div
+        ref={picker}
+        id={id}
+        popover="auto"
+        onBeforeToggle={(event) => hideUntilPlaced(event.currentTarget, event.newState)}
+        onToggle={placePicker}
+        className={clsx(
+          "fixed m-0 w-52 rounded-lg",
+          "border border-ink/20 bg-surface shadow-lg",
+          "p-1 text-sm text-ink"
+        )}
+      >
         {completionStatuses.map((option) => (
-          <button key={option} type="button" aria-pressed={option === status} onClick={() => choose(option)} className={clsx("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left", "hover:bg-ink/7 focus-visible:bg-ink/7 focus-visible:outline-none", option === status && "font-medium")}>
-            <span aria-hidden="true" className={clsx("size-4 shrink-0 rounded-full", statusMarkerStyles[option])} />
+          <button
+            key={option}
+            type="button"
+            aria-pressed={option === status}
+            onClick={() => choose(option)}
+            className={clsx(
+              "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left",
+              "hover:bg-ink/7 focus-visible:bg-ink/7 focus-visible:outline-none",
+              option === status && "font-medium"
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={clsx("size-4 shrink-0 rounded-full", statusMarkerStyles[option])}
+            />
             <span className={clsx("flex-1")}>{completionStatusLabels[option]}</span>
-            {option === status && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>}
+            {option === status && (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m5 12 5 5 9-10" />
+              </svg>
+            )}
           </button>
         ))}
       </div>
@@ -52,7 +108,11 @@ export default function StatusPicker({ status, itemLabel, onChange, triggerClass
 
 // The current status as a small muted chip that opens the picker, for a
 // page or module header.
-export function StatusChip({ status, itemLabel, onChange }: Readonly<{
+export function StatusChip({
+  status,
+  itemLabel,
+  onChange
+}: Readonly<{
   status: CompletionStatus;
   itemLabel: string;
   onChange: (status: CompletionStatus) => void;
@@ -67,9 +127,22 @@ export function StatusChip({ status, itemLabel, onChange }: Readonly<{
         "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
       )}
     >
-      <span aria-hidden="true" className={clsx("size-3.5 rounded-full", statusMarkerStyles[status])} />
+      <span
+        aria-hidden="true"
+        className={clsx("size-3.5 rounded-full", statusMarkerStyles[status])}
+      />
       {completionStatusLabels[status]}
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <path d="m4 6 4 4 4-4" />
       </svg>
     </StatusPicker>

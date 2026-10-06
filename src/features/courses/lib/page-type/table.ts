@@ -1,8 +1,8 @@
+import { PageType } from "@/features/courses/lib/page/types";
+import type { CustomPageTypeRow } from "@/shared/lib/db/schema/custom-page-type";
+import type { PageRow } from "@/shared/lib/db/schema/page";
 import { desktop, sql } from "@chain/sdk";
 
-import type { CustomPageTypeRow } from "../../../../shared/lib/db/schema/custom-page-type";
-import type { PageRow } from "../../../../shared/lib/db/schema/page";
-import { PageType } from "../page/types";
 import { customTypeValue } from "./types";
 
 const customTypeTable = () => desktop.storage.table<CustomPageTypeRow>("custom_page_type");
@@ -32,7 +32,9 @@ export async function setCustomPageTypeName(id: number, name: string) {
 
 export function deleteCustomPageTypeRow(id: number) {
   return desktop.storage.transaction(async (tx) => {
-    await tx.table<PageRow>("page").update({ type: customTypeValue(id) }, { type: PageType.Custom });
+    await tx
+      .table<PageRow>("page")
+      .update({ type: customTypeValue(id) }, { type: PageType.Custom });
     await tx.table<CustomPageTypeRow>("custom_page_type").delete({ id });
   });
 }

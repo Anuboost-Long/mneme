@@ -1,7 +1,7 @@
+import type { Schedule } from "@/features/flashcards/lib/schedule";
+import type { FlashcardRow } from "@/shared/lib/db/schema/flashcard";
 import { desktop, sql } from "@chain/sdk";
 
-import type { FlashcardRow } from "../../../../shared/lib/db/schema/flashcard";
-import type { Schedule } from "../schedule";
 import type { CardDraft, Flashcard } from "./types";
 
 const cardTable = () => desktop.storage.table<FlashcardRow>("flashcard");
@@ -29,7 +29,8 @@ export function getDueCards(moduleId: number) {
 export function insertCards(moduleId: number, cards: CardDraft[]) {
   return desktop.storage.transaction(async (tx) => {
     const table = tx.table<FlashcardRow>("flashcard");
-    for (const { front, back, page_id } of cards) await table.insert({ module_id: moduleId, page_id, front, back });
+    for (const { front, back, page_id } of cards)
+      await table.insert({ module_id: moduleId, page_id, front, back });
   });
 }
 
@@ -42,7 +43,15 @@ export async function recordReview(id: number, schedule: Schedule, dueAt: string
     `UPDATE flashcard SET ease = ?, interval_days = ?, repetitions = ?, due_at = ?,
        right_count = right_count + ?, wrong_count = wrong_count + ?, last_reviewed_at = datetime('now')
      WHERE id = ?`,
-    [schedule.ease, schedule.interval_days, schedule.repetitions, dueAt, right ? 1 : 0, right ? 0 : 1, id]
+    [
+      schedule.ease,
+      schedule.interval_days,
+      schedule.repetitions,
+      dueAt,
+      right ? 1 : 0,
+      right ? 0 : 1,
+      id
+    ]
   );
 }
 

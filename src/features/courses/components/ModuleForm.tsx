@@ -1,13 +1,18 @@
+import { createModule, updateModule } from "@/features/courses/lib/module/actions";
+import {
+  ModuleStatus,
+  moduleStatuses,
+  moduleStatusLabels,
+  type Module
+} from "@/features/courses/lib/module/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import Dialog from "@/shared/ui/Dialog";
+import { TextArea, TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState, type FormEvent } from "react";
 
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextArea, TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText } from "../../../shared/ui/Typography";
-import { createModule, updateModule } from "../lib/module/actions";
-import { ModuleStatus, moduleStatuses, moduleStatusLabels, type Module } from "../lib/module/types";
 import IconPicker from "./IconPicker";
 
 export { moduleStatusLabels };

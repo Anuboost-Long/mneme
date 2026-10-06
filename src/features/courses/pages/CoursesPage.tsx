@@ -1,20 +1,18 @@
+import CourseActions from "@/features/courses/components/CourseActions";
+import {
+  courseDetails,
+  pinnedFirst,
+  withGroupOrder,
+  type Course
+} from "@/features/courses/lib/course/types";
+import { percentDone, type PageProgress } from "@/features/courses/lib/page/types";
+import { useDragReorder } from "@/shared/lib/useDragReorder";
+import CourseIcon, { courseColors } from "@/shared/ui/CourseIcon";
+import DragHandle from "@/shared/ui/DragHandle";
+import { BodyText, Caption, PageTitle, SectionTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-
-import { useDragReorder } from "../../../shared/lib/useDragReorder";
-import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
-import DragHandle from "../../../shared/ui/DragHandle";
-import {
-  BodyText,
-  Caption,
-  PageTitle,
-  SectionTitle,
-  Typography
-} from "../../../shared/ui/Typography";
-import CourseActions from "../components/CourseActions";
-import { courseDetails, pinnedFirst, withGroupOrder, type Course } from "../lib/course/types";
-import { percentDone, type PageProgress } from "../lib/page/types";
 
 type ListProps = {
   courses: Course[];

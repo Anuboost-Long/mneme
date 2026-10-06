@@ -1,15 +1,15 @@
+import { getProfiles } from "@/features/ai-profiles/lib/profile/actions";
+import type { AiProfile } from "@/features/ai-profiles/lib/profile/types";
+import { createCourse, updateCourse } from "@/features/courses/lib/course/actions";
+import type { Course } from "@/features/courses/lib/course/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import CourseIcon, { courseColors } from "@/shared/ui/CourseIcon";
+import Dialog from "@/shared/ui/Dialog";
+import { TextArea, TextInput } from "@/shared/ui/Input";
+import { BodyText, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState, type FormEvent } from "react";
 
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextArea, TextInput } from "../../../shared/ui/Input";
-import { BodyText, Typography } from "../../../shared/ui/Typography";
-import { getProfiles } from "../../ai-profiles/lib/profile/actions";
-import type { AiProfile } from "../../ai-profiles/lib/profile/types";
-import { createCourse, updateCourse } from "../lib/course/actions";
-import type { Course } from "../lib/course/types";
 import CoverPicker, { saveWithCover, type CoverChoice } from "./CoverPicker";
 import IconPicker from "./IconPicker";
 

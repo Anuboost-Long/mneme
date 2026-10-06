@@ -1,4 +1,5 @@
-import { ActionOutput, ActionScope } from "../action/types";
+import { ActionOutput, ActionScope } from "@/features/ai-actions/lib/action/types";
+
 import { PackArea, type CatalogPack } from "./types";
 
 const page = ActionScope.Page;

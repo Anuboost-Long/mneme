@@ -1,8 +1,7 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import type { Widget, WidgetConfig, WidgetSize } from "@/features/home/lib/widget/types";
+import type { SelectOption } from "@/shared/ui/Select";
 import type { ReactNode } from "react";
-
-import type { SelectOption } from "../../../shared/ui/Select";
-import type { Course } from "../../courses/lib/course/types";
-import type { Widget, WidgetConfig, WidgetSize } from "../lib/widget/types";
 
 export type WidgetCategory = "Study" | "Progress" | "Courses" | "AI" | "Your own";
 

@@ -1,14 +1,13 @@
+import { courseImage } from "@/features/courses/lib/icon/actions";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { isFileReference } from "@/shared/lib/fileReference";
+import { IMAGE_EXTENSIONS, pickFiles } from "@/shared/lib/pickFiles";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { iconChoices, iconGroups } from "@/shared/ui/iconCatalogue";
+import { TextInput } from "@/shared/ui/Input";
+import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { isFileReference } from "../../../shared/lib/fileReference";
-import { IMAGE_EXTENSIONS, pickFiles } from "../../../shared/lib/pickFiles";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { iconChoices, iconGroups } from "../../../shared/ui/iconCatalogue";
-import { TextInput } from "../../../shared/ui/Input";
-import { BodyText, Caption, Typography } from "../../../shared/ui/Typography";
-import { courseImage } from "../lib/icon/actions";
 
 const isPicture = (icon: string | null) =>
   (icon?.startsWith("data:image/") ?? false) || isFileReference(icon);
@@ -129,7 +128,9 @@ export default function IconPicker({
             </div>
           ))}
           {groups.length === 0 && (
-            <BodyText tone="muted">No icons match “{search.trim()}”. Paste an emoji or symbol below instead.</BodyText>
+            <BodyText tone="muted">
+              No icons match “{search.trim()}”. Paste an emoji or symbol below instead.
+            </BodyText>
           )}
         </div>
       </fieldset>

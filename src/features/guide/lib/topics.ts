@@ -1,23 +1,23 @@
-import chatAgentApproval from "../assets/chat-agent-approval.jpg";
-import agentAlwaysAllow from "../assets/agent-always-allow.jpg";
-import agentPermissionsActivity from "../assets/agent-permissions-activity.jpg";
-import assistantAnswer from "../assets/assistant-answer.jpg";
-import chatAskMode from "../assets/chat-ask-mode.jpg";
-import customizeReadingPageTypes from "../assets/customize-reading-page-types.jpg";
-import flashcardsDeck from "../assets/flashcards-deck.jpg";
-import flashcardsStudy from "../assets/flashcards-study.jpg";
-import iconPicker from "../assets/icon-picker.jpg";
-import iconSearch from "../assets/icon-search.jpg";
-import importAiAnswer from "../assets/import-ai-answer.jpg";
-import importAssignmentPage from "../assets/import-assignment-page.jpg";
-import importAssignmentPreview from "../assets/import-assignment-preview.jpg";
-import importCoursePage from "../assets/import-course-page.jpg";
-import importFileChosen from "../assets/import-file-chosen.jpg";
-import importFromUrl from "../assets/import-from-url.jpg";
-import importUnsure from "../assets/import-unsure.jpg";
-import moduleImportButton from "../assets/module-import-button.jpg";
-import paletteAsk from "../assets/palette-ask.jpg";
-import searchByMeaning from "../assets/search-by-meaning.jpg";
+import agentAlwaysAllow from "@/features/guide/assets/agent-always-allow.jpg";
+import agentPermissionsActivity from "@/features/guide/assets/agent-permissions-activity.jpg";
+import assistantAnswer from "@/features/guide/assets/assistant-answer.jpg";
+import chatAgentApproval from "@/features/guide/assets/chat-agent-approval.jpg";
+import chatAskMode from "@/features/guide/assets/chat-ask-mode.jpg";
+import customizeReadingPageTypes from "@/features/guide/assets/customize-reading-page-types.jpg";
+import flashcardsDeck from "@/features/guide/assets/flashcards-deck.jpg";
+import flashcardsStudy from "@/features/guide/assets/flashcards-study.jpg";
+import iconPicker from "@/features/guide/assets/icon-picker.jpg";
+import iconSearch from "@/features/guide/assets/icon-search.jpg";
+import importAiAnswer from "@/features/guide/assets/import-ai-answer.jpg";
+import importAssignmentPage from "@/features/guide/assets/import-assignment-page.jpg";
+import importAssignmentPreview from "@/features/guide/assets/import-assignment-preview.jpg";
+import importCoursePage from "@/features/guide/assets/import-course-page.jpg";
+import importFileChosen from "@/features/guide/assets/import-file-chosen.jpg";
+import importFromUrl from "@/features/guide/assets/import-from-url.jpg";
+import importUnsure from "@/features/guide/assets/import-unsure.jpg";
+import moduleImportButton from "@/features/guide/assets/module-import-button.jpg";
+import paletteAsk from "@/features/guide/assets/palette-ask.jpg";
+import searchByMeaning from "@/features/guide/assets/search-by-meaning.jpg";
 
 export type GuideScreenshot = { src: string; alt: string; landscape?: boolean };
 
@@ -49,7 +49,9 @@ export const guideTopics: GuideTopic[] = [
           "Go to the module the page belongs in. Import sits next to New page, above the pages.",
           "From the command palette (⌘P), Import PDF or document opens it too while you’re on a module."
         ],
-        screenshots: [{ src: moduleImportButton, alt: "Module 4, with Import beside New page above the pages" }]
+        screenshots: [
+          { src: moduleImportButton, alt: "Module 4, with Import beside New page above the pages" }
+        ]
       },
       {
         title: "Choose From file and add the file",
@@ -57,7 +59,12 @@ export const guideTopics: GuideTopic[] = [
           "Drop the file on the dialog, or press Choose file…. PDF, Word (.docx) and Markdown files work. Dropping another file replaces it.",
           "Press Read file."
         ],
-        screenshots: [{ src: importFileChosen, alt: "The Import dialog on From file, with a PDF ready to import" }]
+        screenshots: [
+          {
+            src: importFileChosen,
+            alt: "The Import dialog on From file, with a PDF ready to import"
+          }
+        ]
       },
       {
         title: "Check what mneme found",
@@ -92,7 +99,10 @@ export const guideTopics: GuideTopic[] = [
           "It sends the title, the headings and the start of the text to the agent your AI actions use, the one chosen under Run with in the AI actions menu. Connect an agent in Agent chat first."
         ],
         screenshots: [
-          { src: importUnsure, alt: "The preview: Couldn’t tell what kind of page this is, with Ask AI" }
+          {
+            src: importUnsure,
+            alt: "The preview: Couldn’t tell what kind of page this is, with Ask AI"
+          }
         ]
       },
       {
@@ -100,7 +110,12 @@ export const guideTopics: GuideTopic[] = [
         body: [
           "A few seconds later the Type changes and the line says the AI chose it. You can still pick another type before importing."
         ],
-        screenshots: [{ src: importAiAnswer, alt: "The preview after Ask AI: Type Reading, The AI says this is a reading" }]
+        screenshots: [
+          {
+            src: importAiAnswer,
+            alt: "The preview after Ask AI: Type Reading, The AI says this is a reading"
+          }
+        ]
       }
     ]
   },
@@ -120,7 +135,10 @@ export const guideTopics: GuideTopic[] = [
           "For a page that needs your login, press Sign in to your school site instead. A browser window opens beside mneme: sign in as usual, go to the page, and press Import this page in that window’s toolbar. You stay signed in next time; sign out under Settings → General → School site."
         ],
         screenshots: [
-          { src: importFromUrl, alt: "The Import dialog on From URL, with Sign in to your school site under Page URL" }
+          {
+            src: importFromUrl,
+            alt: "The Import dialog on From URL, with Sign in to your school site under Page URL"
+          }
         ]
       },
       {
@@ -129,7 +147,10 @@ export const guideTopics: GuideTopic[] = [
           "Each quiz, assignment and forum is listed with its kind, such as “Quiz: Factual recall test”. Course files and recordings are listed under Files, and the page reads as a module overview."
         ],
         screenshots: [
-          { src: importCoursePage, alt: "The preview of a Moodle course page, with activities and files ticked" }
+          {
+            src: importCoursePage,
+            alt: "The preview of a Moodle course page, with activities and files ticked"
+          }
         ]
       },
       {
@@ -138,7 +159,10 @@ export const guideTopics: GuideTopic[] = [
           "The page’s address says it’s an assignment, and its Due line comes with it, read as a date. The site’s name is left out of the title."
         ],
         screenshots: [
-          { src: importAssignmentPage, alt: "The preview of a Moodle assignment, due 14 December 2021" }
+          {
+            src: importAssignmentPage,
+            alt: "The preview of a Moodle assignment, due 14 December 2021"
+          }
         ]
       },
       {
@@ -166,7 +190,11 @@ export const guideTopics: GuideTopic[] = [
           "On a page, it knows which page you’re on, so “this page” means it. Without a question, Ask the assistant just opens it."
         ],
         screenshots: [
-          { src: paletteAsk, alt: "The command palette with Ask: What are the motives that drive an attacker?", landscape: true },
+          {
+            src: paletteAsk,
+            alt: "The command palette with Ask: What are the motives that drive an attacker?",
+            landscape: true
+          },
           {
             src: assistantAnswer,
             alt: "The assistant beside the cyber threats page, answering in Ask mode",
@@ -267,7 +295,11 @@ export const guideTopics: GuideTopic[] = [
           "Then a question in ⌘P also lists By meaning: pages about it even when they don’t use your words, with the passage that matched. The assistant can search the same way."
         ],
         screenshots: [
-          { src: searchByMeaning, alt: "⌘P with “why do people hack”, listing the cyber threats chapters By meaning", landscape: true }
+          {
+            src: searchByMeaning,
+            alt: "⌘P with “why do people hack”, listing the cyber threats chapters By meaning",
+            landscape: true
+          }
         ]
       }
     ]
@@ -314,7 +346,13 @@ export const guideTopics: GuideTopic[] = [
           "Pages you import get flashcards in the background, using the agent your AI actions use. Turn this off with Make flashcards for pages you import.",
           "On a module’s Flashcards, Make flashcards goes through every page that has no cards yet, one page at a time. Add card writes your own, and Edit or Delete fixes any card."
         ],
-        screenshots: [{ src: flashcardsDeck, alt: "A module’s flashcards being made from its pages", landscape: true }]
+        screenshots: [
+          {
+            src: flashcardsDeck,
+            alt: "A module’s flashcards being made from its pages",
+            landscape: true
+          }
+        ]
       },
       {
         title: "Study what’s due",
@@ -322,7 +360,13 @@ export const guideTopics: GuideTopic[] = [
           "Study shows each due card’s front. Press Space to see the answer, then Again, Hard, Good or Easy (keys 1 to 4); each shows when the card comes back.",
           "Again brings it back in 10 minutes and counts as wrong. Good brings a new card back tomorrow, then in 3 days, then further apart each time."
         ],
-        screenshots: [{ src: flashcardsStudy, alt: "Studying a card with its answer and the four grades", landscape: true }]
+        screenshots: [
+          {
+            src: flashcardsStudy,
+            alt: "Studying a card with its answer and the four grades",
+            landscape: true
+          }
+        ]
       }
     ]
   },
@@ -363,7 +407,8 @@ export const guideTopics: GuideTopic[] = [
     id: "icons",
     label: "Icons",
     title: "Give a course, module or page an icon",
-    summary: "Pick from 122 icons in 8 groups, from Study and Science to Health, Law and the Arts, or search by subject.",
+    summary:
+      "Pick from 122 icons in 8 groups, from Study and Science to Health, Law and the Arts, or search by subject.",
     where: "Edit course, Edit module or Edit page → Icon",
     place: { label: "Go to your courses", path: "/courses" },
     steps: [
@@ -374,7 +419,10 @@ export const guideTopics: GuideTopic[] = [
           "You can still paste an emoji under Custom icon or upload a picture. Press Save changes to keep it."
         ],
         screenshots: [
-          { src: iconPicker, alt: "The Icon section: a search field and the Study and Science groups" },
+          {
+            src: iconPicker,
+            alt: "The Icon section: a search field and the Study and Science groups"
+          },
           { src: iconSearch, alt: "Search icons with “law” typed, showing only the Law icon" }
         ]
       }
@@ -382,4 +430,5 @@ export const guideTopics: GuideTopic[] = [
   }
 ];
 
-export const findGuideTopic = (id: string | undefined) => guideTopics.find((topic) => topic.id === id);
+export const findGuideTopic = (id: string | undefined) =>
+  guideTopics.find((topic) => topic.id === id);

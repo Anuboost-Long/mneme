@@ -1,10 +1,10 @@
+import type { ReadableChunk } from "@/features/read-aloud/lib/readableText";
+import { Caption } from "@/shared/ui/Typography";
 import type { Editor } from "@tiptap/react";
 import clsx from "clsx";
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 
-import { Caption } from "../../../../shared/ui/Typography";
-import type { ReadableChunk } from "../../../read-aloud/lib/readableText";
 import { blockCommands } from "./blockCommands";
 import { markCommands } from "./markCommands";
 import TurnIntoSubmenu from "./TurnIntoSubmenu";

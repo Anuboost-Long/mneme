@@ -1,4 +1,5 @@
-import type { ImageAiAction } from "../../courses/components/editor/AlignableImage";
+import type { ImageAiAction } from "@/features/courses/components/editor/AlignableImage";
+
 import { ActionOutput, ActionScope, type AiAction } from "./action/types";
 
 const builtIn = {

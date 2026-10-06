@@ -1,7 +1,7 @@
+import { parseArgs } from "@/features/agent-chat/lib/presets";
+import type { AgentConnectionRow } from "@/shared/lib/db/schema/agent-connection";
 import { desktop, sql, type Values } from "@chain/sdk";
 
-import type { AgentConnectionRow } from "../../../../shared/lib/db/schema/agent-connection";
-import { parseArgs } from "../presets";
 import type { AgentConnection } from "./types";
 
 const connectionTable = () => desktop.storage.table<AgentConnectionRow>("agent_connection");

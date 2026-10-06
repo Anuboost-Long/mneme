@@ -1,9 +1,9 @@
+import { getModule } from "@/features/courses/lib/module/actions";
+import type { Module } from "@/features/courses/lib/module/types";
+import { getPages } from "@/features/courses/lib/page/actions";
+import type { Page } from "@/features/courses/lib/page/types";
 import { useCallback, useEffect, useState } from "react";
 
-import { getModule } from "../../courses/lib/module/actions";
-import type { Module } from "../../courses/lib/module/types";
-import { getPages } from "../../courses/lib/page/actions";
-import type { Page } from "../../courses/lib/page/types";
 import { getDeckCards } from "./card/actions";
 import type { Flashcard } from "./card/types";
 

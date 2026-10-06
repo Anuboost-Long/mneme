@@ -1,12 +1,12 @@
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import TaskCheck from "@/features/tasks/components/TaskCheck";
+import { completeTask, getTasks } from "@/features/tasks/lib/task/actions";
+import { dueLabel, localDay } from "@/features/tasks/lib/task/types";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Caption } from "../../../shared/ui/Typography";
-import TaskCheck from "../../tasks/components/TaskCheck";
-import { completeTask, getTasks } from "../../tasks/lib/task/actions";
-import { dueLabel, localDay } from "../../tasks/lib/task/types";
-import { useWidgetData } from "../lib/useWidgetData";
 import { Rows, rowsFor, WidgetNote } from "./parts";
 import type { WidgetProps } from "./types";
 
@@ -19,7 +19,10 @@ export function TasksWidget({ widget }: Readonly<WidgetProps>) {
     `${courseId}-${limit}-${version}`
   );
   if (!tasks) return null;
-  if (tasks.length === 0) return <WidgetNote>Nothing to do. Imported activities and your own tasks show up here.</WidgetNote>;
+  if (tasks.length === 0)
+    return (
+      <WidgetNote>Nothing to do. Imported activities and your own tasks show up here.</WidgetNote>
+    );
   const today = localDay();
   const narrow = widget.size === "small";
 
@@ -44,7 +47,11 @@ export function TasksWidget({ widget }: Readonly<WidgetProps>) {
             >
               <span className={clsx("min-w-0 flex-1 truncate font-medium")}>{task.title}</span>
               {!narrow && task.due_on && (
-                <Caption as="span" tone="muted" className={clsx("shrink-0", overdue && "font-medium text-danger")}>
+                <Caption
+                  as="span"
+                  tone="muted"
+                  className={clsx("shrink-0", overdue && "font-medium text-danger")}
+                >
                   {dueLabel(task.due_on, today)}
                 </Caption>
               )}

@@ -1,6 +1,6 @@
+import type { AttachmentRow } from "@/shared/lib/db/schema/attachment";
 import { desktop, sql, type SqlFragment, type Values } from "@chain/sdk";
 
-import type { AttachmentRow } from "../../../../shared/lib/db/schema/attachment";
 import type { AttachmentLink } from "./types";
 
 const attachmentTable = () => desktop.storage.table<AttachmentRow>("attachment");

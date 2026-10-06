@@ -1,9 +1,8 @@
+import { recordingSourceLabels } from "@/features/courses/lib/useAudioRecorder";
+import Select from "@/shared/ui/Select";
+import { Caption } from "@/shared/ui/Typography";
 import type { RecordingSource } from "@chain/sdk";
 import clsx from "clsx";
-
-import Select from "../../../../shared/ui/Select";
-import { Caption } from "../../../../shared/ui/Typography";
-import { recordingSourceLabels } from "../../lib/useAudioRecorder";
 
 export default function RecordingSourcePicker({
   sources,

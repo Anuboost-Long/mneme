@@ -1,7 +1,7 @@
+import { isFileReference } from "@/shared/lib/fileReference";
 import { desktop } from "@chain/sdk";
 import JSZip from "jszip";
 
-import { isFileReference } from "../../../../shared/lib/fileReference";
 import {
   getBackupRows,
   hasRecording,
@@ -18,7 +18,18 @@ const BACKUP_JSON = "backup.json";
 const FILES_FOLDER = "files/";
 
 export async function createBackup(): Promise<Backup> {
-  const [courses, modules, pages, attachments, recordings, widgets, layouts, pageTypes, flashcards, tasks] = await getBackupRows();
+  const [
+    courses,
+    modules,
+    pages,
+    attachments,
+    recordings,
+    widgets,
+    layouts,
+    pageTypes,
+    flashcards,
+    tasks
+  ] = await getBackupRows();
   const references = new Set([
     ...courses.flatMap((course) => [course.cover, course.icon]),
     ...modules.map((module) => module.icon),

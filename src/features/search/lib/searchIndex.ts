@@ -1,9 +1,9 @@
+import { searchModels, type SearchExtension } from "@/features/extensions/lib/catalog";
+import { isReady, refreshExtensions } from "@/features/extensions/lib/extensionsState";
+import { errorMessage } from "@/shared/lib/errorMessage";
 import { desktop, type ChainError } from "@chain/sdk";
 import { useSyncExternalStore } from "react";
 
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { searchModels, type SearchExtension } from "../../extensions/lib/catalog";
-import { isReady, refreshExtensions } from "../../extensions/lib/extensionsState";
 import {
   countIndexedPages,
   deleteStalePassages,
@@ -63,14 +63,23 @@ async function embedPassages(model: SearchExtension, texts: string[]) {
   return vectors;
 }
 
-async function indexPage(model: SearchExtension, page: { id: number; title: string; content: string | null; updated_at: string }) {
+async function indexPage(
+  model: SearchExtension,
+  page: { id: number; title: string; content: string | null; updated_at: string }
+) {
   const id = model.manifest.id;
   const texts = splitIntoPassages(page.title, page.content);
-  const known = new Map((await getPagePassages(page.id, id)).map((passage) => [passage.text, passage.vector]));
+  const known = new Map(
+    (await getPagePassages(page.id, id)).map((passage) => [passage.text, passage.vector])
+  );
   const missing = [...new Set(texts.filter((text) => !known.has(text)))];
   const vectors = await embedPassages(model, missing);
   missing.forEach((text, index) => known.set(text, vectors[index]));
-  const passages: Passage[] = texts.map((text, position) => ({ position, text, vector: known.get(text) as Float32Array }));
+  const passages: Passage[] = texts.map((text, position) => ({
+    position,
+    text,
+    vector: known.get(text) as Float32Array
+  }));
   await replacePagePassages(page.id, id, page.updated_at, passages);
 }
 
@@ -110,12 +119,17 @@ export async function searchByMeaning(query: string, limit = 8): Promise<Passage
   const model = await activeSearchModel();
   if (!model || !query.trim()) return [];
   const id = model.manifest.id;
-  if (searchable?.model !== id) searchable = { model: id, passages: await getSearchablePassages(id) };
+  if (searchable?.model !== id)
+    searchable = { model: id, passages: await getSearchablePassages(id) };
   const { passages } = searchable;
   if (passages.length === 0) return [];
   const {
     vectors: [asked]
-  } = await desktop.embeddings.embed([query.trim()], { modelId: id, config: model.config, as: "query" });
+  } = await desktop.embeddings.embed([query.trim()], {
+    modelId: id,
+    config: model.config,
+    as: "query"
+  });
   const live = await getLivePageIds();
   const best = new Map<number, PassageMatch>();
   for (const { vector, ...passage } of passages) {

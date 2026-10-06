@@ -1,12 +1,15 @@
+import {
+  completionStatusLabels,
+  type CompletionStatus
+} from "@/features/courses/lib/completion-status";
+import type { Module } from "@/features/courses/lib/module/types";
+import type { PageProgress } from "@/features/courses/lib/page/types";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import type { ReactNode, Ref } from "react";
 import { Link } from "react-router-dom";
 
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { completionStatusLabels, type CompletionStatus } from "../lib/completion-status";
-import type { Module } from "../lib/module/types";
-import type { PageProgress } from "../lib/page/types";
 import ItemMenu from "./ItemMenu";
 import StatusPicker, { statusMarkerStyles } from "./StatusPicker";
 

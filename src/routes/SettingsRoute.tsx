@@ -1,6 +1,5 @@
+import SettingsPage, { settingsSections } from "@/features/settings/pages/SettingsPage";
 import { Navigate, useLocation, useParams } from "react-router-dom";
-
-import SettingsPage, { settingsSections } from "../features/settings/pages/SettingsPage";
 
 export default function SettingsRoute() {
   const { section } = useParams();

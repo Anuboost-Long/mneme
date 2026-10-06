@@ -1,8 +1,8 @@
+import type { CourseRow } from "@/shared/lib/db/schema/course";
+import type { ModuleRow } from "@/shared/lib/db/schema/module";
+import type { PageRow } from "@/shared/lib/db/schema/page";
 import { desktop, sql } from "@chain/sdk";
 
-import type { CourseRow } from "../../../../shared/lib/db/schema/course";
-import type { ModuleRow } from "../../../../shared/lib/db/schema/module";
-import type { PageRow } from "../../../../shared/lib/db/schema/page";
 import type { DeletedItem, DeletedPage } from "./types";
 
 export function getDeletedItems() {

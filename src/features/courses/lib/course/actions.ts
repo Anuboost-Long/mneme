@@ -1,11 +1,11 @@
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import { deleteIcon, deleteReplacedIcon, storeIcon } from "@/features/courses/lib/icon/actions";
+import { eraseModules } from "@/features/courses/lib/module/actions";
+import { deleteImage } from "@/features/courses/lib/page-image";
+import { deletionTime } from "@/features/courses/lib/page/actions";
+import type { CourseRow } from "@/shared/lib/db/schema/course";
 import { sql, type Values } from "@chain/sdk";
 
-import type { CourseRow } from "../../../../shared/lib/db/schema/course";
-import { CompletionStatus } from "../completion-status";
-import { deleteIcon, deleteReplacedIcon, storeIcon } from "../icon/actions";
-import { eraseModules } from "../module/actions";
-import { deleteImage } from "../page-image";
-import { deletionTime } from "../page/actions";
 import {
   deleteCourseRow,
   getCourse,

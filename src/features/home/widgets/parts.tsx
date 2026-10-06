@@ -1,12 +1,11 @@
+import { typeGlyph } from "@/features/courses/components/pageDisplay";
+import type { PageType } from "@/features/courses/lib/page/types";
+import type { WidgetSize } from "@/features/home/lib/widget/types";
+import CourseIcon, { courseColors } from "@/shared/ui/CourseIcon";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router-dom";
-
-import CourseIcon, { courseColors } from "../../../shared/ui/CourseIcon";
-import { Caption } from "../../../shared/ui/Typography";
-import { typeGlyph } from "../../courses/components/pageDisplay";
-import type { PageType } from "../../courses/lib/page/types";
-import type { WidgetSize } from "../lib/widget/types";
 
 // How many 36px rows fit in a widget of this size.
 export function rowsFor(size: WidgetSize) {

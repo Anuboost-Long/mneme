@@ -1,6 +1,5 @@
+import type { VoiceExtension } from "@/features/extensions/lib/catalog";
 import { desktop } from "@chain/sdk";
-
-import type { VoiceExtension } from "../../extensions/lib/catalog";
 
 // How many sentences are kept synthesized and decoded ahead of playback.
 // Kokoro runs ~4× faster than real time, so a few is enough to never run
@@ -173,7 +172,9 @@ export class DownloadedVoicePlayer {
   // Follows the audio clock, so a suspended context (pause) holds the word.
   private readonly follow = () => {
     const now = this.context.currentTime;
-    const current = this.timeline.find((item) => now >= item.startAt && now < item.startAt + item.duration);
+    const current = this.timeline.find(
+      (item) => now >= item.startAt && now < item.startAt + item.duration
+    );
     const frame = current ? Math.floor((now - current.startAt) / FRAME_SECONDS) : 0;
     // After the clip's last speech (its silent tail) or between clips,
     // nothing is being said, so nothing stays highlighted.

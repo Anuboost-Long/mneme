@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { deletePage } from "@/features/courses/lib/page/actions";
+import type { Page } from "@/features/courses/lib/page/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
-import type { Page } from "../lib/page/types";
-import { deletePage } from "../lib/page/actions";
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import Dialog from "../../../shared/ui/Dialog";
-import { BodyText } from "../../../shared/ui/Typography";
+import { useState } from "react";
 
-export default function DeletePage({ open, page, onClose, onDelete }: Readonly<{
+export default function DeletePage({
+  open,
+  page,
+  onClose,
+  onDelete
+}: Readonly<{
   open: boolean;
   page: Page | null;
   onClose: () => void;
@@ -34,14 +39,43 @@ export default function DeletePage({ open, page, onClose, onDelete }: Readonly<{
 
   return (
     <Dialog open={open} title="Delete page?" busy={busy} onClose={onClose}>
-      {(close, complete) => <>
-      <BodyText tone="muted" className={clsx("wrap-anywhere")}>“{page?.title}” moves to Recently deleted. You can restore it from there for 30 days.</BodyText>
-      {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
-      <div className={clsx("mt-8 flex justify-end gap-3")}>
-        <button type="button" data-autofocus disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}>Cancel</button>
-        <button type="button" disabled={busy} onClick={() => confirmDelete(complete)} className={clsx("rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white", "hover:bg-red-800")}>{busy ? "Deleting…" : "Delete page"}</button>
-      </div>
-      </>}
+      {(close, complete) => (
+        <>
+          <BodyText tone="muted" className={clsx("wrap-anywhere")}>
+            “{page?.title}” moves to Recently deleted. You can restore it from there for 30 days.
+          </BodyText>
+          {error && (
+            <BodyText role="alert" tone="error" className={clsx("mt-4")}>
+              {error}
+            </BodyText>
+          )}
+          <div className={clsx("mt-8 flex justify-end gap-3")}>
+            <button
+              type="button"
+              data-autofocus
+              disabled={busy}
+              onClick={close}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => confirmDelete(complete)}
+              className={clsx(
+                "rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white",
+                "hover:bg-red-800"
+              )}
+            >
+              {busy ? "Deleting…" : "Delete page"}
+            </button>
+          </div>
+        </>
+      )}
     </Dialog>
   );
 }

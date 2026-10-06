@@ -1,7 +1,7 @@
+import type { Page } from "@/features/courses/lib/page/types";
+import { getSetting, putSetting } from "@/shared/lib/settings/actions";
 import { useSyncExternalStore } from "react";
 
-import { getSetting, putSetting } from "../../../shared/lib/settings/actions";
-import type { Page } from "../../courses/lib/page/types";
 import { addCards } from "./card/actions";
 import { suggestFlashcards } from "./generate";
 
@@ -33,7 +33,9 @@ export async function makeFlashcards(
 ) {
   const current = making.get(moduleId);
   if (current && current.done < current.total) return;
-  const worthMaking = pages.filter((page) => (page.content ?? "").replace(/<[^>]+>/g, "").trim().length > 80);
+  const worthMaking = pages.filter(
+    (page) => (page.content ?? "").replace(/<[^>]+>/g, "").trim().length > 80
+  );
   if (worthMaking.length === 0) return;
   making.set(moduleId, { done: 0, total: worthMaking.length, error: "" });
   notify();
@@ -54,7 +56,11 @@ export async function makeFlashcards(
   }
 }
 
-export async function makeFlashcardsForImport(moduleId: number, page: Pick<Page, "id" | "title" | "content">, courseId?: number) {
+export async function makeFlashcardsForImport(
+  moduleId: number,
+  page: Pick<Page, "id" | "title" | "content">,
+  courseId?: number
+) {
   if (await makesCardsForImports()) await makeFlashcards(moduleId, [page], courseId);
 }
 

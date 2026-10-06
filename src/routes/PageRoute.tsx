@@ -1,14 +1,13 @@
+import { getPageAudio } from "@/features/audiobook/lib/page-audio/actions";
+import type { PageAudio } from "@/features/audiobook/lib/page-audio/types";
+import { updateCourse } from "@/features/courses/lib/course/actions";
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { getModule } from "@/features/courses/lib/module/actions";
+import { getPage, getPages, markPageOpened } from "@/features/courses/lib/page/actions";
+import type { Page as PageRecord } from "@/features/courses/lib/page/types";
+import PageDetailPage from "@/features/courses/pages/PageDetailPage";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-import { getPageAudio } from "../features/audiobook/lib/page-audio/actions";
-import type { PageAudio } from "../features/audiobook/lib/page-audio/types";
-import { updateCourse } from "../features/courses/lib/course/actions";
-import { useCourses } from "../features/courses/lib/coursesState";
-import { getModule } from "../features/courses/lib/module/actions";
-import { getPage, getPages, markPageOpened } from "../features/courses/lib/page/actions";
-import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import PageDetailPage from "../features/courses/pages/PageDetailPage";
 
 export default function PageRoute() {
   const { courseId, pageId } = useParams();

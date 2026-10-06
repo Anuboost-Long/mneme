@@ -1,12 +1,15 @@
+import {
+  getDefaultProfileId,
+  getProfiles,
+  setDefaultProfileId
+} from "@/features/ai-profiles/lib/profile/actions";
+import type { AiProfile } from "@/features/ai-profiles/lib/profile/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getDefaultProfileId, getProfiles, setDefaultProfileId } from "../lib/profile/actions";
-import type { AiProfile } from "../lib/profile/types";
 
 const unset = 0;
 

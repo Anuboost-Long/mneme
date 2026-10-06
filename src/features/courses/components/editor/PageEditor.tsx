@@ -15,20 +15,20 @@ import {
   type MouseEvent
 } from "react";
 import "prosemirror-view/style/prosemirror.css";
+import AiActions from "@/features/ai-actions/components/AiActions";
+import { markdownToEditorHtml } from "@/features/ai-actions/lib/editorHtml";
+import type { ActionLocation } from "@/features/ai-actions/lib/useAiAction";
+import { useSetPageSelection } from "@/features/ai-context/lib/selectionState";
+import { createAttachment } from "@/features/courses/lib/attachment/actions";
+import { storePageFile } from "@/features/courses/lib/page-files";
+import { hasInlineImages, pageImage, storeInlineImages } from "@/features/courses/lib/page-image";
+import { updatePage } from "@/features/courses/lib/page/actions";
+import type { ReadableChunk } from "@/features/read-aloud/lib/readableText";
+import { addCommandSource } from "@/shared/lib/commandSources";
+import { useShortcut } from "@/shared/lib/shortcuts/shortcutsState";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 
-import { addCommandSource } from "../../../../shared/lib/commandSources";
-import { useShortcut } from "../../../../shared/lib/shortcuts/shortcutsState";
-import { BodyText } from "../../../../shared/ui/Typography";
-import { useSetPageSelection } from "../../../ai-context/lib/selectionState";
-import AiActions from "../../../ai-actions/components/AiActions";
-import { markdownToEditorHtml } from "../../../ai-actions/lib/editorHtml";
-import type { ActionLocation } from "../../../ai-actions/lib/useAiAction";
-import type { ReadableChunk } from "../../../read-aloud/lib/readableText";
-import { createAttachment } from "../../lib/attachment/actions";
-import { storePageFile } from "../../lib/page-files";
-import { hasInlineImages, pageImage, storeInlineImages } from "../../lib/page-image";
-import { updatePage } from "../../lib/page/actions";
 import AiBlock from "./AiBlock";
 import AlignableImage from "./AlignableImage";
 import AttachmentBlock from "./AttachmentBlock";
@@ -109,7 +109,11 @@ export default function PageEditor({
       DetailsSummary,
       DetailsContent,
       Video,
-      AiBlock.configure({ courseId: actionLocation.courseId, moduleId: actionLocation.moduleId, pageId })
+      AiBlock.configure({
+        courseId: actionLocation.courseId,
+        moduleId: actionLocation.moduleId,
+        pageId
+      })
     ],
     content: content || "",
     editorProps: {
@@ -173,7 +177,9 @@ export default function PageEditor({
     if (!editor) return;
     function shareSelection() {
       const { from, to, empty } = editor.state.selection;
-      setPageSelection(empty ? null : { pageId, text: editor.state.doc.textBetween(from, to, "\n") });
+      setPageSelection(
+        empty ? null : { pageId, text: editor.state.doc.textBetween(from, to, "\n") }
+      );
     }
     editor.on("selectionUpdate", shareSelection);
     return () => {

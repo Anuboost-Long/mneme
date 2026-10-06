@@ -1,10 +1,10 @@
+import { getPagesByIds } from "@/features/home/lib/dashboard/actions";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { Caption } from "../../../shared/ui/Typography";
-import { getPagesByIds } from "../lib/dashboard/actions";
-import { useWidgetData } from "../lib/useWidgetData";
 import { PageGlyph, pageLink, RowLink, Rows, rowsFor, WidgetNote } from "./parts";
 import type { WidgetProps } from "./types";
 

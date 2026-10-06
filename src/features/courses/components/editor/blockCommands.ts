@@ -1,6 +1,5 @@
+import { pickImage } from "@/features/courses/lib/page-image";
 import type { Editor } from "@tiptap/react";
-
-import { pickImage } from "../../lib/page-image";
 
 // The `/` menu lists its commands under these headings, in this order.
 export const slashCategories = ["Text", "Lists", "Insert", "AI"] as const;

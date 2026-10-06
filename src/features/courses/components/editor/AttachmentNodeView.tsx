@@ -1,14 +1,4 @@
-import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
-import clsx from "clsx";
-import { useEffect, useRef, useState, type SubmitEvent } from "react";
-
-import { useOpenedOnce } from "../../../../shared/lib/dialogState";
-import { errorMessage } from "../../../../shared/lib/errorMessage";
-import { formatSize } from "../../../../shared/lib/formatSize";
-import { pickFiles } from "../../../../shared/lib/pickFiles";
-import { useFileUrl } from "../../../../shared/lib/useFileUrl";
-import ConfirmDeleteDialog from "../../../../shared/ui/ConfirmDeleteDialog";
-import { Caption } from "../../../../shared/ui/Typography";
+import ItemMenu from "@/features/courses/components/ItemMenu";
 import {
   createAttachment,
   deleteAttachment,
@@ -17,10 +7,19 @@ import {
   renameAttachment,
   revealAttachment,
   saveAttachmentCopy
-} from "../../lib/attachment/actions";
-import type { Attachment } from "../../lib/attachment/types";
-import { fileExtension } from "../../lib/page-files";
-import ItemMenu from "../ItemMenu";
+} from "@/features/courses/lib/attachment/actions";
+import type { Attachment } from "@/features/courses/lib/attachment/types";
+import { fileExtension } from "@/features/courses/lib/page-files";
+import { useOpenedOnce } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { formatSize } from "@/shared/lib/formatSize";
+import { pickFiles } from "@/shared/lib/pickFiles";
+import { useFileUrl } from "@/shared/lib/useFileUrl";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import { Caption } from "@/shared/ui/Typography";
+import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
+import clsx from "clsx";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 
 const folderIcon = "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z";
 const saveIcon = "M12 4v11m0 0-4-4m4 4 4-4M5 19h14";

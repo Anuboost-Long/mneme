@@ -1,9 +1,9 @@
+import type { AnswerLength, ExplanationLevel, Tone } from "@/features/ai-profiles/lib/preferences";
+import type { AiProfileRow } from "@/shared/lib/db/schema/ai-profile";
+import type { CourseRow } from "@/shared/lib/db/schema/course";
+import type { SettingsRow } from "@/shared/lib/db/schema/settings";
 import { desktop, sql, type Values } from "@chain/sdk";
 
-import type { AiProfileRow } from "../../../../shared/lib/db/schema/ai-profile";
-import type { CourseRow } from "../../../../shared/lib/db/schema/course";
-import type { SettingsRow } from "../../../../shared/lib/db/schema/settings";
-import type { AnswerLength, ExplanationLevel, Tone } from "../preferences";
 import type { AiProfile } from "./types";
 
 const profileTable = () => desktop.storage.table<AiProfileRow>("ai_profile");

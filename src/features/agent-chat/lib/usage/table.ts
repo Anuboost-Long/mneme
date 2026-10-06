@@ -1,6 +1,6 @@
+import type { AgentUsageRow } from "@/shared/lib/db/schema/agent-usage";
 import { desktop } from "@chain/sdk";
 
-import type { AgentUsageRow } from "../../../../shared/lib/db/schema/agent-usage";
 import type { UsageSummary } from "./types";
 
 export async function insertUsage(usage: Omit<AgentUsageRow, "id" | "invoked_at">) {

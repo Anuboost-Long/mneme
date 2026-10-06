@@ -1,15 +1,18 @@
-import { desktop, type ProcessArg, type ProcessOutputChunk } from "@chain/sdk";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { toBase64, type ImageData } from "../../../shared/lib/htmlImages";
-import { getAgentServerSnapshot, startAgentServer } from "../../agent-server/lib/agentServerState";
-import { startMessageBudget } from "../../agent-server/lib/budget";
-import { getActiveProfile } from "../../ai-profiles/lib/profile/actions";
+import {
+  getAgentServerSnapshot,
+  startAgentServer
+} from "@/features/agent-server/lib/agentServerState";
+import { startMessageBudget } from "@/features/agent-server/lib/budget";
+import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
 import {
   withProfile,
   withProfileMessage,
   type AiProfile
-} from "../../ai-profiles/lib/profile/types";
+} from "@/features/ai-profiles/lib/profile/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { toBase64, type ImageData } from "@/shared/lib/htmlImages";
+import { desktop, type ProcessArg, type ProcessOutputChunk } from "@chain/sdk";
+
 import { formatAttachments, imageMediaType, type ChatAttachment } from "./attachments";
 import type { AgentConnection } from "./connection/types";
 import { getConversation, updateConversationSessionId } from "./conversation/actions";
@@ -476,7 +479,10 @@ export async function runTurn(
     prompt,
     sessionId,
     mcpUrl,
-    framingInstructions(invoker.needsMcp, (await getConversation(conversationId))?.mode ?? ConversationMode.Ask),
+    framingInstructions(
+      invoker.needsMcp,
+      (await getConversation(conversationId))?.mode ?? ConversationMode.Ask
+    ),
     await getActiveProfile()
   );
   const command =

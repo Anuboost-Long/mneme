@@ -1,16 +1,16 @@
+import type { AgentConnection } from "@/features/agent-chat/lib/connection/types";
+import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
+import { buildActionContext } from "@/features/ai-context/lib/builder";
+import type { AiContext, ContextLayer } from "@/features/ai-context/lib/types";
+import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
+import { createPage } from "@/features/courses/lib/page/actions";
+import { PageType } from "@/features/courses/lib/page/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { extractImages } from "@/shared/lib/htmlImages";
 import { getHTMLFromFragment, type Editor, type EditorEvents } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { extractImages } from "../../../shared/lib/htmlImages";
-import { buildActionContext } from "../../ai-context/lib/builder";
-import type { AiContext, ContextLayer } from "../../ai-context/lib/types";
-import type { AgentConnection } from "../../agent-chat/lib/connection/types";
-import { acceptsImages } from "../../agent-chat/lib/runTurn";
-import { getActiveProfile } from "../../ai-profiles/lib/profile/actions";
-import { createPage } from "../../courses/lib/page/actions";
-import { PageType } from "../../courses/lib/page/types";
 import { ActionOutput, ActionScope, type AiAction } from "./action/types";
 import { compactHtml, gatherContext } from "./context";
 import { markdownToEditorHtml } from "./editorHtml";
@@ -61,7 +61,8 @@ const subjectLabels: Record<RunScope, string> = {
 function subjectLayer(scope: RunScope, html: string): ContextLayer {
   const text = new DOMParser().parseFromString(html, "text/html").body.textContent ?? "";
   const count = text.trim().split(/\s+/).filter(Boolean).length;
-  const words = scope === "image" ? "" : `, ${count.toLocaleString()} ${count === 1 ? "word" : "words"}`;
+  const words =
+    scope === "image" ? "" : `, ${count.toLocaleString()} ${count === 1 ? "word" : "words"}`;
   return { label: "Working on", detail: `${subjectLabels[scope]}${words}`, chars: html.length };
 }
 
@@ -212,26 +213,40 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
       }
       const profile = await getActiveProfile(location.courseId);
       const content = await extractImages(html);
-      const context = await buildActionContext(location, scope, content.images, acceptsImages(connection), profile);
+      const context = await buildActionContext(
+        location,
+        scope,
+        content.images,
+        acceptsImages(connection),
+        profile
+      );
       if (runId.current !== id) return;
       update((current) => ({
         ...current,
         context: { ...context, layers: [subjectLayer(scope, content.html), ...context.layers] }
       }));
 
-      const handle = await runAction(connection, action, scope, content, context.text, profile, (event) => {
-        switch (event.type) {
-          case "text":
-            update((current) => ({ ...current, text: current.text + event.text }));
-            break;
-          case "done":
-            void finish(event.text);
-            break;
-          case "error":
-            fail(event.message);
-            break;
+      const handle = await runAction(
+        connection,
+        action,
+        scope,
+        content,
+        context.text,
+        profile,
+        (event) => {
+          switch (event.type) {
+            case "text":
+              update((current) => ({ ...current, text: current.text + event.text }));
+              break;
+            case "done":
+              void finish(event.text);
+              break;
+            case "error":
+              fail(event.message);
+              break;
+          }
         }
-      });
+      );
       if (runId.current === id) kill.current = handle.kill;
       else void handle.kill();
     } catch (error) {

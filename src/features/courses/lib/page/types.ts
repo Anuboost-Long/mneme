@@ -1,4 +1,4 @@
-import type { CompletionStatus } from "../completion-status";
+import type { CompletionStatus } from "@/features/courses/lib/completion-status";
 
 export enum PageType {
   Lesson = 1,
@@ -9,7 +9,7 @@ export enum PageType {
   Notes = 6,
   Reading = 7,
   Revision = 8,
-  Custom = 9,
+  Custom = 9
 }
 
 export const pageTypes: PageType[] = [
@@ -21,7 +21,7 @@ export const pageTypes: PageType[] = [
   PageType.Notes,
   PageType.Reading,
   PageType.Revision,
-  PageType.Custom,
+  PageType.Custom
 ];
 
 export const pageTypeLabels: Record<PageType, string> = {
@@ -33,7 +33,7 @@ export const pageTypeLabels: Record<PageType, string> = {
   [PageType.Notes]: "Notes",
   [PageType.Reading]: "Reading",
   [PageType.Revision]: "Revision",
-  [PageType.Custom]: "Custom",
+  [PageType.Custom]: "Custom"
 };
 
 export type Page = {
@@ -90,7 +90,5 @@ export function pageContentPreview(html: string | null) {
 }
 
 export function percentDone(progress: PageProgress | undefined) {
-  return progress?.total
-    ? Math.round((progress.done / progress.total) * 100)
-    : 0;
+  return progress?.total ? Math.round((progress.done / progress.total) * 100) : 0;
 }

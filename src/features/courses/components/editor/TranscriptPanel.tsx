@@ -1,16 +1,5 @@
-import { desktop } from "@chain/sdk";
-import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-
-import { errorMessage } from "../../../../shared/lib/errorMessage";
-import { languageName } from "../../../../shared/lib/languageName";
-import Select from "../../../../shared/ui/Select";
-import { Caption } from "../../../../shared/ui/Typography";
-import { transcriptionModels, WHISPER_LANGUAGES } from "../../../extensions/lib/catalog";
-import { isReady, refreshExtensions, useExtensions } from "../../../extensions/lib/extensionsState";
-import { saveTranscript, updateTranscriptText } from "../../lib/recording/actions";
-import type { Recording } from "../../lib/recording/types";
+import { saveTranscript, updateTranscriptText } from "@/features/courses/lib/recording/actions";
+import type { Recording } from "@/features/courses/lib/recording/types";
 import {
   ENGINE_KEY,
   LOCALE_KEY,
@@ -20,7 +9,21 @@ import {
   SYSTEM,
   transcribeError,
   transcribeOptions
-} from "../../lib/transcription";
+} from "@/features/courses/lib/transcription";
+import { transcriptionModels, WHISPER_LANGUAGES } from "@/features/extensions/lib/catalog";
+import {
+  isReady,
+  refreshExtensions,
+  useExtensions
+} from "@/features/extensions/lib/extensionsState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { languageName } from "@/shared/lib/languageName";
+import Select from "@/shared/ui/Select";
+import { Caption } from "@/shared/ui/Typography";
+import { desktop } from "@chain/sdk";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 const button = clsx(
   "h-8 shrink-0 rounded-md px-3 text-sm font-medium",

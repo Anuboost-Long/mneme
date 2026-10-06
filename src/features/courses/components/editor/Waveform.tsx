@@ -1,7 +1,6 @@
+import { WAVEFORM_LENGTH } from "@/features/courses/lib/useAudioRecorder";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-
-import { WAVEFORM_LENGTH } from "../../lib/useAudioRecorder";
 
 // Newest sample at the right edge, mirrored around the tape's centre
 // line, with the envelope drawn as a curve through the midpoints between
@@ -53,7 +52,12 @@ export default function Waveform({ values, live }: Readonly<{ values: number[]; 
     for (let index = 1; index < points.length; index++) {
       const previous = points[index - 1];
       const point = points[index];
-      context.quadraticCurveTo(previous.x, middle - previous.y, (previous.x + point.x) / 2, middle - (previous.y + point.y) / 2);
+      context.quadraticCurveTo(
+        previous.x,
+        middle - previous.y,
+        (previous.x + point.x) / 2,
+        middle - (previous.y + point.y) / 2
+      );
     }
     const last = points[points.length - 1];
     context.lineTo(last.x, middle - last.y);
@@ -61,7 +65,12 @@ export default function Waveform({ values, live }: Readonly<{ values: number[]; 
     for (let index = points.length - 1; index > 0; index--) {
       const previous = points[index];
       const point = points[index - 1];
-      context.quadraticCurveTo(previous.x, middle + previous.y, (previous.x + point.x) / 2, middle + (previous.y + point.y) / 2);
+      context.quadraticCurveTo(
+        previous.x,
+        middle + previous.y,
+        (previous.x + point.x) / 2,
+        middle + (previous.y + point.y) / 2
+      );
     }
     context.lineTo(points[0].x, middle + points[0].y);
     context.closePath();

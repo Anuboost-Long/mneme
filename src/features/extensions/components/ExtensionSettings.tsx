@@ -1,10 +1,10 @@
-import clsx from "clsx";
-import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-
-import { BodyText, Caption, SectionTitle, Typography } from "../../../shared/ui/Typography";
-import SearchIndexStatus from "../../search/components/SearchIndexStatus";
-import { searchModels, transcriptionModels, VAD, voiceModels, type Extension } from "../lib/catalog";
+import {
+  searchModels,
+  transcriptionModels,
+  VAD,
+  voiceModels,
+  type Extension
+} from "@/features/extensions/lib/catalog";
 import {
   cancelExtension,
   installExtension,
@@ -13,7 +13,12 @@ import {
   removeExtension,
   setOnlyDownloaded,
   useExtensions
-} from "../lib/extensionsState";
+} from "@/features/extensions/lib/extensionsState";
+import SearchIndexStatus from "@/features/search/components/SearchIndexStatus";
+import { BodyText, Caption, SectionTitle, Typography } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 
 function formatBytes(bytes: number) {
   if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
@@ -107,7 +112,8 @@ export default function ExtensionSettings() {
         )}
         <Caption tone="muted" className={clsx("mt-3")}>
           Voices and transcription models come from the sherpa-onnx releases, search models from
-          Hugging Face; each is checked against a pinned checksum before it’s kept. Speech detection uses Silero VAD (
+          Hugging Face; each is checked against a pinned checksum before it’s kept. Speech detection
+          uses Silero VAD (
           <a
             href={VAD.license.url}
             target="_blank"

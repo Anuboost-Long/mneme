@@ -1,9 +1,9 @@
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import { savePositions } from "@/shared/lib/db/positions";
+import type { HighlightRow } from "@/shared/lib/db/schema/highlight";
+import type { PageRow } from "@/shared/lib/db/schema/page";
 import { desktop, sql, type SqlFragment, type Values } from "@chain/sdk";
 
-import { savePositions } from "../../../../shared/lib/db/positions";
-import type { HighlightRow } from "../../../../shared/lib/db/schema/highlight";
-import type { PageRow } from "../../../../shared/lib/db/schema/page";
-import { CompletionStatus } from "../completion-status";
 import type { Page, PageFilter, PageLink, PageProgress, PageType } from "./types";
 
 const pageTable = () => desktop.storage.table<PageRow>("page");

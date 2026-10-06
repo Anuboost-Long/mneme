@@ -1,14 +1,14 @@
+import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
+import { getActionConnection, getEnabledActions } from "@/features/ai-actions/lib/action/actions";
+import { ActionScope } from "@/features/ai-actions/lib/action/types";
+import { imageActions } from "@/features/ai-actions/lib/imageActions";
+import { useAiAction, type ActionLocation } from "@/features/ai-actions/lib/useAiAction";
+import { addCommandSource } from "@/shared/lib/commandSources";
 import type { Editor } from "@tiptap/react";
 import clsx from "clsx";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { addCommandSource } from "../../../shared/lib/commandSources";
-import { acceptsImages } from "../../agent-chat/lib/runTurn";
-import { getActionConnection, getEnabledActions } from "../lib/action/actions";
-import { ActionScope } from "../lib/action/types";
-import { imageActions } from "../lib/imageActions";
-import { useAiAction, type ActionLocation } from "../lib/useAiAction";
 import AiActionResult from "./AiActionResult";
 import AiActionsMenu from "./AiActionsMenu";
 
@@ -86,7 +86,8 @@ export default function AiActions({
   useEffect(() => {
     editor.storage.image.runAiAction = async (kind) => {
       const connection = await getActionConnection();
-      if (!connection) return "No agent connected yet. Add one in Agent chat to explain or summarize images.";
+      if (!connection)
+        return "No agent connected yet. Add one in Agent chat to explain or summarize images.";
       if (!acceptsImages(connection))
         return `${connection.name} can’t see images. Choose Claude or Codex under Run with in AI actions.`;
       void start(connection, imageActions[kind], true);

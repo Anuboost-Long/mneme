@@ -1,8 +1,7 @@
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { useDeck } from "@/features/flashcards/lib/useDeck";
+import FlashcardsPage from "@/features/flashcards/pages/FlashcardsPage";
 import { useParams } from "react-router-dom";
-
-import { useCourses } from "../features/courses/lib/coursesState";
-import { useDeck } from "../features/flashcards/lib/useDeck";
-import FlashcardsPage from "../features/flashcards/pages/FlashcardsPage";
 
 export default function FlashcardsRoute() {
   const { courseId, moduleId } = useParams();

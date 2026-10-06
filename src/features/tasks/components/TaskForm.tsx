@@ -1,18 +1,17 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import { getModules } from "@/features/courses/lib/module/actions";
+import type { Module } from "@/features/courses/lib/module/types";
+import { addTasks, editTask } from "@/features/tasks/lib/task/actions";
+import { TaskType, taskTypeOptions, type Task } from "@/features/tasks/lib/task/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import DateField from "@/shared/ui/date/DateField";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState, type SubmitEvent } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import DateField from "../../../shared/ui/date/DateField";
-import { TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/course/types";
-import { getModules } from "../../courses/lib/module/actions";
-import type { Module } from "../../courses/lib/module/types";
-import { addTasks, editTask } from "../lib/task/actions";
-import { TaskType, taskTypeOptions, type Task } from "../lib/task/types";
 
 export default function TaskForm({
   open,
@@ -67,11 +66,20 @@ export default function TaskForm({
     setModule(0);
   }
 
-  async function save(event: SubmitEvent<HTMLFormElement>, complete: (callback: () => void) => void) {
+  async function save(
+    event: SubmitEvent<HTMLFormElement>,
+    complete: (callback: () => void) => void
+  ) {
     event.preventDefault();
     setBusy(true);
     setError("");
-    const draft = { title, type, course_id: course || null, module_id: module || null, due_on: dueOn };
+    const draft = {
+      title,
+      type,
+      course_id: course || null,
+      module_id: module || null,
+      due_on: dueOn
+    };
     try {
       if (task) await editTask(task.id, draft);
       else await addTasks([draft]);
@@ -106,14 +114,20 @@ export default function TaskForm({
               label="Course"
               value={course}
               onChange={chooseCourse}
-              options={[{ value: 0, label: "No course" }, ...courses.map((item) => ({ value: item.id, label: item.name }))]}
+              options={[
+                { value: 0, label: "No course" },
+                ...courses.map((item) => ({ value: item.id, label: item.name }))
+              ]}
             />
             <Select
               label="Module"
               value={module}
               onChange={setModule}
               disabled={!course}
-              options={[{ value: 0, label: "No module" }, ...modules.map((item) => ({ value: item.id, label: item.name }))]}
+              options={[
+                { value: 0, label: "No module" },
+                ...modules.map((item) => ({ value: item.id, label: item.name }))
+              ]}
             />
           </div>
           {error && (
@@ -126,14 +140,20 @@ export default function TaskForm({
               type="button"
               disabled={busy}
               onClick={close}
-              className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+                "hover:bg-ink/5"
+              )}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className={clsx("rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action", "hover:bg-action/85")}
+              className={clsx(
+                "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+                "hover:bg-action/85"
+              )}
             >
               {task ? "Save task" : "Add task"}
             </button>

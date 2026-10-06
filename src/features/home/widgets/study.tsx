@@ -1,14 +1,18 @@
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import type { PageType } from "@/features/courses/lib/page/types";
+import {
+  getPages,
+  getRecentHighlights,
+  getRecentRecordings
+} from "@/features/home/lib/dashboard/actions";
+import type { PageFilter, PageSort } from "@/features/home/lib/dashboard/types";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import { timeAgo } from "@/shared/lib/date";
+import { formatDuration } from "@/shared/lib/formatDuration";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { Link } from "react-router-dom";
 
-import { timeAgo } from "../../../shared/lib/date";
-import { formatDuration } from "../../../shared/lib/formatDuration";
-import { Caption } from "../../../shared/ui/Typography";
-import { CompletionStatus } from "../../courses/lib/completion-status";
-import type { PageType } from "../../courses/lib/page/types";
-import { getPages, getRecentHighlights, getRecentRecordings } from "../lib/dashboard/actions";
-import type { PageFilter, PageSort } from "../lib/dashboard/types";
-import { useWidgetData } from "../lib/useWidgetData";
 import { PageGlyph, pageLink, RowLink, Rows, rowsFor, WidgetNote } from "./parts";
 import type { WidgetProps } from "./types";
 

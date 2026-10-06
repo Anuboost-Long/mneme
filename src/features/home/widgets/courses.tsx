@@ -1,17 +1,22 @@
+import ActionIcon from "@/features/ai-actions/components/ActionIcon";
+import { getActionConnection, getEnabledActions } from "@/features/ai-actions/lib/action/actions";
+import { typeGlyph } from "@/features/courses/components/pageDisplay";
+import type { Course } from "@/features/courses/lib/course/types";
+import { pageTypeLabel } from "@/features/courses/lib/page-type/pageTypesState";
+import { getCoursePageProgress } from "@/features/courses/lib/page/actions";
+import { pageTypes, percentDone } from "@/features/courses/lib/page/types";
+import {
+  countPagesBy,
+  getAiUsage,
+  getCourseActivity,
+  getPages
+} from "@/features/home/lib/dashboard/actions";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
 
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import { Caption } from "../../../shared/ui/Typography";
-import ActionIcon from "../../ai-actions/components/ActionIcon";
-import { getActionConnection, getEnabledActions } from "../../ai-actions/lib/action/actions";
-import { typeGlyph } from "../../courses/components/pageDisplay";
-import { pageTypeLabel } from "../../courses/lib/page-type/pageTypesState";
-import type { Course } from "../../courses/lib/course/types";
-import { getCoursePageProgress } from "../../courses/lib/page/actions";
-import { pageTypes, percentDone } from "../../courses/lib/page/types";
-import { countPagesBy, getAiUsage, getCourseActivity, getPages } from "../lib/dashboard/actions";
-import { useWidgetData } from "../lib/useWidgetData";
 import { pageLink, RowLink, Rows, rowLink, rowsFor, Stat, WidgetNote } from "./parts";
 import type { WidgetProps } from "./types";
 

@@ -1,7 +1,6 @@
+import { Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useId, type ReactNode } from "react";
-
-import { Typography } from "../../../shared/ui/Typography";
 
 export type OptionCard<T extends string> = { value: T; label: string; preview: ReactNode };
 
@@ -29,7 +28,10 @@ export default function OptionCards<T extends string>({
               "hover:border-ink/35 has-checked:outline-2 has-checked:outline-ink has-focus-visible:outline-offset-4"
             )}
           >
-            <div aria-hidden="true" className={clsx("h-20 overflow-hidden rounded border border-ink/10 bg-surface")}>
+            <div
+              aria-hidden="true"
+              className={clsx("h-20 overflow-hidden rounded border border-ink/10 bg-surface")}
+            >
               {option.preview}
             </div>
             <input

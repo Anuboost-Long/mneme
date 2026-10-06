@@ -1,16 +1,15 @@
+import { deletePageAudio } from "@/features/audiobook/lib/page-audio/actions";
+import { isOutdated, type PageAudio } from "@/features/audiobook/lib/page-audio/types";
+import { keepInView, paintHighlight } from "@/features/read-aloud/lib/highlight";
+import { textRange, type ReadableChunk } from "@/features/read-aloud/lib/readableText";
+import { usePlayback } from "@/shared/lib/usePlayback";
+import { DeckIcon, DeckKey } from "@/shared/ui/CassetteDeck";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import PlaybackDeck, { PlaybackKeys } from "@/shared/ui/PlaybackDeck";
+import { Caption } from "@/shared/ui/Typography";
 import { desktop } from "@chain/sdk";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { usePlayback } from "../../../shared/lib/usePlayback";
-import { DeckIcon, DeckKey } from "../../../shared/ui/CassetteDeck";
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import PlaybackDeck, { PlaybackKeys } from "../../../shared/ui/PlaybackDeck";
-import { Caption } from "../../../shared/ui/Typography";
-import { keepInView, paintHighlight } from "../../read-aloud/lib/highlight";
-import { textRange, type ReadableChunk } from "../../read-aloud/lib/readableText";
-import { deletePageAudio } from "../lib/page-audio/actions";
-import { isOutdated, type PageAudio } from "../lib/page-audio/types";
 
 export default function AudiobookBar({
   audio,

@@ -1,15 +1,14 @@
+import { getModuleDestinations } from "@/features/courses/lib/module/actions";
+import type { ModuleLink } from "@/features/courses/lib/module/types";
+import { movePage } from "@/features/courses/lib/page/actions";
+import type { Page } from "@/features/courses/lib/page/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import Select from "@/shared/ui/Select";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import Select from "../../../shared/ui/Select";
-import { BodyText } from "../../../shared/ui/Typography";
-import { getModuleDestinations } from "../lib/module/actions";
-import type { ModuleLink } from "../lib/module/types";
-import { movePage } from "../lib/page/actions";
-import type { Page } from "../lib/page/types";
 
 export default function MovePageDialog({
   open,

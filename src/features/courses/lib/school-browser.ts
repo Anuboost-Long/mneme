@@ -1,7 +1,6 @@
+import { imageFile, MAX_DOWNLOAD_BYTES } from "@/shared/lib/downloadImage";
+import { getSetting, putSetting } from "@/shared/lib/settings/actions";
 import { desktop, type BrowserPageContent } from "@chain/sdk";
-
-import { imageFile, MAX_DOWNLOAD_BYTES } from "../../../shared/lib/downloadImage";
-import { getSetting, putSetting } from "../../../shared/lib/settings/actions";
 
 const SCHOOL_SITE = "school-site";
 const IMPORT = "import";

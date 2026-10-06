@@ -1,10 +1,10 @@
+import type { CompletionStatus } from "@/features/courses/lib/completion-status";
+import { savePositions } from "@/shared/lib/db/positions";
+import type { CourseRow } from "@/shared/lib/db/schema/course";
+import type { ModuleRow } from "@/shared/lib/db/schema/module";
+import type { PageRow } from "@/shared/lib/db/schema/page";
 import { desktop, sql, type Values } from "@chain/sdk";
 
-import { savePositions } from "../../../../shared/lib/db/positions";
-import type { CourseRow } from "../../../../shared/lib/db/schema/course";
-import type { ModuleRow } from "../../../../shared/lib/db/schema/module";
-import type { PageRow } from "../../../../shared/lib/db/schema/page";
-import type { CompletionStatus } from "../completion-status";
 import type { Course, CourseFilter } from "./types";
 
 const courseTable = () => desktop.storage.table<CourseRow>("course");

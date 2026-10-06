@@ -1,8 +1,15 @@
+import {
+  contextTokens,
+  estimateTokens,
+  formatTokens,
+  type AiContext
+} from "@/features/ai-context/lib/types";
 import clsx from "clsx";
 
-import { contextTokens, estimateTokens, formatTokens, type AiContext } from "../lib/types";
-
-export default function ContextSummary({ context, className }: Readonly<{ context: AiContext; className?: string }>) {
+export default function ContextSummary({
+  context,
+  className
+}: Readonly<{ context: AiContext; className?: string }>) {
   if (!context.layers.length) return null;
   const labels = context.layers.map((layer) => layer.label).join(" · ");
   return (
@@ -14,20 +21,40 @@ export default function ContextSummary({ context, className }: Readonly<{ contex
           "[&::-webkit-details-marker]:hidden"
         )}
       >
-        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className={clsx("size-3.5 shrink-0 group-open:rotate-90")}>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className={clsx("size-3.5 shrink-0 group-open:rotate-90")}
+        >
           <path d="m8 5 5 5-5 5" />
         </svg>
         <span className={clsx("min-w-0 flex-1 truncate")}>
           <span className={clsx("font-medium")}>Context</span> · {labels}
         </span>
-        <span className={clsx("shrink-0 tabular-nums")}>{formatTokens(contextTokens(context))}</span>
+        <span className={clsx("shrink-0 tabular-nums")}>
+          {formatTokens(contextTokens(context))}
+        </span>
       </summary>
-      <ul tabIndex={0} aria-label="Context layers" className={clsx("mt-2 max-h-48 overflow-y-auto pr-3 divide-y divide-ink/10 border-t border-ink/10", "focus-visible:outline-2 focus-visible:outline-ink")}>
+      <ul
+        tabIndex={0}
+        aria-label="Context layers"
+        className={clsx(
+          "mt-2 max-h-48 overflow-y-auto pr-3 divide-y divide-ink/10 border-t border-ink/10",
+          "focus-visible:outline-2 focus-visible:outline-ink"
+        )}
+      >
         {context.layers.map((layer) => (
           <li key={layer.label} className={clsx("flex items-baseline gap-3 py-1.5")}>
             <span className={clsx("w-20 shrink-0 font-medium text-ink")}>{layer.label}</span>
-            <span className={clsx("min-w-0 flex-1 wrap-break-word text-muted")}>{layer.detail}</span>
-            <span className={clsx("shrink-0 tabular-nums text-muted")}>~{estimateTokens(layer.chars).toLocaleString()}</span>
+            <span className={clsx("min-w-0 flex-1 wrap-break-word text-muted")}>
+              {layer.detail}
+            </span>
+            <span className={clsx("shrink-0 tabular-nums text-muted")}>
+              ~{estimateTokens(layer.chars).toLocaleString()}
+            </span>
           </li>
         ))}
       </ul>

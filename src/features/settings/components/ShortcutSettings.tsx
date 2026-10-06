@@ -1,9 +1,14 @@
+import { useShortcuts } from "@/shared/lib/shortcuts/shortcutsState";
+import {
+  comboFromEvent,
+  formatCombo,
+  shortcutProblem,
+  shortcuts,
+  type ShortcutId
+} from "@/shared/lib/shortcuts/types";
+import { BodyText, SectionTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { useShortcuts } from "../../../shared/lib/shortcuts/shortcutsState";
-import { comboFromEvent, formatCombo, shortcutProblem, shortcuts, type ShortcutId } from "../../../shared/lib/shortcuts/types";
-import { BodyText, SectionTitle } from "../../../shared/ui/Typography";
 
 const rowButton = clsx(
   "h-8 rounded-md px-2.5 text-sm text-muted",
@@ -28,7 +33,9 @@ export default function ShortcutSettings() {
 
   function save(task: Promise<void>) {
     setError("");
-    task.catch(() => setError("Couldn’t save your shortcuts. Your previous keys still work. Try again."));
+    task.catch(() =>
+      setError("Couldn’t save your shortcuts. Your previous keys still work. Try again.")
+    );
   }
 
   useEffect(() => {
@@ -58,7 +65,10 @@ export default function ShortcutSettings() {
   });
 
   return (
-    <section aria-labelledby="shortcuts-title" className={clsx("grid gap-6 border-t border-ink/10 py-6 @min-3xl:grid-cols-3")}>
+    <section
+      aria-labelledby="shortcuts-title"
+      className={clsx("grid gap-6 border-t border-ink/10 py-6 @min-3xl:grid-cols-3")}
+    >
       <div>
         <SectionTitle id="shortcuts-title">Keyboard shortcuts</SectionTitle>
         <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>
@@ -70,7 +80,10 @@ export default function ShortcutSettings() {
           {shortcuts.map(({ id, label }) => {
             const active = recording === id;
             return (
-              <li key={id} className={clsx("flex flex-wrap items-center gap-x-3 gap-y-2", "py-2.5")}>
+              <li
+                key={id}
+                className={clsx("flex flex-wrap items-center gap-x-3 gap-y-2", "py-2.5")}
+              >
                 <span className={clsx("min-w-0 flex-1 text-sm")}>{label}</span>
                 {active ? (
                   <output className={clsx("text-sm text-muted")}>Press the new keys</output>
@@ -95,7 +108,12 @@ export default function ShortcutSettings() {
                   {active ? "Cancel" : "Change"}
                 </button>
                 {overrides[id] && !active && (
-                  <button type="button" aria-label={`Reset “${label}”`} onClick={() => save(reset(id))} className={rowButton}>
+                  <button
+                    type="button"
+                    aria-label={`Reset “${label}”`}
+                    onClick={() => save(reset(id))}
+                    className={rowButton}
+                  >
                     Reset
                   </button>
                 )}

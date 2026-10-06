@@ -1,11 +1,11 @@
+import type { DeniedAccess } from "@/features/courses/lib/useAudioRecorder";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText } from "@/shared/ui/Typography";
 import { desktop, type ChainOs } from "@chain/sdk";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
 import appIcon from "../../../../../asset/app-icon.svg";
-import Dialog from "../../../../shared/ui/Dialog";
-import { BodyText } from "../../../../shared/ui/Typography";
-import type { DeniedAccess } from "../../lib/useAudioRecorder";
 
 type Guide = {
   steps: string[];

@@ -1,21 +1,20 @@
+import { getEnabledActions } from "@/features/ai-actions/lib/action/actions";
+import type { Course } from "@/features/courses/lib/course/types";
+import { searchPageLinks } from "@/features/courses/lib/page/actions";
+import { getPagesByIds } from "@/features/home/lib/dashboard/actions";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import type { Widget, WidgetConfig } from "@/features/home/lib/widget/types";
+import { widgetTitle } from "@/features/home/widgets/catalog";
+import { quickLinks, type QuickLink } from "@/features/home/widgets/tools";
+import type { WidgetDefinition, WidgetField } from "@/features/home/widgets/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { Caption, Typography } from "../../../shared/ui/Typography";
-import { getEnabledActions } from "../../ai-actions/lib/action/actions";
-import type { Course } from "../../courses/lib/course/types";
-import { searchPageLinks } from "../../courses/lib/page/actions";
-import { getPagesByIds } from "../lib/dashboard/actions";
-import { useWidgetData } from "../lib/useWidgetData";
-import type { Widget, WidgetConfig } from "../lib/widget/types";
-import { widgetTitle } from "../widgets/catalog";
-import { quickLinks, type QuickLink } from "../widgets/tools";
-import type { WidgetDefinition, WidgetField } from "../widgets/types";
 
 export default function WidgetSettings({
   open,
@@ -39,53 +38,56 @@ export default function WidgetSettings({
 
   return (
     <Dialog open={open} title={`${definition?.name ?? "Widget"} settings`} onClose={onClose}>
-      {(close, complete) => widget && definition && (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSave({ ...widget, config });
-            complete(onClose);
-          }}
-          className={clsx("space-y-5")}
-        >
-          <TextInput
-            label="Title"
-            value={typeof config.title === "string" ? config.title : ""}
-            placeholder={widgetTitle(definition, { ...config, title: "" }, courses)}
-            onChange={(event) => set("title", event.target.value)}
-          />
-          {definition.fields?.map((field) => (
-            <FieldControl
-              key={field.key}
-              field={field}
-              value={config[field.key]}
-              courses={courses}
-              onChange={(value) => set(field.key, value)}
+      {(close, complete) =>
+        widget &&
+        definition && (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSave({ ...widget, config });
+              complete(onClose);
+            }}
+            className={clsx("space-y-5")}
+          >
+            <TextInput
+              label="Title"
+              value={typeof config.title === "string" ? config.title : ""}
+              placeholder={widgetTitle(definition, { ...config, title: "" }, courses)}
+              onChange={(event) => set("title", event.target.value)}
             />
-          ))}
-          <div className={clsx("flex justify-end gap-3 pt-3")}>
-            <button
-              type="button"
-              onClick={close}
-              className={clsx(
-                "rounded-md border border-ink/15 px-4 py-2 text-sm",
-                "hover:bg-ink/5"
-              )}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={clsx(
-                "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
-                "hover:bg-action/85"
-              )}
-            >
-              Save widget
-            </button>
-          </div>
-        </form>
-      )}
+            {definition.fields?.map((field) => (
+              <FieldControl
+                key={field.key}
+                field={field}
+                value={config[field.key]}
+                courses={courses}
+                onChange={(value) => set(field.key, value)}
+              />
+            ))}
+            <div className={clsx("flex justify-end gap-3 pt-3")}>
+              <button
+                type="button"
+                onClick={close}
+                className={clsx(
+                  "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                  "hover:bg-ink/5"
+                )}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={clsx(
+                  "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+                  "hover:bg-action/85"
+                )}
+              >
+                Save widget
+              </button>
+            </div>
+          </form>
+        )
+      }
     </Dialog>
   );
 }

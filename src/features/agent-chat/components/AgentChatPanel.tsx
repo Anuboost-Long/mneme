@@ -1,10 +1,10 @@
+import { subscribeAssistant } from "@/features/agent-chat/lib/assistant";
+import { useAgentChat } from "@/features/agent-chat/lib/useAgentChat";
+import Select from "@/shared/ui/Select";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
-import Select from "../../../shared/ui/Select";
-import { BodyText } from "../../../shared/ui/Typography";
-import { subscribeAssistant } from "../lib/assistant";
-import { useAgentChat } from "../lib/useAgentChat";
 import AgentPicker from "./AgentPicker";
 import ConversationPane from "./ConversationPane";
 
@@ -21,7 +21,10 @@ function storedConversation() {
 
 // Agent chat beside whatever is open. On a page, each message goes with
 // that page's context, so "this page" means something to the agent.
-export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: number | null; onClose: () => void }>) {
+export default function AgentChatPanel({
+  pageId,
+  onClose
+}: Readonly<{ pageId: number | null; onClose: () => void }>) {
   const [selectedId, setSelectedId] = useState(storedConversation);
   const [picking, setPicking] = useState(false);
   const [assistantError, setAssistantError] = useState("");
@@ -53,10 +56,7 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
   return (
     <aside
       aria-label="Agent chat"
-      className={clsx(
-        "flex h-full min-h-0 w-full flex-col bg-surface",
-        "border-l border-ink/10"
-      )}
+      className={clsx("flex h-full min-h-0 w-full flex-col bg-surface", "border-l border-ink/10")}
     >
       <div className={clsx("flex shrink-0 items-center gap-2 border-b border-ink/10 px-3 py-2")}>
         <Select
@@ -68,7 +68,10 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
           onChange={(id) => select(id || null)}
           options={[
             { value: 0, label: "Choose a conversation" },
-            ...chat.conversations.map((conversation) => ({ value: conversation.id, label: conversation.title ?? "New conversation" }))
+            ...chat.conversations.map((conversation) => ({
+              value: conversation.id,
+              label: conversation.title ?? "New conversation"
+            }))
           ]}
           className={clsx("min-w-0 flex-1")}
         />
@@ -93,13 +96,26 @@ export default function AgentChatPanel({ pageId, onClose }: Readonly<{ pageId: n
             "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
           )}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
       </div>
       {assistantError && (
-        <BodyText role="alert" tone="error" className={clsx("shrink-0 border-b border-ink/10 px-3 py-2")}>
+        <BodyText
+          role="alert"
+          tone="error"
+          className={clsx("shrink-0 border-b border-ink/10 px-3 py-2")}
+        >
           {assistantError}
         </BodyText>
       )}

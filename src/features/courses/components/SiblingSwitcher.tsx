@@ -1,9 +1,8 @@
+import { hideUntilPlaced, placePopover } from "@/shared/lib/placePopover";
+import CourseIcon from "@/shared/ui/CourseIcon";
 import clsx from "clsx";
 import { useId, useRef, type KeyboardEvent, type ToggleEvent } from "react";
 import { Link } from "react-router-dom";
-
-import { hideUntilPlaced, placePopover } from "../../../shared/lib/placePopover";
-import CourseIcon from "../../../shared/ui/CourseIcon";
 export type Sibling = { id: number; name: string; icon: string | null };
 
 const stepLink = clsx(
@@ -13,7 +12,17 @@ const stepLink = clsx(
 
 function StepIcon({ path }: Readonly<{ path: string }>) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d={path} />
     </svg>
   );
@@ -21,7 +30,13 @@ function StepIcon({ path }: Readonly<{ path: string }>) {
 
 // The breadcrumb's last crumb: opens the other modules of the course, or
 // pages of the module, with the previous and next one a click away.
-export default function SiblingSwitcher({ noun, color, siblings, current, path }: Readonly<{
+export default function SiblingSwitcher({
+  noun,
+  color,
+  siblings,
+  current,
+  path
+}: Readonly<{
   noun: "module" | "page";
   color: string | null;
   siblings: Sibling[];
@@ -39,7 +54,9 @@ export default function SiblingSwitcher({ noun, color, siblings, current, path }
     if (event.newState !== "open" || !trigger.current) return;
     placePopover(event.currentTarget, trigger.current, "start");
     const links = event.currentTarget;
-    (links.querySelector<HTMLElement>("[aria-current=page]") ?? links.querySelector("a"))?.focus({ preventScroll: true });
+    (links.querySelector<HTMLElement>("[aria-current=page]") ?? links.querySelector("a"))?.focus({
+      preventScroll: true
+    });
   }
 
   function moveFocus(event: KeyboardEvent<HTMLAnchorElement>) {
@@ -75,7 +92,12 @@ export default function SiblingSwitcher({ noun, color, siblings, current, path }
         <StepIcon path="m6 9 6 6 6-6" />
       </button>
       {previous ? (
-        <Link to={path(previous.id)} aria-label={`Previous ${noun}: ${previous.name}`} title={`Previous: ${previous.name}`} className={stepLink}>
+        <Link
+          to={path(previous.id)}
+          aria-label={`Previous ${noun}: ${previous.name}`}
+          title={`Previous: ${previous.name}`}
+          className={stepLink}
+        >
           <StepIcon path="m15 18-6-6 6-6" />
         </Link>
       ) : (
@@ -84,7 +106,12 @@ export default function SiblingSwitcher({ noun, color, siblings, current, path }
         </span>
       )}
       {next ? (
-        <Link to={path(next.id)} aria-label={`Next ${noun}: ${next.name}`} title={`Next: ${next.name}`} className={stepLink}>
+        <Link
+          to={path(next.id)}
+          aria-label={`Next ${noun}: ${next.name}`}
+          title={`Next: ${next.name}`}
+          className={stepLink}
+        >
           <StepIcon path="m9 18 6-6-6-6" />
         </Link>
       ) : (
@@ -119,7 +146,11 @@ export default function SiblingSwitcher({ noun, color, siblings, current, path }
                   item.id === current.id && "font-medium"
                 )}
               >
-                {item.icon ? <CourseIcon icon={item.icon} color={color} small /> : <span aria-hidden="true" className={clsx("w-5 shrink-0")} />}
+                {item.icon ? (
+                  <CourseIcon icon={item.icon} color={color} small />
+                ) : (
+                  <span aria-hidden="true" className={clsx("w-5 shrink-0")} />
+                )}
                 <span className={clsx("min-w-0 flex-1 truncate")}>{item.name}</span>
                 {item.id === current.id && <StepIcon path="m5 12 5 5 9-10" />}
               </Link>

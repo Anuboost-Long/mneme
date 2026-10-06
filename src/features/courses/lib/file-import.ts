@@ -1,10 +1,11 @@
+import { recognizeDocument } from "@/shared/lib/ocr";
+import { readPdf } from "@/shared/lib/pdf";
 import mammoth from "mammoth";
 import { marked } from "marked";
+
 import { detectType, sanitizeChildren, type ParsedImport } from "./import-sanitize";
 import { pageImage } from "./page-image";
 import { pdfPagesToHtml } from "./pdf-structure";
-import { recognizeDocument } from "../../../shared/lib/ocr";
-import { readPdf } from "../../../shared/lib/pdf";
 
 export type ImportableFileKind = "markdown" | "docx" | "pdf";
 
@@ -12,7 +13,7 @@ const EXTENSION_KINDS: Record<string, ImportableFileKind> = {
   md: "markdown",
   markdown: "markdown",
   docx: "docx",
-  pdf: "pdf",
+  pdf: "pdf"
 };
 
 export const IMPORTABLE_FILE_EXTENSIONS = Object.keys(EXTENSION_KINDS);
@@ -53,7 +54,9 @@ async function parseDocxFile(file: File): Promise<ParsedImport> {
       // Stored as files like pasted images rather than inlined as data
       // URLs. A format pageImage can't read (EMF, TIFF) is left out.
       convertImage: mammoth.images.imgElement(async (image) => {
-        const imageFile = new File([await image.readAsArrayBuffer()], "docx-image", { type: image.contentType });
+        const imageFile = new File([await image.readAsArrayBuffer()], "docx-image", {
+          type: image.contentType
+        });
         const src = await pageImage(imageFile).catch(() => "");
         if (src) storedImages.add(src);
         return { src };
@@ -83,7 +86,10 @@ async function parsePdfFile(file: File): Promise<ParsedImport> {
       }))
     )
   );
-  const title = headingTitle || (isPlaceholderTitle(metaTitle) ? "" : metaTitle) || titleFromFilename(file.name);
+  const title =
+    headingTitle ||
+    (isPlaceholderTitle(metaTitle) ? "" : metaTitle) ||
+    titleFromFilename(file.name);
   return { title, type: detectType(title), html };
 }
 

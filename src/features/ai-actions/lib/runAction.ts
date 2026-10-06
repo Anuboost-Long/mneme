@@ -1,13 +1,14 @@
-import type { ImageData } from "../../../shared/lib/htmlImages";
-import type { AgentConnection } from "../../agent-chat/lib/connection/types";
+import type { AgentConnection } from "@/features/agent-chat/lib/connection/types";
 import {
   acceptsImages,
   acceptsStdin,
   MAX_ARGV_CONTEXT_CHARS,
   runOnce,
   type TurnEvent
-} from "../../agent-chat/lib/runTurn";
-import type { AiProfile } from "../../ai-profiles/lib/profile/types";
+} from "@/features/agent-chat/lib/runTurn";
+import type { AiProfile } from "@/features/ai-profiles/lib/profile/types";
+import type { ImageData } from "@/shared/lib/htmlImages";
+
 import type { AiAction } from "./action/types";
 
 // What a run actually received: "selection"/"page" for a page-scoped

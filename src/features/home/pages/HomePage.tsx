@@ -1,16 +1,15 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import LayoutsDialog from "@/features/home/components/LayoutsDialog";
+import WidgetFrame from "@/features/home/components/WidgetFrame";
+import WidgetGallery from "@/features/home/components/WidgetGallery";
+import WidgetSettings from "@/features/home/components/WidgetSettings";
+import type { NewWidget, Widget, WidgetSize } from "@/features/home/lib/widget/types";
+import { widgetDefinitions, widgetTitle } from "@/features/home/widgets/catalog";
+import { useLastValue } from "@/shared/lib/dialogState";
+import { useDragReorder } from "@/shared/lib/useDragReorder";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-
-import { useLastValue } from "../../../shared/lib/dialogState";
-import { useDragReorder } from "../../../shared/lib/useDragReorder";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/course/types";
-import LayoutsDialog from "../components/LayoutsDialog";
-import WidgetFrame from "../components/WidgetFrame";
-import WidgetGallery from "../components/WidgetGallery";
-import WidgetSettings from "../components/WidgetSettings";
-import type { NewWidget, Widget, WidgetSize } from "../lib/widget/types";
-import { widgetDefinitions, widgetTitle } from "../widgets/catalog";
 
 const UNDO_VISIBLE_MS = 8000;
 
@@ -70,7 +69,10 @@ export default function HomePage({
   onRemove: (widget: Widget) => () => void;
   onReorder: (widgets: Widget[]) => void;
   onBeautify: () => Promise<{ name: string; undo: () => Promise<void> }>;
-  onApplyLayout: (name: string, widgets: NewWidget[]) => Promise<{ name: string; undo: () => Promise<void> }>;
+  onApplyLayout: (
+    name: string,
+    widgets: NewWidget[]
+  ) => Promise<{ name: string; undo: () => Promise<void> }>;
 }>) {
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -276,7 +278,11 @@ export default function HomePage({
               >
                 Beautify
               </button>
-              <button type="button" onClick={() => setChoosingLayout(true)} className={secondaryButton}>
+              <button
+                type="button"
+                onClick={() => setChoosingLayout(true)}
+                className={secondaryButton}
+              >
                 Layouts
               </button>
               <button type="button" onClick={() => setAdding(true)} className={secondaryButton}>
@@ -302,7 +308,11 @@ export default function HomePage({
                   >
                     Beautify
                   </button>
-                  <button type="button" onClick={() => setChoosingLayout(true)} className={secondaryButton}>
+                  <button
+                    type="button"
+                    onClick={() => setChoosingLayout(true)}
+                    className={secondaryButton}
+                  >
                     Layouts
                   </button>
                   <button

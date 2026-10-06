@@ -1,16 +1,20 @@
+import { completionStatusLabels } from "@/features/courses/lib/completion-status";
+import { pageTypeLabel } from "@/features/courses/lib/page-type/pageTypesState";
+import { getPages } from "@/features/courses/lib/page/actions";
+import type { Page } from "@/features/courses/lib/page/types";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Caption } from "../../../shared/ui/Typography";
-import { completionStatusLabels } from "../lib/completion-status";
-import type { Page } from "../lib/page/types";
-import { getPages } from "../lib/page/actions";
-import { pageTypeLabel } from "../lib/page-type/pageTypesState";
 import { statusMarkerStyles } from "./StatusPicker";
 
 // A module's pages, listed under its row on the course page while expanded.
-export default function ModulePages({ id, courseId, moduleId }: Readonly<{ id: string; courseId: number; moduleId: number }>) {
+export default function ModulePages({
+  id,
+  courseId,
+  moduleId
+}: Readonly<{ id: string; courseId: number; moduleId: number }>) {
   const [pages, setPages] = useState<Page[] | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -24,9 +28,24 @@ export default function ModulePages({ id, courseId, moduleId }: Readonly<{ id: s
     };
   }, [moduleId]);
 
-  if (failed) return <Caption id={id} role="alert" tone="error" className={clsx("mt-3")}>Couldn’t load this module’s pages. Open the module to see them.</Caption>;
-  if (pages === null) return <Caption id={id} role="status" tone="muted" className={clsx("mt-3")}>Loading pages…</Caption>;
-  if (pages.length === 0) return <Caption id={id} tone="muted" className={clsx("mt-3")}>No pages yet.</Caption>;
+  if (failed)
+    return (
+      <Caption id={id} role="alert" tone="error" className={clsx("mt-3")}>
+        Couldn’t load this module’s pages. Open the module to see them.
+      </Caption>
+    );
+  if (pages === null)
+    return (
+      <Caption id={id} role="status" tone="muted" className={clsx("mt-3")}>
+        Loading pages…
+      </Caption>
+    );
+  if (pages.length === 0)
+    return (
+      <Caption id={id} tone="muted" className={clsx("mt-3")}>
+        No pages yet.
+      </Caption>
+    );
 
   return (
     <ul id={id} className={clsx("relative z-10 mt-3 border-l border-ink/10")}>
@@ -40,12 +59,17 @@ export default function ModulePages({ id, courseId, moduleId }: Readonly<{ id: s
               "hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-ink"
             )}
           >
-            <span aria-hidden="true" className={clsx("size-2 shrink-0 rounded-full", statusMarkerStyles[page.status])} />
+            <span
+              aria-hidden="true"
+              className={clsx("size-2 shrink-0 rounded-full", statusMarkerStyles[page.status])}
+            />
             <span className={clsx("min-w-0 flex-1 truncate")}>
               {page.title}
               <span className={clsx("sr-only")}>, {completionStatusLabels[page.status]}</span>
             </span>
-            <Caption as="span" tone="muted" className={clsx("shrink-0")}>{pageTypeLabel(page.type)}</Caption>
+            <Caption as="span" tone="muted" className={clsx("shrink-0")}>
+              {pageTypeLabel(page.type)}
+            </Caption>
           </Link>
         </li>
       ))}

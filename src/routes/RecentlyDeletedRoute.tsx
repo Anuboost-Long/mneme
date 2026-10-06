@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
-
-import { useCourses } from "../features/courses/lib/coursesState";
+import { useCourses } from "@/features/courses/lib/coursesState";
 import {
   eraseItems,
   getDeletedItems,
   restoreItems
-} from "../features/recently-deleted/lib/deleted-item/actions";
-import type { DeletedItem } from "../features/recently-deleted/lib/deleted-item/types";
-import RecentlyDeletedPage from "../features/recently-deleted/pages/RecentlyDeletedPage";
+} from "@/features/recently-deleted/lib/deleted-item/actions";
+import type { DeletedItem } from "@/features/recently-deleted/lib/deleted-item/types";
+import RecentlyDeletedPage from "@/features/recently-deleted/pages/RecentlyDeletedPage";
+import { useEffect, useState } from "react";
 
 export default function RecentlyDeletedRoute() {
   const { refresh } = useCourses();

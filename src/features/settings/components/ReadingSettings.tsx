@@ -1,8 +1,8 @@
+import { pageFontOptions, textSizeOptions, type Appearance } from "@/shared/lib/appearance";
+import { useAppearance } from "@/shared/providers/AppearanceProvider";
+import { BodyText, SectionTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 
-import { pageFontOptions, textSizeOptions, type Appearance } from "../../../shared/lib/appearance";
-import { useAppearance } from "../../../shared/providers/AppearanceProvider";
-import { BodyText, SectionTitle } from "../../../shared/ui/Typography";
 import OptionCards from "./OptionCards";
 
 export default function ReadingSettings() {
@@ -27,7 +27,11 @@ export default function ReadingSettings() {
             value,
             label,
             preview: (
-              <div data-page-font={value} className={clsx("flex h-full flex-col justify-center px-3")} style={{ fontFamily: "var(--page-font)" }}>
+              <div
+                data-page-font={value}
+                className={clsx("flex h-full flex-col justify-center px-3")}
+                style={{ fontFamily: "var(--page-font)" }}
+              >
                 <span className={clsx("text-3xl leading-none")}>Ag</span>
                 <span className={clsx("mt-2 truncate text-xs text-muted")}>Key terms</span>
               </div>
@@ -43,7 +47,10 @@ export default function ReadingSettings() {
             label,
             preview: (
               <div data-text-size={value} className={clsx("flex h-full items-end px-3 pb-2.5")}>
-                <span className={clsx("leading-none")} style={{ fontSize: "calc(var(--page-text) * 2)" }}>
+                <span
+                  className={clsx("leading-none")}
+                  style={{ fontSize: "calc(var(--page-text) * 2)" }}
+                >
                   Aa
                 </span>
               </div>

@@ -1,3 +1,4 @@
+import { useStoredChoice, useStoredString } from "@/shared/lib/useStoredChoice";
 import {
   desktop,
   type RecordingAvailability,
@@ -7,7 +8,6 @@ import {
 } from "@chain/sdk";
 import { useEffect, useRef, useState } from "react";
 
-import { useStoredChoice, useStoredString } from "../../../shared/lib/useStoredChoice";
 import { storeRecordedAudio } from "./recording/actions";
 import type { RecordedAudio } from "./recording/types";
 
@@ -72,7 +72,11 @@ const optionDefaults: Record<RecordingOption, "on" | "off"> = {
 };
 
 export function useRecordingOption(option: RecordingOption) {
-  return useStoredChoice(`mneme.recording.${option}`, ["on", "off"] as const, optionDefaults[option]);
+  return useStoredChoice(
+    `mneme.recording.${option}`,
+    ["on", "off"] as const,
+    optionDefaults[option]
+  );
 }
 
 export const AUTOMATIC_MICROPHONE = "automatic";
@@ -152,9 +156,7 @@ export function useAudioRecorder() {
     void availableSources().then(
       (available) => active && available.length > 0 && setSources(available)
     );
-    void recorderAvailability().then(
-      (loaded) => active && setAvailable(loaded)
-    );
+    void recorderAvailability().then((loaded) => active && setAvailable(loaded));
     return () => {
       active = false;
       release();
@@ -210,12 +212,16 @@ export function useAudioRecorder() {
       },
       onMicrophoneChange: ({ microphone, previous, bluetoothFallback }) => {
         setInUse({ microphone, bluetoothFallback });
-        setNotice(`${previous.name} was disconnected, so recording carried on with ${microphone.name}.`);
+        setNotice(
+          `${previous.name} was disconnected, so recording carried on with ${microphone.name}.`
+        );
       }
     };
     const automatic = { ...options, avoidBluetoothMicrophone: true };
     const chosen =
-      chosenMicrophone === AUTOMATIC_MICROPHONE ? automatic : { ...options, microphone: chosenMicrophone };
+      chosenMicrophone === AUTOMATIC_MICROPHONE
+        ? automatic
+        : { ...options, microphone: chosenMicrophone };
     try {
       if (!available?.microphoneChoice) {
         setInUse(await desktop.audioRecorder.start(options));
@@ -225,7 +231,9 @@ export function useAudioRecorder() {
         } catch (error_) {
           if (chosen === automatic || !isUnavailable(error_)) throw error_;
           setInUse(await desktop.audioRecorder.start(automatic));
-          setNotice("The microphone chosen in Settings isn’t connected, so the automatic one is recording.");
+          setNotice(
+            "The microphone chosen in Settings isn’t connected, so the automatic one is recording."
+          );
         }
       }
     } catch (error_) {

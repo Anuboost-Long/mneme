@@ -1,10 +1,9 @@
+import { searchModels } from "@/features/extensions/lib/catalog";
+import { isReady, useExtensions } from "@/features/extensions/lib/extensionsState";
+import { updateSearchIndex, useSearchIndex } from "@/features/search/lib/searchIndex";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect } from "react";
-
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { searchModels } from "../../extensions/lib/catalog";
-import { isReady, useExtensions } from "../../extensions/lib/extensionsState";
-import { updateSearchIndex, useSearchIndex } from "../lib/searchIndex";
 
 export default function SearchIndexStatus() {
   const { installed } = useExtensions();
@@ -50,7 +49,10 @@ export default function SearchIndexStatus() {
           <button
             type="button"
             onClick={() => void updateSearchIndex()}
-            className={clsx("mt-1 text-sm font-medium underline underline-offset-4", "hover:text-muted")}
+            className={clsx(
+              "mt-1 text-sm font-medium underline underline-offset-4",
+              "hover:text-muted"
+            )}
           >
             Try again
           </button>

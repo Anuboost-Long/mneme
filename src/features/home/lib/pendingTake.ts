@@ -1,4 +1,4 @@
-import type { Take } from "../components/FileRecordingDialog";
+import type { Take } from "@/features/home/components/FileRecordingDialog";
 
 // A take recorded on Home but not saved to a page yet. Kept outside the
 // widget so leaving Home and coming back doesn't lose it; it lasts until

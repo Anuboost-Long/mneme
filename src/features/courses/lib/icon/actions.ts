@@ -1,7 +1,7 @@
+import { base64Bytes, copyImage, deleteImage } from "@/features/courses/lib/page-image";
+import { isFileReference } from "@/shared/lib/fileReference";
 import { desktop } from "@chain/sdk";
 
-import { isFileReference } from "../../../../shared/lib/fileReference";
-import { base64Bytes, copyImage, deleteImage } from "../page-image";
 import { getInlineIcons, iconTables, replaceIcon } from "./table";
 
 export async function courseImage(file: File): Promise<string> {

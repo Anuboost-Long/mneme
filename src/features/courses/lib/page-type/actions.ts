@@ -1,4 +1,5 @@
-import { pageTypeLabels } from "../page/types";
+import { pageTypeLabels } from "@/features/courses/lib/page/types";
+
 import {
   deleteCustomPageTypeRow,
   getCustomPageTypes,
@@ -14,7 +15,9 @@ async function checkedName(name: string, id?: number) {
   const lower = trimmed.toLowerCase();
   if (Object.values(pageTypeLabels).some((label) => label.toLowerCase() === lower))
     throw new Error(`“${trimmed}” is already a built-in page type.`);
-  if ((await getCustomPageTypes()).some((type) => type.id !== id && type.name.toLowerCase() === lower))
+  if (
+    (await getCustomPageTypes()).some((type) => type.id !== id && type.name.toLowerCase() === lower)
+  )
     throw new Error(`You already have a page type called “${trimmed}”.`);
   return trimmed;
 }

@@ -1,9 +1,8 @@
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { getAllRecordings } from "@/features/courses/lib/recording/actions";
+import type { RecordingListItem } from "@/features/courses/lib/recording/types";
+import RecordingsPage from "@/features/recordings/pages/RecordingsPage";
 import { useEffect, useState } from "react";
-
-import { useCourses } from "../features/courses/lib/coursesState";
-import { getAllRecordings } from "../features/courses/lib/recording/actions";
-import type { RecordingListItem } from "../features/courses/lib/recording/types";
-import RecordingsPage from "../features/recordings/pages/RecordingsPage";
 
 export default function RecordingsRoute() {
   const { courses } = useCourses();

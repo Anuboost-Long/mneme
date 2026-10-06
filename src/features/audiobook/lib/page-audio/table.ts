@@ -1,6 +1,6 @@
+import type { PageAudioRow } from "@/shared/lib/db/schema/page-audio";
 import { desktop, type SqlFragment } from "@chain/sdk";
 
-import type { PageAudioRow } from "../../../../shared/lib/db/schema/page-audio";
 import type { AudioSentence, PageAudio } from "./types";
 
 const pageAudioTable = () => desktop.storage.table<PageAudioRow>("page_audio");

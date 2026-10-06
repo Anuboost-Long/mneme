@@ -1,15 +1,15 @@
+import { appendToPage } from "@/features/courses/lib/page/actions";
+import { transcriptHtml, type RecordingListItem } from "@/features/courses/lib/recording/types";
+import { transcribeError, transcribeRecording } from "@/features/courses/lib/transcription";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { useFileUrl } from "@/shared/lib/useFileUrl";
+import { usePlayback } from "@/shared/lib/usePlayback";
+import PlaybackDeck, { PlaybackKeys } from "@/shared/ui/PlaybackDeck";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { useFileUrl } from "../../../shared/lib/useFileUrl";
-import { usePlayback } from "../../../shared/lib/usePlayback";
-import PlaybackDeck, { PlaybackKeys } from "../../../shared/ui/PlaybackDeck";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { appendToPage } from "../../courses/lib/page/actions";
-import { transcriptHtml, type RecordingListItem } from "../../courses/lib/recording/types";
-import { transcribeError, transcribeRecording } from "../../courses/lib/transcription";
 import AddToPageDialog from "./AddToPageDialog";
 
 const button = clsx(

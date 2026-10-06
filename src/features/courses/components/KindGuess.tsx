@@ -1,7 +1,6 @@
+import { kindDescriptions, type ContentKind } from "@/features/courses/lib/content-detection";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
-
-import { Caption } from "../../../shared/ui/Typography";
-import { kindDescriptions, type ContentKind } from "../lib/content-detection";
 
 export type Guess = { kind: ContentKind; sure: boolean; byAi?: boolean };
 

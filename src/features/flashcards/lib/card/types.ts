@@ -1,4 +1,4 @@
-import type { FlashcardRow } from "../../../../shared/lib/db/schema/flashcard";
+import type { FlashcardRow } from "@/shared/lib/db/schema/flashcard";
 
 export type Flashcard = FlashcardRow & { page_title: string | null };
 

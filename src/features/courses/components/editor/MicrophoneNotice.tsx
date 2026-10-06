@@ -1,8 +1,7 @@
+import { Caption } from "@/shared/ui/Typography";
 import type { RecordingStarted } from "@chain/sdk";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { Caption } from "../../../../shared/ui/Typography";
 
 export default function MicrophoneNotice({
   microphone,
@@ -16,7 +15,8 @@ export default function MicrophoneNotice({
   className?: string;
 }>) {
   const [switched, setSwitched] = useState(false);
-  const bluetooth = microphone?.microphone?.transport === "bluetooth" ? microphone.microphone : null;
+  const bluetooth =
+    microphone?.microphone?.transport === "bluetooth" ? microphone.microphone : null;
   if (!bluetooth && !notice) return null;
   return (
     <div className={clsx("space-y-1", className)}>

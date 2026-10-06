@@ -1,8 +1,7 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import type { Module } from "@/features/courses/lib/module/types";
 import clsx from "clsx";
 import { Link } from "react-router-dom";
-
-import type { Course } from "../../courses/lib/course/types";
-import type { Module } from "../../courses/lib/module/types";
 
 export default function DeckHeader({
   course,
@@ -10,7 +9,10 @@ export default function DeckHeader({
   current
 }: Readonly<{ course: Course; module: Module; current: "Flashcards" | "Study" }>) {
   const deck = `/courses/${course.id}/modules/${module.id}/flashcards`;
-  const back = current === "Study" ? { to: deck, label: "Back to flashcards" } : { to: `/courses/${course.id}/modules/${module.id}`, label: `Back to ${module.name}` };
+  const back =
+    current === "Study"
+      ? { to: deck, label: "Back to flashcards" }
+      : { to: `/courses/${course.id}/modules/${module.id}`, label: `Back to ${module.name}` };
   return (
     <>
       <Link
@@ -37,7 +39,10 @@ export default function DeckHeader({
         </svg>
         <span className={clsx("truncate")}>{back.label}</span>
       </Link>
-      <nav aria-label="Breadcrumb" className={clsx("mt-4 flex items-center gap-3 text-xs text-muted")}>
+      <nav
+        aria-label="Breadcrumb"
+        className={clsx("mt-4 flex items-center gap-3 text-xs text-muted")}
+      >
         <Link to="/courses" className={clsx("shrink-0 hover:text-ink")}>
           Your courses
         </Link>
@@ -46,7 +51,10 @@ export default function DeckHeader({
           {course.name}
         </Link>
         <span aria-hidden="true">/</span>
-        <Link to={`/courses/${course.id}/modules/${module.id}`} className={clsx("min-w-0 truncate hover:text-ink")}>
+        <Link
+          to={`/courses/${course.id}/modules/${module.id}`}
+          className={clsx("min-w-0 truncate hover:text-ink")}
+        >
           {module.name}
         </Link>
         <span aria-hidden="true">/</span>

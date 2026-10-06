@@ -1,11 +1,10 @@
+import { checkImage, deleteImage, storeImage } from "@/features/courses/lib/page-image";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { IMAGE_EXTENSIONS, pickFiles } from "@/shared/lib/pickFiles";
+import { useFileUrl } from "@/shared/lib/useFileUrl";
+import { BodyText, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { IMAGE_EXTENSIONS, pickFiles } from "../../../shared/lib/pickFiles";
-import { useFileUrl } from "../../../shared/lib/useFileUrl";
-import { BodyText, Typography } from "../../../shared/ui/Typography";
-import { checkImage, deleteImage, storeImage } from "../lib/page-image";
 
 // A cover already stored (`reference`) or a new picture chosen in this
 // form (`file`), which is only written when the form is saved.
@@ -13,7 +12,10 @@ export type CoverChoice = { reference: string | null; file: File | null };
 
 // Writes a newly chosen cover, then saves with its reference. If saving
 // fails, the new file is deleted again so nothing is left behind.
-export async function saveWithCover<T>(cover: CoverChoice, save: (reference: string | null) => Promise<T>) {
+export async function saveWithCover<T>(
+  cover: CoverChoice,
+  save: (reference: string | null) => Promise<T>
+) {
   const stored = cover.file ? await storeImage(cover.file) : null;
   try {
     return await save(stored ?? cover.reference);
@@ -23,7 +25,10 @@ export async function saveWithCover<T>(cover: CoverChoice, save: (reference: str
   }
 }
 
-export default function CoverPicker({ value, onChange }: Readonly<{
+export default function CoverPicker({
+  value,
+  onChange
+}: Readonly<{
   value: CoverChoice;
   onChange: (value: CoverChoice) => void;
 }>) {
@@ -59,7 +64,12 @@ export default function CoverPicker({ value, onChange }: Readonly<{
       <Typography as="span" variant="label" className={clsx("block")}>
         Cover
       </Typography>
-      <div className={clsx("aspect-16/5 w-full overflow-hidden rounded-md", "border border-dashed border-ink/20 bg-ink/5")}>
+      <div
+        className={clsx(
+          "aspect-16/5 w-full overflow-hidden rounded-md",
+          "border border-dashed border-ink/20 bg-ink/5"
+        )}
+      >
         {preview && <img src={preview} alt="" className={clsx("size-full object-cover")} />}
       </div>
       <div className={clsx("flex flex-wrap items-center gap-3")}>
@@ -68,7 +78,9 @@ export default function CoverPicker({ value, onChange }: Readonly<{
           onClick={() =>
             void pickFiles({ extensions: IMAGE_EXTENSIONS })
               .then(([file]) => choose(file))
-              .catch((error_) => setError(errorMessage(error_, "Couldn’t open the file picker. Try again.")))
+              .catch((error_) =>
+                setError(errorMessage(error_, "Couldn’t open the file picker. Try again."))
+              )
           }
           className={clsx(
             "inline-flex items-center rounded-md",
@@ -89,7 +101,9 @@ export default function CoverPicker({ value, onChange }: Readonly<{
           </button>
         )}
       </div>
-      <BodyText tone="muted">A wide picture works best. PNG, JPEG, WebP, GIF or SVG, up to 10 MB.</BodyText>
+      <BodyText tone="muted">
+        A wide picture works best. PNG, JPEG, WebP, GIF or SVG, up to 10 MB.
+      </BodyText>
       {error && (
         <BodyText role="alert" tone="error">
           {error}

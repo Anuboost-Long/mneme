@@ -1,15 +1,18 @@
+import type { Course } from "@/features/courses/lib/course/types";
+import {
+  deleteHighlight,
+  keepOrphanedHighlight,
+  stripHighlight
+} from "@/features/courses/lib/highlight/actions";
+import type { Highlight } from "@/features/courses/lib/highlight/types";
+import type { Module } from "@/features/courses/lib/module/types";
+import { getPage, updatePage } from "@/features/courses/lib/page/actions";
+import type { Page } from "@/features/courses/lib/page/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { BodyText, Caption, PageTitle, SectionTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { BodyText, Caption, PageTitle, SectionTitle } from "../../../shared/ui/Typography";
-import type { Course } from "../lib/course/types";
-import { deleteHighlight, keepOrphanedHighlight, stripHighlight } from "../lib/highlight/actions";
-import type { Highlight } from "../lib/highlight/types";
-import type { Module } from "../lib/module/types";
-import { getPage, updatePage } from "../lib/page/actions";
-import type { Page } from "../lib/page/types";
 
 export default function ModuleHighlightsPage({
   course,

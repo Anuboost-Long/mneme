@@ -1,20 +1,25 @@
-import { sql, type SqlFragment, type Values } from "@chain/sdk";
-
-import type { PageRow } from "../../../../shared/lib/db/schema/page";
-import { recordStudy } from "../../../../shared/lib/study-day/actions";
-import { deletePageAudios } from "../../../audiobook/lib/page-audio/actions";
-import { copyAttachments, deleteAttachments } from "../attachment/actions";
-import { CompletionStatus } from "../completion-status";
-import { reconcileHighlights, syncPageHighlights } from "../highlight/actions";
-import { copyIcon, deleteIcon, deleteReplacedIcon, storeIcon } from "../icon/actions";
-import { copyImage, deleteImage, storeInlineImages } from "../page-image";
+import { deletePageAudios } from "@/features/audiobook/lib/page-audio/actions";
+import { copyAttachments, deleteAttachments } from "@/features/courses/lib/attachment/actions";
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import { reconcileHighlights, syncPageHighlights } from "@/features/courses/lib/highlight/actions";
+import {
+  copyIcon,
+  deleteIcon,
+  deleteReplacedIcon,
+  storeIcon
+} from "@/features/courses/lib/icon/actions";
+import { copyImage, deleteImage, storeInlineImages } from "@/features/courses/lib/page-image";
 import {
   copyRecordings,
   deleteRecording,
   deleteRecordings,
   setRecordingPage
-} from "../recording/actions";
-import { transcriptHtml, type Recording } from "../recording/types";
+} from "@/features/courses/lib/recording/actions";
+import { transcriptHtml, type Recording } from "@/features/courses/lib/recording/types";
+import type { PageRow } from "@/shared/lib/db/schema/page";
+import { recordStudy } from "@/shared/lib/study-day/actions";
+import { sql, type SqlFragment, type Values } from "@chain/sdk";
+
 import {
   deletePageRows,
   getPage,
@@ -148,17 +153,27 @@ export async function appendToPage(id: number, html: string) {
   return updatePage(id, { content: `${page.content ?? ""}${html}` });
 }
 
-export async function insertBlocks(id: number, html: string, where: { after?: string; at?: "start" | "end" } = {}) {
+export async function insertBlocks(
+  id: number,
+  html: string,
+  where: { after?: string; at?: "start" | "end" } = {}
+) {
   const page = await getPage(id);
   if (!page) throw new Error("This page no longer exists.");
-  const doc = new DOMParser().parseFromString(`<!doctype html><html><body>${page.content ?? ""}</body></html>`, "text/html");
+  const doc = new DOMParser().parseFromString(
+    `<!doctype html><html><body>${page.content ?? ""}</body></html>`,
+    "text/html"
+  );
   const holder = doc.createElement("div");
   holder.innerHTML = html;
-  if (!holder.textContent?.trim() && !holder.querySelector("img, video, table, hr")) throw new Error("There’s nothing to insert.");
+  if (!holder.textContent?.trim() && !holder.querySelector("img, video, table, hr"))
+    throw new Error("There’s nothing to insert.");
   const blocks = Array.from(holder.childNodes);
   const needle = where.after?.trim().toLowerCase();
   if (needle) {
-    const anchor = Array.from(doc.body.children).find((block) => block.textContent?.toLowerCase().includes(needle));
+    const anchor = Array.from(doc.body.children).find((block) =>
+      block.textContent?.toLowerCase().includes(needle)
+    );
     if (!anchor) throw new Error(`No block on this page contains “${where.after}”.`);
     anchor.after(...blocks);
   } else if (where.at === "start") doc.body.prepend(...blocks);

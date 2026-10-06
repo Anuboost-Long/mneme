@@ -1,4 +1,4 @@
-import type { AgentPermission } from "../permissions";
+import type { AgentPermission } from "@/features/agent-server/lib/permissions";
 
 export enum ActivityOutcome {
   Read = 1,
@@ -34,6 +34,9 @@ export type AgentActivity = {
   created_at: string;
 };
 
-export type NewActivity = Pick<AgentActivity, "conversation_id" | "tool" | "permission" | "description" | "outcome"> & {
+export type NewActivity = Pick<
+  AgentActivity,
+  "conversation_id" | "tool" | "permission" | "description" | "outcome"
+> & {
   detail?: string | null;
 };

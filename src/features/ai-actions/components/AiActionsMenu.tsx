@@ -1,22 +1,22 @@
+import { getConnections } from "@/features/agent-chat/lib/connection/actions";
+import type { AgentConnection } from "@/features/agent-chat/lib/connection/types";
+import {
+  getActionConnectionId,
+  getEnabledActions,
+  setActionConnectionId
+} from "@/features/ai-actions/lib/action/actions";
+import { ActionScope, type AiAction } from "@/features/ai-actions/lib/action/types";
+import { getPacks } from "@/features/ai-actions/lib/pack/actions";
+import type { ActionPack } from "@/features/ai-actions/lib/pack/types";
+import ProfilePicker, { type CourseProfile } from "@/features/ai-profiles/components/ProfilePicker";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import type { Editor } from "@tiptap/react";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getConnections } from "../../agent-chat/lib/connection/actions";
-import type { AgentConnection } from "../../agent-chat/lib/connection/types";
-import ProfilePicker, { type CourseProfile } from "../../ai-profiles/components/ProfilePicker";
-import {
-  getActionConnectionId,
-  getEnabledActions,
-  setActionConnectionId
-} from "../lib/action/actions";
-import { ActionScope, type AiAction } from "../lib/action/types";
-import { getPacks } from "../lib/pack/actions";
-import type { ActionPack } from "../lib/pack/types";
 import ActionIcon from "./ActionIcon";
 
 const scopeTags: Partial<Record<ActionScope, string>> = {

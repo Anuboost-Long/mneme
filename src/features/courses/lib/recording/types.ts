@@ -1,5 +1,5 @@
-import type { RecordingRow } from "../../../../shared/lib/db/schema/recording";
-import { escapeHtml } from "../import-sanitize";
+import { escapeHtml } from "@/features/courses/lib/import-sanitize";
+import type { RecordingRow } from "@/shared/lib/db/schema/recording";
 
 export type Recording = RecordingRow;
 

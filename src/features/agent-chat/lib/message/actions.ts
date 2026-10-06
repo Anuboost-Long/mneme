@@ -1,4 +1,5 @@
-import type { AttachmentInfo } from "../attachments";
+import type { AttachmentInfo } from "@/features/agent-chat/lib/attachments";
+
 import { insertMessage } from "./table";
 import type { AgentMessage } from "./types";
 

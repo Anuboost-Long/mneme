@@ -1,7 +1,6 @@
+import { findGuideTopic, guideTopics } from "@/features/guide/lib/topics";
+import GuidePage from "@/features/guide/pages/GuidePage";
 import { Navigate, useParams } from "react-router-dom";
-
-import { findGuideTopic, guideTopics } from "../features/guide/lib/topics";
-import GuidePage from "../features/guide/pages/GuidePage";
 
 export default function GuideRoute() {
   const { topicId } = useParams();

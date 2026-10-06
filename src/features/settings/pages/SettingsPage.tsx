@@ -1,40 +1,33 @@
-import clsx from "clsx";
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
-
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { pickFiles } from "../../../shared/lib/pickFiles";
-import { skipIntervals, useSkipInterval } from "../../../shared/lib/playbackPreferences";
-import { useSidebarMode, type SidebarMode } from "../../../shared/providers/SidebarModeProvider";
-import { useTheme } from "../../../shared/providers/ThemeProvider";
-import {
-  BodyText,
-  Caption,
-  PageTitle,
-  SectionTitle,
-  Typography
-} from "../../../shared/ui/Typography";
-import ChatRetention from "../../agent-chat/components/ChatRetention";
-import AgentActivity from "../../agent-server/components/AgentActivity";
-import AgentPermissions from "../../agent-server/components/AgentPermissions";
-import { startAgentServer, stopAgentServer } from "../../agent-server/lib/agentServerState";
-import { useAgentServer } from "../../agent-server/lib/useAgentServer";
-import ActionSettings from "../../ai-actions/components/ActionSettings";
-import ProfileSettings from "../../ai-profiles/components/ProfileSettings";
-import PageTypeSettings from "../../courses/components/PageTypeSettings";
-import SchoolSiteSettings from "../../courses/components/SchoolSiteSettings";
+import ChatRetention from "@/features/agent-chat/components/ChatRetention";
+import AgentActivity from "@/features/agent-server/components/AgentActivity";
+import AgentPermissions from "@/features/agent-server/components/AgentPermissions";
+import { startAgentServer, stopAgentServer } from "@/features/agent-server/lib/agentServerState";
+import { useAgentServer } from "@/features/agent-server/lib/useAgentServer";
+import ActionSettings from "@/features/ai-actions/components/ActionSettings";
+import ProfileSettings from "@/features/ai-profiles/components/ProfileSettings";
+import PageTypeSettings from "@/features/courses/components/PageTypeSettings";
+import SchoolSiteSettings from "@/features/courses/components/SchoolSiteSettings";
 import {
   createBackup,
   readBackupFile,
   restoreBackup,
   saveBackup
-} from "../../courses/lib/backup/actions";
-import ExtensionSettings from "../../extensions/components/ExtensionSettings";
-import RecordingSoundSettings from "../../recordings/components/RecordingSoundSettings";
-import AccentSetting from "../components/AccentSetting";
-import LayoutSettings from "../components/LayoutSettings";
-import ReadingSettings from "../components/ReadingSettings";
-import ShortcutSettings from "../components/ShortcutSettings";
+} from "@/features/courses/lib/backup/actions";
+import ExtensionSettings from "@/features/extensions/components/ExtensionSettings";
+import RecordingSoundSettings from "@/features/recordings/components/RecordingSoundSettings";
+import AccentSetting from "@/features/settings/components/AccentSetting";
+import LayoutSettings from "@/features/settings/components/LayoutSettings";
+import ReadingSettings from "@/features/settings/components/ReadingSettings";
+import ShortcutSettings from "@/features/settings/components/ShortcutSettings";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { pickFiles } from "@/shared/lib/pickFiles";
+import { skipIntervals, useSkipInterval } from "@/shared/lib/playbackPreferences";
+import { useSidebarMode, type SidebarMode } from "@/shared/providers/SidebarModeProvider";
+import { useTheme } from "@/shared/providers/ThemeProvider";
+import { BodyText, Caption, PageTitle, SectionTitle, Typography } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
 
 export const settingsSections = [
   { id: "general", label: "General" },
@@ -408,7 +401,8 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
                       <div>
                         <SectionTitle id="recordings-title">Recordings</SectionTitle>
                         <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>
-                          Choose how far the back and forward keys jump when you play a recording, and how recordings sound.
+                          Choose how far the back and forward keys jump when you play a recording,
+                          and how recordings sound.
                         </BodyText>
                       </div>
                       <div className={clsx("min-w-0 w-full max-w-xl @min-3xl:col-span-2")}>

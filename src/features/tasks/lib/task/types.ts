@@ -1,4 +1,4 @@
-import type { TaskRow } from "../../../../shared/lib/db/schema/task";
+import type { TaskRow } from "@/shared/lib/db/schema/task";
 
 export enum TaskType {
   Exercise = 1,
@@ -70,7 +70,11 @@ export function taskGroup(task: Pick<Task, "due_on" | "completed_at">, today: st
   return task.due_on <= addDays(today, 7) ? "week" : "later";
 }
 
-const dueFormat = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" });
+const dueFormat = new Intl.DateTimeFormat(undefined, {
+  weekday: "short",
+  day: "numeric",
+  month: "short"
+});
 
 export function dueLabel(dueOn: string, today: string) {
   if (dueOn === today) return "Due today";

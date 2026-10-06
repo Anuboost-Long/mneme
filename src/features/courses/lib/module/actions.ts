@@ -1,9 +1,9 @@
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import { deleteIcon, deleteReplacedIcon, storeIcon } from "@/features/courses/lib/icon/actions";
+import { deletionTime, erasePages } from "@/features/courses/lib/page/actions";
+import type { ModuleRow } from "@/shared/lib/db/schema/module";
 import { sql, type SqlFragment, type Values } from "@chain/sdk";
 
-import type { ModuleRow } from "../../../../shared/lib/db/schema/module";
-import { CompletionStatus } from "../completion-status";
-import { deleteIcon, deleteReplacedIcon, storeIcon } from "../icon/actions";
-import { deletionTime, erasePages } from "../page/actions";
 import {
   deleteModuleRows,
   getModule,

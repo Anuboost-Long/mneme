@@ -1,12 +1,11 @@
+import { getRetentionDays, setRetentionDays } from "@/features/agent-chat/lib/conversation/actions";
+import { initDb } from "@/shared/lib/db";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { TextInput } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-
-import { initDb } from "../../../shared/lib/db";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { TextInput } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import { getRetentionDays, setRetentionDays } from "../lib/conversation/actions";
 
 export default function ChatRetention() {
   const [retention, setRetention] = useState<"never" | "days">("never");

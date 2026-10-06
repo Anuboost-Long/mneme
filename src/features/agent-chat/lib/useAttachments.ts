@@ -1,7 +1,8 @@
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { pickFiles } from "@/shared/lib/pickFiles";
 import { useEffect, useRef, useState, type DragEvent } from "react";
+
 import { readAttachment, type ChatAttachment } from "./attachments";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { pickFiles } from "../../../shared/lib/pickFiles";
 
 // The files waiting to go out with the next message. Owned by the page, not
 // the composer, because files can be dropped anywhere on the conversation.
@@ -27,9 +28,14 @@ export function useAttachments(conversationId: number | null) {
     // Switched conversations while reading: these files belong to the old one.
     if (generation.current !== started) return;
     setReading((current) => current.filter((name) => !names.includes(name)));
-    const added = results.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
+    const added = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
     const failed = results.find((result) => result.status === "rejected");
-    setAttachments((current) => [...current, ...added.filter((file) => !current.some((item) => item.name === file.name))]);
+    setAttachments((current) => [
+      ...current,
+      ...added.filter((file) => !current.some((item) => item.name === file.name))
+    ]);
     setError(failed ? errorMessage(failed.reason, "Couldn’t read that file. Try again.") : "");
   }
 
@@ -42,9 +48,17 @@ export function useAttachments(conversationId: number | null) {
   }
 
   return {
-    attachments, reading, error, add, pick,
-    remove: (name: string) => setAttachments((current) => current.filter((item) => item.name !== name)),
-    clear: () => { setAttachments([]); setError(""); },
+    attachments,
+    reading,
+    error,
+    add,
+    pick,
+    remove: (name: string) =>
+      setAttachments((current) => current.filter((item) => item.name !== name)),
+    clear: () => {
+      setAttachments([]);
+      setError("");
+    }
   };
 }
 
@@ -90,7 +104,7 @@ export function useFileDrop(enabled: boolean, onDrop: (files: File[]) => void) {
         depth.current = 0;
         setDragging(false);
         onDrop(Array.from(event.dataTransfer.files));
-      },
-    },
+      }
+    }
   };
 }

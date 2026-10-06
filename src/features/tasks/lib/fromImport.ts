@@ -1,5 +1,6 @@
-import type { ContentKind, DueDate } from "../../courses/lib/content-detection";
-import { PageType } from "../../courses/lib/page/types";
+import type { ContentKind, DueDate } from "@/features/courses/lib/content-detection";
+import { PageType } from "@/features/courses/lib/page/types";
+
 import { addTasks, getModuleTaskTitles } from "./task/actions";
 import { TaskType, type TaskDraft } from "./task/types";
 
@@ -47,7 +48,14 @@ export function importedTasks({
     const key = title.trim().toLowerCase();
     if (!key || taken.has(key)) return;
     taken.add(key);
-    drafts.push({ title: title.trim(), type, course_id: courseId, module_id: moduleId, page_id: page.id, due_on: dueOn });
+    drafts.push({
+      title: title.trim(),
+      type,
+      course_id: courseId,
+      module_id: moduleId,
+      page_id: page.id,
+      due_on: dueOn
+    });
   };
   if (pageTask) {
     const earliest = dueDates.flatMap(({ date }) => (date ? [date] : [])).sort()[0] ?? null;
@@ -57,8 +65,13 @@ export function importedTasks({
   return drafts;
 }
 
-export async function addImportedTasks(input: Omit<Parameters<typeof importedTasks>[0], "existingTitles">) {
-  const drafts = importedTasks({ ...input, existingTitles: await getModuleTaskTitles(input.moduleId) });
+export async function addImportedTasks(
+  input: Omit<Parameters<typeof importedTasks>[0], "existingTitles">
+) {
+  const drafts = importedTasks({
+    ...input,
+    existingTitles: await getModuleTaskTitles(input.moduleId)
+  });
   if (drafts.length > 0) await addTasks(drafts);
   return drafts.length;
 }

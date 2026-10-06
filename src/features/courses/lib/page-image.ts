@@ -1,6 +1,5 @@
+import { IMAGE_EXTENSIONS, pickFiles } from "@/shared/lib/pickFiles";
 import { desktop } from "@chain/sdk";
-
-import { IMAGE_EXTENSIONS, pickFiles } from "../../../shared/lib/pickFiles";
 
 const MAX_DIMENSION = 1600;
 
@@ -9,7 +8,7 @@ const EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/webp": "webp",
   "image/gif": "gif",
-  "image/svg+xml": "svg",
+  "image/svg+xml": "svg"
 };
 
 // Resizes to fit MAX_DIMENSION and writes the image through desktop.files,
@@ -34,7 +33,8 @@ export async function storeImage(file: File): Promise<string> {
     const context = canvas.getContext("2d");
     if (!context) throw new Error("No 2D canvas context.");
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const resizedType = file.type === "image/png" || file.type === "image/svg+xml" ? "image/png" : "image/jpeg";
+    const resizedType =
+      file.type === "image/png" || file.type === "image/svg+xml" ? "image/png" : "image/jpeg";
     const blob = await canvasToBlob(canvas, resizedType, 0.9);
     return await writeImage(blob, EXTENSIONS[resizedType]);
   } catch {
@@ -73,10 +73,14 @@ export async function storeInlineImages(html: string) {
 
 async function storeInlineImage(type: string, base64: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(base64));
-  const key = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const key = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
+    ""
+  );
   let stored = storedInlineImages.get(key);
   if (!stored) {
-    stored = desktop.files.write(base64Bytes(base64), { extension: EXTENSIONS[type] }).then((reference) => desktop.files.url(reference));
+    stored = desktop.files
+      .write(base64Bytes(base64), { extension: EXTENSIONS[type] })
+      .then((reference) => desktop.files.url(reference));
     stored.catch(() => storedInlineImages.delete(key));
     storedInlineImages.set(key, stored);
   }
@@ -105,7 +109,11 @@ export async function pageImage(file: File): Promise<string> {
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Couldn’t encode the image."))), type, quality);
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Couldn’t encode the image."))),
+      type,
+      quality
+    );
   });
 }
 

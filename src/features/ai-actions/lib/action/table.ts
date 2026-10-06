@@ -1,8 +1,8 @@
+import type { PageType } from "@/features/courses/lib/page/types";
+import { savePositions } from "@/shared/lib/db/positions";
+import type { AiActionRow } from "@/shared/lib/db/schema/ai-action";
 import { desktop, sql, type Values } from "@chain/sdk";
 
-import { savePositions } from "../../../../shared/lib/db/positions";
-import type { AiActionRow } from "../../../../shared/lib/db/schema/ai-action";
-import type { PageType } from "../../../courses/lib/page/types";
 import type { ActionOutput, ActionScope, AiAction } from "./types";
 
 const actionTable = () => desktop.storage.table<AiActionRow>("ai_action");

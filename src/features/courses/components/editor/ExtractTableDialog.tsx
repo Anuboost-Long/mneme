@@ -1,12 +1,12 @@
+import { tableHtml } from "@/features/courses/lib/recognized-document";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { extractTables } from "@/shared/lib/ocr";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import type { RecognizedDocument } from "@chain/sdk";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 
-import { useResetOnOpen } from "../../../../shared/lib/dialogState";
-import { extractTables } from "../../../../shared/lib/ocr";
-import Dialog from "../../../../shared/ui/Dialog";
-import { BodyText, Caption } from "../../../../shared/ui/Typography";
-import { tableHtml } from "../../lib/recognized-document";
 import type { ExtractPlacement } from "./ExtractTextDialog";
 
 type Table = RecognizedDocument["tables"][number];
@@ -72,7 +72,10 @@ export default function ExtractTableDialog({
             <button
               type="button"
               onClick={close}
-              className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
             >
               {found ? "Cancel" : "Close"}
             </button>
@@ -80,7 +83,9 @@ export default function ExtractTableDialog({
               <>
                 <button
                   type="button"
-                  onClick={() => complete(() => onInsert(tables.map(tableHtml).join(""), "replace"))}
+                  onClick={() =>
+                    complete(() => onInsert(tables.map(tableHtml).join(""), "replace"))
+                  }
                   className={clsx(
                     "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
                     "hover:bg-ink/5"

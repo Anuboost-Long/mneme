@@ -1,16 +1,15 @@
+import AgentPicker from "@/features/agent-chat/components/AgentPicker";
+import ConversationActions from "@/features/agent-chat/components/ConversationActions";
+import ConversationPane from "@/features/agent-chat/components/ConversationPane";
+import type { Conversation } from "@/features/agent-chat/lib/conversation/types";
+import type { useAgentChat } from "@/features/agent-chat/lib/useAgentChat";
+import { DATE_GROUP_VALUES, groupByDate } from "@/shared/lib/dateGroups";
+import { useListView, type SortOption } from "@/shared/lib/useListView";
+import { useStoredChoice } from "@/shared/lib/useStoredChoice";
+import ListToolbar from "@/shared/ui/ListToolbar";
+import { BodyText, Caption, PageTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useRef, useState } from "react";
-
-import { DATE_GROUP_VALUES, groupByDate } from "../../../shared/lib/dateGroups";
-import { useListView, type SortOption } from "../../../shared/lib/useListView";
-import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
-import ListToolbar from "../../../shared/ui/ListToolbar";
-import { BodyText, Caption, PageTitle } from "../../../shared/ui/Typography";
-import AgentPicker from "../components/AgentPicker";
-import ConversationActions from "../components/ConversationActions";
-import ConversationPane from "../components/ConversationPane";
-import type { Conversation } from "../lib/conversation/types";
-import type { useAgentChat } from "../lib/useAgentChat";
 
 const sorts: SortOption<Conversation, "updated" | "title">[] = [
   {

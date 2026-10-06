@@ -1,4 +1,3 @@
-import type { AiProfileRow } from "../../../../shared/lib/db/schema/ai-profile";
 import {
   answerLengths,
   explanationLevels,
@@ -8,7 +7,8 @@ import {
   type AnswerLength,
   type ExplanationLevel,
   type Tone
-} from "../preferences";
+} from "@/features/ai-profiles/lib/preferences";
+import type { AiProfileRow } from "@/shared/lib/db/schema/ai-profile";
 
 export type AiProfile = Pick<
   AiProfileRow,

@@ -1,7 +1,7 @@
+import { errorMessage } from "@/shared/lib/errorMessage";
 import { desktop, type ChainError, type InstalledModel } from "@chain/sdk";
 import { useSyncExternalStore } from "react";
 
-import { errorMessage } from "../../../shared/lib/errorMessage";
 import { transcriptionModels, VAD, type Extension } from "./catalog";
 
 export type Download = { received: number; total: number | null };
@@ -27,7 +27,11 @@ function storedOnlyDownloaded(): Record<Extension["kind"], boolean> {
     const saved = JSON.parse(localStorage.getItem(ONLY_DOWNLOADED_KEY) ?? "{}") as Partial<
       Record<Extension["kind"], boolean>
     >;
-    return { voice: saved.voice === true, transcription: saved.transcription === true, search: false };
+    return {
+      voice: saved.voice === true,
+      transcription: saved.transcription === true,
+      search: false
+    };
   } catch {
     return { voice: false, transcription: false, search: false };
   }

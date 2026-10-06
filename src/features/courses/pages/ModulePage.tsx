@@ -1,42 +1,42 @@
+import DeleteModule from "@/features/courses/components/DeleteModule";
+import DeletePage from "@/features/courses/components/DeletePage";
+import DeletePages from "@/features/courses/components/DeletePages";
+import LmsImportForm from "@/features/courses/components/LmsImportForm";
+import ModuleForm from "@/features/courses/components/ModuleForm";
+import MovePageDialog from "@/features/courses/components/MovePageDialog";
+import PageCard from "@/features/courses/components/PageCard";
+import type { PageItemProps } from "@/features/courses/components/pageDisplay";
+import PageForm from "@/features/courses/components/PageForm";
+import ProgressSummary from "@/features/courses/components/ProgressSummary";
+import ReadingRow from "@/features/courses/components/ReadingRow";
+import SiblingSwitcher from "@/features/courses/components/SiblingSwitcher";
+import { StatusChip } from "@/features/courses/components/StatusPicker";
+import ViewToggle from "@/features/courses/components/ViewToggle";
+import { CompletionStatus } from "@/features/courses/lib/completion-status";
+import type { Course } from "@/features/courses/lib/course/types";
+import { updateModule } from "@/features/courses/lib/module/actions";
+import type { Module } from "@/features/courses/lib/module/types";
+import { pageTypeLabel, pageTypeOptions } from "@/features/courses/lib/page-type/pageTypesState";
+import { duplicatePage, setPageDone } from "@/features/courses/lib/page/actions";
+import { type Page } from "@/features/courses/lib/page/types";
+import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
+import { textChunks } from "@/features/read-aloud/lib/readableText";
+import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
+import FindTasksDialog from "@/features/tasks/components/FindTasksDialog";
+import { addCommandSource } from "@/shared/lib/commandSources";
+import { DATE_GROUP_VALUES, groupByDate, groupItems } from "@/shared/lib/dateGroups";
+import { useLastValue } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { useDragReorder } from "@/shared/lib/useDragReorder";
+import { useListView, type SortOption } from "@/shared/lib/useListView";
+import { useStoredChoice } from "@/shared/lib/useStoredChoice";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import DragHandle from "@/shared/ui/DragHandle";
+import ListToolbar, { DATE_GROUP_OPTIONS } from "@/shared/ui/ListToolbar";
+import { BodyText, PageTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
-import { addCommandSource } from "../../../shared/lib/commandSources";
-import { DATE_GROUP_VALUES, groupByDate, groupItems } from "../../../shared/lib/dateGroups";
-import { useLastValue } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { useDragReorder } from "../../../shared/lib/useDragReorder";
-import { useListView, type SortOption } from "../../../shared/lib/useListView";
-import { useStoredChoice } from "../../../shared/lib/useStoredChoice";
-import CourseIcon from "../../../shared/ui/CourseIcon";
-import DragHandle from "../../../shared/ui/DragHandle";
-import ListToolbar, { DATE_GROUP_OPTIONS } from "../../../shared/ui/ListToolbar";
-import { BodyText, PageTitle, Typography } from "../../../shared/ui/Typography";
-import ReadAloudBar from "../../read-aloud/components/ReadAloudBar";
-import { textChunks } from "../../read-aloud/lib/readableText";
-import { useReadAloud } from "../../read-aloud/lib/useReadAloud";
-import DeleteModule from "../components/DeleteModule";
-import DeletePage from "../components/DeletePage";
-import DeletePages from "../components/DeletePages";
-import LmsImportForm from "../components/LmsImportForm";
-import ModuleForm from "../components/ModuleForm";
-import SiblingSwitcher from "../components/SiblingSwitcher";
-import MovePageDialog from "../components/MovePageDialog";
-import PageCard from "../components/PageCard";
-import type { PageItemProps } from "../components/pageDisplay";
-import PageForm from "../components/PageForm";
-import { pageTypeLabel, pageTypeOptions } from "../lib/page-type/pageTypesState";
-import ProgressSummary from "../components/ProgressSummary";
-import ReadingRow from "../components/ReadingRow";
-import { StatusChip } from "../components/StatusPicker";
-import ViewToggle from "../components/ViewToggle";
-import { CompletionStatus } from "../lib/completion-status";
-import type { Course } from "../lib/course/types";
-import { updateModule } from "../lib/module/actions";
-import type { Module } from "../lib/module/types";
-import { duplicatePage, setPageDone } from "../lib/page/actions";
-import { type Page } from "../lib/page/types";
 
 const PAGE_VIEWS = ["list", "gallery"] as const;
 
@@ -105,6 +105,8 @@ export default function ModulePage({
   const [typeFilter, setTypeFilter] = useState("all");
   const [doneError, setDoneError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [findingTasks, setFindingTasks] = useState(false);
+  const [tasksAdded, setTasksAdded] = useState(0);
   const reader = useReadAloud();
   const navigate = useNavigate();
   const pageTarget = useLastValue(typeof pageDialog === "object" ? pageDialog?.page : null);
@@ -132,6 +134,12 @@ export default function ModulePage({
           label: "Import PDF or document",
           detail: module.name,
           run: () => setPageDialog("import-file")
+        },
+        {
+          id: "module-find-tasks",
+          label: "Find tasks",
+          detail: module.name,
+          run: () => setFindingTasks(true)
         },
         {
           id: "module-flashcards",
@@ -355,6 +363,15 @@ export default function ModulePage({
           {statusError && (
             <BodyText role="alert" tone="error" className={clsx("mt-1")}>
               {statusError}
+            </BodyText>
+          )}
+          {tasksAdded > 0 && (
+            <BodyText role="status" tone="muted" className={clsx("mt-1")}>
+              {tasksAdded === 1 ? "1 task added" : `${tasksAdded} tasks added`} to{" "}
+              <Link to="/tasks" className={clsx("text-ink underline underline-offset-4")}>
+                Tasks
+              </Link>
+              .
             </BodyText>
           )}
         </div>
@@ -681,6 +698,14 @@ export default function ModulePage({
           onSavePage(page);
           setPageDialog(null);
         }}
+      />
+      <FindTasksDialog
+        open={findingTasks}
+        courses={[course]}
+        courseId={course.id}
+        moduleId={module.id}
+        onAdded={setTasksAdded}
+        onClose={() => setFindingTasks(false)}
       />
       <LmsImportForm
         open={pageDialog === "import" || pageDialog === "import-file"}

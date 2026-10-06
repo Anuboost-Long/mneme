@@ -1,17 +1,18 @@
-import type { ImageData } from "../../../shared/lib/htmlImages";
-import { extractTextFromBytes } from "../../../shared/lib/ocr";
-import { compactHtml } from "../../ai-actions/lib/context";
-import { escapeHtml } from "../../ai-actions/lib/editorHtml";
-import { preferenceLines, type AiProfile } from "../../ai-profiles/lib/profile/types";
-import { getPageAttachments, readAttachmentText } from "../../courses/lib/attachment/actions";
-import { completionStatusLabels } from "../../courses/lib/completion-status";
-import { getCourse } from "../../courses/lib/course/actions";
-import type { Course } from "../../courses/lib/course/types";
-import { getModule } from "../../courses/lib/module/actions";
-import type { Module } from "../../courses/lib/module/types";
-import { getPage, getPages } from "../../courses/lib/page/actions";
-import { pageTypeLabels, type Page } from "../../courses/lib/page/types";
-import { getPageRecordings } from "../../courses/lib/recording/actions";
+import { compactHtml } from "@/features/ai-actions/lib/context";
+import { escapeHtml } from "@/features/ai-actions/lib/editorHtml";
+import { preferenceLines, type AiProfile } from "@/features/ai-profiles/lib/profile/types";
+import { getPageAttachments, readAttachmentText } from "@/features/courses/lib/attachment/actions";
+import { completionStatusLabels } from "@/features/courses/lib/completion-status";
+import { getCourse } from "@/features/courses/lib/course/actions";
+import type { Course } from "@/features/courses/lib/course/types";
+import { getModule } from "@/features/courses/lib/module/actions";
+import type { Module } from "@/features/courses/lib/module/types";
+import { getPage, getPages } from "@/features/courses/lib/page/actions";
+import { pageTypeLabels, type Page } from "@/features/courses/lib/page/types";
+import { getPageRecordings } from "@/features/courses/lib/recording/actions";
+import type { ImageData } from "@/shared/lib/htmlImages";
+import { extractTextFromBytes } from "@/shared/lib/ocr";
+
 import type { AiContext, ContextLayer } from "./types";
 
 export const CONTEXT_BUDGET_CHARS = 60_000;
@@ -124,14 +125,19 @@ function coursePart(course: Course, withIds: boolean): Part {
   };
 }
 
-async function modulePart(module: Module, currentPageId: number | null, withIds: boolean): Promise<Part> {
+async function modulePart(
+  module: Module,
+  currentPageId: number | null,
+  withIds: boolean
+): Promise<Part> {
   const pages = await getPages(module.id);
   const listed = pages.slice(0, MAX_LISTED_PAGES).map((page) => {
     const id = withIds ? `id ${page.id}, ` : "";
     const current = page.id === currentPageId ? ", the open page" : "";
     return `- ${page.title} (${id}${pageTypeLabels[page.type]}, ${completionStatusLabels[page.status]}${current})`;
   });
-  if (pages.length > MAX_LISTED_PAGES) listed.push(`- … and ${pages.length - MAX_LISTED_PAGES} more`);
+  if (pages.length > MAX_LISTED_PAGES)
+    listed.push(`- … and ${pages.length - MAX_LISTED_PAGES} more`);
   const pageList = listed.length ? `Pages in this module, in order:\n${listed.join("\n")}` : "";
   return {
     label: "Module",
@@ -159,7 +165,13 @@ function pagePart(page: Page, body: string, withIds: boolean): Part {
 }
 
 function selectionPart(text: string): Part {
-  return { label: "Selection", detail: words(text), tag: "selection", body: text.trim(), trimOrder: TrimOrder.Selection };
+  return {
+    label: "Selection",
+    detail: words(text),
+    tag: "selection",
+    body: text.trim(),
+    trimOrder: TrimOrder.Selection
+  };
 }
 
 async function attachmentParts(pageId: number, withText: boolean): Promise<Part[]> {
@@ -168,12 +180,17 @@ async function attachmentParts(pageId: number, withText: boolean): Promise<Part[
     const text = withText ? await readAttachmentText(attachment) : null;
     parts.push({
       label: "Attachments",
-      detail: text ? `${attachment.file_name}, ${words(text)}` : `${attachment.file_name}, name only`,
+      detail: text
+        ? `${attachment.file_name}, ${words(text)}`
+        : `${attachment.file_name}, name only`,
       tag: "attachment",
       attributes: {
         name: attachment.file_name,
         type: attachment.mime_type,
-        size: attachment.size_bytes === null ? null : `${Math.max(1, Math.round(attachment.size_bytes / 1024))} KB`
+        size:
+          attachment.size_bytes === null
+            ? null
+            : `${Math.max(1, Math.round(attachment.size_bytes / 1024))} KB`
       },
       body: text?.trim() ?? "",
       trimOrder: TrimOrder.AttachmentText
@@ -219,7 +236,11 @@ async function imageTextParts(images: ImageData[]): Promise<Part[]> {
   return parts;
 }
 
-async function transcriptParts(pageId: number, pageText: string, withText: boolean): Promise<Part[]> {
+async function transcriptParts(
+  pageId: number,
+  pageText: string,
+  withText: boolean
+): Promise<Part[]> {
   const inPage = normalized(pageText);
   const parts: Part[] = [];
   for (const recording of await getPageRecordings(pageId)) {
@@ -234,7 +255,12 @@ async function transcriptParts(pageId: number, pageText: string, withText: boole
       label: "Transcripts",
       detail,
       tag: "recording",
-      attributes: { id: withText ? null : recording.id, name: recording.name, length: `${minutes} min`, transcript: transcript ? null : "none" },
+      attributes: {
+        id: withText ? null : recording.id,
+        name: recording.name,
+        length: `${minutes} min`,
+        transcript: transcript ? null : "none"
+      },
       body: sendText ? transcript : "",
       trimOrder: TrimOrder.Transcript
     });
@@ -265,7 +291,8 @@ export async function buildActionContext(
   if (subject === "course") return finish(parts, profile, "");
 
   const module = await getModule(location.moduleId);
-  if (module) parts.push(await modulePart(module, subject === "module" ? null : location.pageId, false));
+  if (module)
+    parts.push(await modulePart(module, subject === "module" ? null : location.pageId, false));
   if (subject === "module") return finish(parts, profile, "");
 
   const page = await getPage(location.pageId);

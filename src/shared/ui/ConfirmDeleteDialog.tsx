@@ -1,8 +1,8 @@
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
 import clsx from "clsx";
 import { useState } from "react";
 
-import { useResetOnOpen } from "../lib/dialogState";
-import { errorMessage } from "../lib/errorMessage";
 import Dialog from "./Dialog";
 import { BodyText } from "./Typography";
 
@@ -63,7 +63,10 @@ export default function ConfirmDeleteDialog({
               type="button"
               disabled={busy}
               onClick={close}
-              className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
             >
               Cancel
             </button>

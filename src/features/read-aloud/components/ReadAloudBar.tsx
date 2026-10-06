@@ -1,11 +1,10 @@
+import { RATES, type ReadAloud } from "@/features/read-aloud/lib/useReadAloud";
+import { languageName } from "@/shared/lib/languageName";
+import CassetteDeck, { DeckIcon, DeckKey } from "@/shared/ui/CassetteDeck";
+import Select from "@/shared/ui/Select";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { languageName } from "../../../shared/lib/languageName";
-import CassetteDeck, { DeckIcon, DeckKey } from "../../../shared/ui/CassetteDeck";
-import Select from "../../../shared/ui/Select";
-import { Caption } from "../../../shared/ui/Typography";
-import { RATES, type ReadAloud } from "../lib/useReadAloud";
 
 export default function ReadAloudBar({ reader }: Readonly<{ reader: ReadAloud }>) {
   const [settingsOpen, setSettingsOpen] = useState(false);

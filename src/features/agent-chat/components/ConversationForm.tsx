@@ -1,12 +1,11 @@
+import type { Conversation } from "@/features/agent-chat/lib/conversation/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { TextInput } from "@/shared/ui/Input";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextInput } from "../../../shared/ui/Input";
-import { BodyText } from "../../../shared/ui/Typography";
-import type { Conversation } from "../lib/conversation/types";
 
 export default function ConversationForm({
   open,

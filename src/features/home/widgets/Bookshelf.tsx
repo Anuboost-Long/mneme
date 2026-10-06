@@ -1,11 +1,11 @@
+import { getCourseShelf, getLibraryCounts } from "@/features/home/lib/dashboard/actions";
+import type { ShelfCourse } from "@/features/home/lib/dashboard/types";
+import { useWidgetData } from "@/features/home/lib/useWidgetData";
+import { courseColors } from "@/shared/ui/CourseIcon";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { Link } from "react-router-dom";
 
-import { courseColors } from "../../../shared/ui/CourseIcon";
-import { Caption } from "../../../shared/ui/Typography";
-import { getCourseShelf, getLibraryCounts } from "../lib/dashboard/actions";
-import type { ShelfCourse } from "../lib/dashboard/types";
-import { useWidgetData } from "../lib/useWidgetData";
 import { WidgetNote } from "./parts";
 import type { WidgetProps } from "./types";
 

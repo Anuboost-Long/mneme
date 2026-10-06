@@ -1,8 +1,7 @@
+import { accentOptions } from "@/shared/lib/appearance";
+import { useAppearance } from "@/shared/providers/AppearanceProvider";
+import { Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
-
-import { accentOptions } from "../../../shared/lib/appearance";
-import { useAppearance } from "../../../shared/providers/AppearanceProvider";
-import { Typography } from "../../../shared/ui/Typography";
 
 export default function AccentSetting() {
   const { appearance, changeAppearance } = useAppearance();
@@ -28,7 +27,10 @@ export default function AccentSetting() {
               onChange={() => changeAppearance({ accent: accent.value })}
               className={clsx("sr-only")}
             />
-            <span aria-hidden="true" className={clsx("flex overflow-hidden rounded ring-1 ring-ink/20")}>
+            <span
+              aria-hidden="true"
+              className={clsx("flex overflow-hidden rounded ring-1 ring-ink/20")}
+            >
               <span className={clsx("size-5")} style={{ background: accent.light }} />
               <span className={clsx("size-5")} style={{ background: accent.dark }} />
             </span>

@@ -1,14 +1,13 @@
+import CourseActions from "@/features/courses/components/CourseActions";
+import { pinnedFirst, withGroupOrder, type Course } from "@/features/courses/lib/course/types";
+import { useDragReorder } from "@/shared/lib/useDragReorder";
+import type { SidebarMode } from "@/shared/providers/SidebarModeProvider";
+import CourseIcon from "@/shared/ui/CourseIcon";
+import DragHandle from "@/shared/ui/DragHandle";
+import TruncatedText from "@/shared/ui/TruncatedText";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { NavLink } from "react-router-dom";
-
-import CourseActions from "../features/courses/components/CourseActions";
-import { pinnedFirst, withGroupOrder, type Course } from "../features/courses/lib/course/types";
-import { useDragReorder } from "../shared/lib/useDragReorder";
-import type { SidebarMode } from "../shared/providers/SidebarModeProvider";
-import CourseIcon from "../shared/ui/CourseIcon";
-import DragHandle from "../shared/ui/DragHandle";
-import TruncatedText from "../shared/ui/TruncatedText";
-import { Caption } from "../shared/ui/Typography";
 
 type CourseHandlers = {
   onSave: (course: Course) => void;

@@ -1,5 +1,5 @@
-import type { ActionPackRow } from "../../../../shared/lib/db/schema/action-pack";
-import type { ActionInput } from "../action/types";
+import type { ActionInput } from "@/features/ai-actions/lib/action/types";
+import type { ActionPackRow } from "@/shared/lib/db/schema/action-pack";
 
 export enum PackArea {
   Study = 1,

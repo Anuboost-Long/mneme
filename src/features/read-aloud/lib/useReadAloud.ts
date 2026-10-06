@@ -1,8 +1,12 @@
+import { voiceModels, type VoiceExtension } from "@/features/extensions/lib/catalog";
+import {
+  isReady,
+  refreshExtensions,
+  useExtensions
+} from "@/features/extensions/lib/extensionsState";
+import { errorMessage } from "@/shared/lib/errorMessage";
 import { useEffect, useRef, useState } from "react";
 
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { voiceModels, type VoiceExtension } from "../../extensions/lib/catalog";
-import { isReady, refreshExtensions, useExtensions } from "../../extensions/lib/extensionsState";
 import { DownloadedVoicePlayer, warmUp } from "./downloadedVoicePlayer";
 import { keepInView, paintHighlight } from "./highlight";
 import { textRange, type ReadableChunk } from "./readableText";
@@ -54,14 +58,12 @@ function store(key: string, value: string) {
 
 function systemVoices(): ReadAloudVoice[] {
   if (typeof speechSynthesis === "undefined") return [];
-  return speechSynthesis
-    .getVoices()
-    .map((voice) => ({
-      id: voice.voiceURI,
-      name: voice.name,
-      lang: voice.lang,
-      isDefault: voice.default
-    }));
+  return speechSynthesis.getVoices().map((voice) => ({
+    id: voice.voiceURI,
+    name: voice.name,
+    lang: voice.lang,
+    isDefault: voice.default
+  }));
 }
 
 export function downloadedVoices(installed: Parameters<typeof isReady>[1]): ReadAloudVoice[] {
@@ -251,7 +253,8 @@ export function useReadAloud() {
           if (live()) setIndex(paragraph);
         },
         onWord: (spoken) => {
-          if (live()) hear(spoken && { chunk: spoken.paragraph, start: spoken.start, end: spoken.end });
+          if (live())
+            hear(spoken && { chunk: spoken.paragraph, start: spoken.start, end: spoken.end });
         },
         // Only a wait the listener would notice changes the label; a quick
         // one would just flash "Preparing voice…" and back.

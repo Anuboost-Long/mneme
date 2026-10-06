@@ -1,12 +1,11 @@
+import { useCourses } from "@/features/courses/lib/coursesState";
+import { getModule, getModules } from "@/features/courses/lib/module/actions";
+import type { Module as ModuleRecord } from "@/features/courses/lib/module/types";
+import { getPages, reorderPages } from "@/features/courses/lib/page/actions";
+import type { Page as PageRecord } from "@/features/courses/lib/page/types";
+import ModulePage from "@/features/courses/pages/ModulePage";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-import { useCourses } from "../features/courses/lib/coursesState";
-import { getModule, getModules } from "../features/courses/lib/module/actions";
-import type { Module as ModuleRecord } from "../features/courses/lib/module/types";
-import { getPages, reorderPages } from "../features/courses/lib/page/actions";
-import type { Page as PageRecord } from "../features/courses/lib/page/types";
-import ModulePage from "../features/courses/pages/ModulePage";
 
 export default function ModuleRoute() {
   const { courseId, moduleId } = useParams();

@@ -1,6 +1,5 @@
+import type { SettingsRow } from "@/shared/lib/db/schema/settings";
 import { desktop } from "@chain/sdk";
-
-import type { SettingsRow } from "../db/schema/settings";
 
 const settingsTable = () => desktop.storage.table<SettingsRow>("settings");
 

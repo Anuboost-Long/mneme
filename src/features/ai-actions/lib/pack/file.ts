@@ -1,6 +1,11 @@
-import { PageType } from "../../../courses/lib/page/types";
-import { actionIcons } from "../../components/ActionIcon";
-import { ActionOutput, ActionScope, type ActionInput } from "../action/types";
+import { actionIcons } from "@/features/ai-actions/components/ActionIcon";
+import {
+  ActionOutput,
+  ActionScope,
+  type ActionInput
+} from "@/features/ai-actions/lib/action/types";
+import { PageType } from "@/features/courses/lib/page/types";
+
 import { PackArea, type PackContent } from "./types";
 
 const FORMAT = "mneme-action-pack";

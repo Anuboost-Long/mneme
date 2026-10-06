@@ -1,9 +1,9 @@
+import type { CompletionStatus } from "@/features/courses/lib/completion-status";
+import { savePositions } from "@/shared/lib/db/positions";
+import type { ModuleRow } from "@/shared/lib/db/schema/module";
+import type { PageRow } from "@/shared/lib/db/schema/page";
 import { desktop, sql, type SqlFragment, type Values } from "@chain/sdk";
 
-import { savePositions } from "../../../../shared/lib/db/positions";
-import type { ModuleRow } from "../../../../shared/lib/db/schema/module";
-import type { PageRow } from "../../../../shared/lib/db/schema/page";
-import type { CompletionStatus } from "../completion-status";
 import type { Module, ModuleFilter, ModuleLink } from "./types";
 
 const moduleTable = () => desktop.storage.table<ModuleRow>("module");

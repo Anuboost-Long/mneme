@@ -1,6 +1,7 @@
-import { getModules } from "../../courses/lib/module/actions";
-import { getPages } from "../../courses/lib/page/actions";
-import { PageType, type Page } from "../../courses/lib/page/types";
+import { getModules } from "@/features/courses/lib/module/actions";
+import { getPages } from "@/features/courses/lib/page/actions";
+import { PageType, type Page } from "@/features/courses/lib/page/types";
+
 import { ActionScope, type AiAction } from "./action/types";
 import { escapeHtml } from "./editorHtml";
 

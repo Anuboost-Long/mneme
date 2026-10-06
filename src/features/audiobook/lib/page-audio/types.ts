@@ -1,5 +1,5 @@
-import type { PageAudioRow } from "../../../../shared/lib/db/schema/page-audio";
-import type { ReadableChunk, Sentence } from "../../../read-aloud/lib/readableText";
+import type { ReadableChunk, Sentence } from "@/features/read-aloud/lib/readableText";
+import type { PageAudioRow } from "@/shared/lib/db/schema/page-audio";
 
 export type AudioSentence = Sentence & { from: number; to: number };
 

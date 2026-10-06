@@ -1,20 +1,24 @@
+import { addRecordingToPage } from "@/features/courses/lib/page/actions";
+import type { RecordingListItem } from "@/features/courses/lib/recording/types";
+import PagePicker, { type PageTarget } from "@/features/home/components/PagePicker";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { BodyText } from "../../../shared/ui/Typography";
-import { addRecordingToPage } from "../../courses/lib/page/actions";
-import type { RecordingListItem } from "../../courses/lib/recording/types";
-import PagePicker, { type PageTarget } from "../../home/components/PagePicker";
 
 export default function AddToPageDialog({
   open,
   recording,
   onAdded,
   onClose
-}: Readonly<{ open: boolean; recording: RecordingListItem; onAdded: () => void; onClose: () => void }>) {
+}: Readonly<{
+  open: boolean;
+  recording: RecordingListItem;
+  onAdded: () => void;
+  onClose: () => void;
+}>) {
   const [page, setPage] = useState<PageTarget | null>(null);
   const [withTranscript, setWithTranscript] = useState(!!recording.transcript);
   const [busy, setBusy] = useState(false);

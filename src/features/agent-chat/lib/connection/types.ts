@@ -1,4 +1,4 @@
-import type { AgentConnectionRow } from "../../../../shared/lib/db/schema/agent-connection";
+import type { AgentConnectionRow } from "@/shared/lib/db/schema/agent-connection";
 
 export type AgentConnection = Omit<AgentConnectionRow, "args"> & {
   args: string[];

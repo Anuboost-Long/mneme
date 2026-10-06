@@ -1,4 +1,5 @@
-import { parseArgs } from "../presets";
+import { parseArgs } from "@/features/agent-chat/lib/presets";
+
 import { deleteConnectionRow, insertConnection, updateConnectionColumns } from "./table";
 import type { ConnectionInput } from "./types";
 

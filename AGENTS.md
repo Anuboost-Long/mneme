@@ -35,6 +35,11 @@ build` directly (instead of through `chain`) won't find it.
   don't reach for arbitrary-value brackets or a different palette without
   a reason. Add custom CSS there only when a utility class genuinely
   can't express it.
+- Imports from another folder start at `src/` with `@/`
+  (`@/shared/ui/Select`, `@/features/courses/lib/page/actions`); imports
+  in the same folder stay `./`. The alias is set in three places that
+  must agree: `tsconfig.json` (`paths`), `vite.config.ts`
+  (`resolve.alias`) and `tests/support/hooks.mjs` (the test loader).
 - Routing via `react-router-dom`'s data router, split into a husk/content
   layering (mirrors Lazify's own renderer structure):
   - `src/router.tsx` — `createBrowserRouter` route tree. Add new

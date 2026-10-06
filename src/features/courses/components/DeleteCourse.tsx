@@ -1,11 +1,10 @@
+import { deleteCourse } from "@/features/courses/lib/course/actions";
+import type { Course } from "@/features/courses/lib/course/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import Dialog from "@/shared/ui/Dialog";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import Dialog from "../../../shared/ui/Dialog";
-import { BodyText } from "../../../shared/ui/Typography";
-import { deleteCourse } from "../lib/course/actions";
-import type { Course } from "../lib/course/types";
 
 export default function DeleteCourse({
   open,

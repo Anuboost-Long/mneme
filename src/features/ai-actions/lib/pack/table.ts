@@ -1,7 +1,7 @@
+import type { ActionPackRow } from "@/shared/lib/db/schema/action-pack";
+import type { AiActionRow } from "@/shared/lib/db/schema/ai-action";
 import { desktop, sql } from "@chain/sdk";
 
-import type { ActionPackRow } from "../../../../shared/lib/db/schema/action-pack";
-import type { AiActionRow } from "../../../../shared/lib/db/schema/ai-action";
 import type { ActionPack, PackArea, PackContent } from "./types";
 
 const packTable = () => desktop.storage.table<ActionPackRow>("action_pack");

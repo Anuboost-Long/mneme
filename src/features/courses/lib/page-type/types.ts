@@ -1,4 +1,4 @@
-import type { CustomPageTypeRow } from "../../../../shared/lib/db/schema/custom-page-type";
+import type { CustomPageTypeRow } from "@/shared/lib/db/schema/custom-page-type";
 
 export type CustomPageType = CustomPageTypeRow;
 

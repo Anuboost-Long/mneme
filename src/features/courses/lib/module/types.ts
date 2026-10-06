@@ -1,10 +1,10 @@
-import type { CompletionStatus } from "../completion-status";
+import type { CompletionStatus } from "@/features/courses/lib/completion-status";
 
 export {
   CompletionStatus as ModuleStatus,
   completionStatuses as moduleStatuses,
   completionStatusLabels as moduleStatusLabels
-} from "../completion-status";
+} from "@/features/courses/lib/completion-status";
 
 export type Module = {
   id: number;

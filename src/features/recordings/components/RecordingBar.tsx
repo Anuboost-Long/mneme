@@ -1,17 +1,17 @@
+import MicrophoneAccessDialog from "@/features/courses/components/editor/MicrophoneAccessDialog";
+import MicrophoneNotice from "@/features/courses/components/editor/MicrophoneNotice";
+import RecordingSourcePicker from "@/features/courses/components/editor/RecordingSourcePicker";
+import Waveform from "@/features/courses/components/editor/Waveform";
+import { discardRecordedAudio } from "@/features/courses/lib/recording/actions";
+import { recordingSourceLabels, useAudioRecorder } from "@/features/courses/lib/useAudioRecorder";
+import FileRecordingDialog, { type Take } from "@/features/home/components/FileRecordingDialog";
+import { getPendingTake, setPendingTake } from "@/features/home/lib/pendingTake";
+import { useLastValue } from "@/shared/lib/dialogState";
+import { formatDuration } from "@/shared/lib/formatDuration";
+import { BodyText, Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 
-import { useLastValue } from "../../../shared/lib/dialogState";
-import { formatDuration } from "../../../shared/lib/formatDuration";
-import { BodyText, Caption } from "../../../shared/ui/Typography";
-import MicrophoneAccessDialog from "../../courses/components/editor/MicrophoneAccessDialog";
-import MicrophoneNotice from "../../courses/components/editor/MicrophoneNotice";
-import RecordingSourcePicker from "../../courses/components/editor/RecordingSourcePicker";
-import Waveform from "../../courses/components/editor/Waveform";
-import { discardRecordedAudio } from "../../courses/lib/recording/actions";
-import { recordingSourceLabels, useAudioRecorder } from "../../courses/lib/useAudioRecorder";
-import FileRecordingDialog, { type Take } from "../../home/components/FileRecordingDialog";
-import { getPendingTake, setPendingTake } from "../../home/lib/pendingTake";
 import SoundSettingsButton from "./SoundSettingsButton";
 
 const roundControl = clsx(

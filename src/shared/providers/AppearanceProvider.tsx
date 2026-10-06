@@ -1,8 +1,15 @@
+import {
+  applyAppearance,
+  readAppearance,
+  saveAppearance,
+  type Appearance
+} from "@/shared/lib/appearance";
 import { createContext, useContext, useLayoutEffect, useState, type ReactNode } from "react";
 
-import { applyAppearance, readAppearance, saveAppearance, type Appearance } from "../lib/appearance";
-
-type AppearanceContext = { appearance: Appearance; changeAppearance: (changes: Partial<Appearance>) => void };
+type AppearanceContext = {
+  appearance: Appearance;
+  changeAppearance: (changes: Partial<Appearance>) => void;
+};
 const AppearanceContext = createContext<AppearanceContext | null>(null);
 
 export function useAppearance() {
@@ -24,5 +31,9 @@ export default function AppearanceProvider({ children }: Readonly<{ children: Re
     setAppearance(next);
   }
 
-  return <AppearanceContext.Provider value={{ appearance, changeAppearance }}>{children}</AppearanceContext.Provider>;
+  return (
+    <AppearanceContext.Provider value={{ appearance, changeAppearance }}>
+      {children}
+    </AppearanceContext.Provider>
+  );
 }

@@ -1,8 +1,7 @@
+import { guideTopics, type GuideTopic } from "@/features/guide/lib/topics";
+import { BodyText, PageTitle, SectionTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { Link, NavLink } from "react-router-dom";
-
-import { BodyText, PageTitle, SectionTitle, Typography } from "../../../shared/ui/Typography";
-import { guideTopics, type GuideTopic } from "../lib/topics";
 
 export default function GuidePage({ topic }: Readonly<{ topic: GuideTopic }>) {
   return (
@@ -48,7 +47,9 @@ export default function GuidePage({ topic }: Readonly<{ topic: GuideTopic }>) {
                     clsx(
                       "block rounded-md px-3 py-2 text-sm whitespace-nowrap",
                       "focus-visible:outline-2 focus-visible:outline-ink",
-                      isActive ? "bg-ink/7 font-medium text-ink" : "text-muted hover:bg-ink/5 hover:text-ink"
+                      isActive
+                        ? "bg-ink/7 font-medium text-ink"
+                        : "text-muted hover:bg-ink/5 hover:text-ink"
                     )
                   }
                 >
@@ -98,7 +99,12 @@ export default function GuidePage({ topic }: Readonly<{ topic: GuideTopic }>) {
                   <SectionTitle as="h3" className={clsx("mt-1")}>
                     {step.title}
                   </SectionTitle>
-                  <div className={clsx("mt-2 space-y-2", step.screenshots.length > 0 ? "max-w-xs" : "max-w-2xl")}>
+                  <div
+                    className={clsx(
+                      "mt-2 space-y-2",
+                      step.screenshots.length > 0 ? "max-w-xs" : "max-w-2xl"
+                    )}
+                  >
                     {step.body.map((paragraph) => (
                       <BodyText key={paragraph} tone="muted">
                         {paragraph}
@@ -110,9 +116,12 @@ export default function GuidePage({ topic }: Readonly<{ topic: GuideTopic }>) {
                   <div
                     className={clsx(
                       "grid min-w-0 gap-4 @min-3xl:col-span-2",
-                      step.screenshots.length > 1 && !step.screenshots[0].landscape && "max-w-xl grid-cols-2",
+                      step.screenshots.length > 1 &&
+                        !step.screenshots[0].landscape &&
+                        "max-w-xl grid-cols-2",
                       step.screenshots.length > 1 && step.screenshots[0].landscape && "max-w-xl",
-                      step.screenshots.length === 1 && (step.screenshots[0].landscape ? "max-w-xl" : "max-w-xs")
+                      step.screenshots.length === 1 &&
+                        (step.screenshots[0].landscape ? "max-w-xl" : "max-w-xs")
                     )}
                   >
                     {step.screenshots.map((screenshot) => (

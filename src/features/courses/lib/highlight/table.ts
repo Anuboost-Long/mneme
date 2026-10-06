@@ -1,6 +1,5 @@
+import type { HighlightRow } from "@/shared/lib/db/schema/highlight";
 import { desktop, sql } from "@chain/sdk";
-
-import type { HighlightRow } from "../../../../shared/lib/db/schema/highlight";
 
 const UPSERT_BATCH = 200;
 

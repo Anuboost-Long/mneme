@@ -1,6 +1,6 @@
+import type { AgentConversationRow } from "@/shared/lib/db/schema/agent-conversation";
 import { desktop, sql, type SqlFragment, type Values } from "@chain/sdk";
 
-import type { AgentConversationRow } from "../../../../shared/lib/db/schema/agent-conversation";
 import type { Conversation, ConversationMode } from "./types";
 
 const conversationTable = () => desktop.storage.table<Conversation>("agent_conversation");

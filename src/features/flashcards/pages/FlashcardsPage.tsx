@@ -1,31 +1,32 @@
-import clsx from "clsx";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-
-import ConfirmDeleteDialog from "../../../shared/ui/ConfirmDeleteDialog";
-import { rowAction } from "../../../shared/ui/rowAction";
-import { BodyText, Caption, PageTitle, SectionTitle } from "../../../shared/ui/Typography";
-import type { Course } from "../../courses/lib/course/types";
-import type { Module } from "../../courses/lib/module/types";
-import type { Page } from "../../courses/lib/page/types";
-import CardForm from "../components/CardForm";
-import DeckHeader from "../components/DeckHeader";
-import DeckMissing from "../components/DeckMissing";
+import type { Course } from "@/features/courses/lib/course/types";
+import type { Module } from "@/features/courses/lib/module/types";
+import type { Page } from "@/features/courses/lib/page/types";
+import CardForm from "@/features/flashcards/components/CardForm";
+import DeckHeader from "@/features/flashcards/components/DeckHeader";
+import DeckMissing from "@/features/flashcards/components/DeckMissing";
 import {
   makeFlashcards,
   makesCardsForImports,
   setMakesCardsForImports,
   useMakingFlashcards
-} from "../lib/autoFlashcards";
-import { deckCounts, deleteCard } from "../lib/card/actions";
-import type { Flashcard } from "../lib/card/types";
-import { describeInterval } from "../lib/schedule";
+} from "@/features/flashcards/lib/autoFlashcards";
+import { deckCounts, deleteCard } from "@/features/flashcards/lib/card/actions";
+import type { Flashcard } from "@/features/flashcards/lib/card/types";
+import { describeInterval } from "@/features/flashcards/lib/schedule";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import { rowAction } from "@/shared/ui/rowAction";
+import { BodyText, Caption, PageTitle, SectionTitle } from "@/shared/ui/Typography";
+import clsx from "clsx";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-type Dialog = { kind: "add" } | { kind: "edit"; card: Flashcard } | { kind: "delete"; card: Flashcard };
+type Dialog =
+  { kind: "add" } | { kind: "edit"; card: Flashcard } | { kind: "delete"; card: Flashcard };
 
 function dueLabel(card: Flashcard, now: Date) {
   if (card.last_reviewed_at === null) return "New";
-  const days = (new Date(`${card.due_at.replace(" ", "T")}Z`).getTime() - now.getTime()) / 86_400_000;
+  const days =
+    (new Date(`${card.due_at.replace(" ", "T")}Z`).getTime() - now.getTime()) / 86_400_000;
   return days <= 0 ? "Due now" : `Due in ${describeInterval(days)}`;
 }
 
@@ -92,7 +93,10 @@ export default function FlashcardsPage({
           <button
             type="button"
             onClick={() => show({ kind: "add" })}
-            className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}
+            className={clsx(
+              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+              "hover:bg-ink/5"
+            )}
           >
             Add card
           </button>
@@ -111,7 +115,10 @@ export default function FlashcardsPage({
           {counts.due > 0 && (
             <Link
               to={`/courses/${course.id}/modules/${module.id}/flashcards/review`}
-              className={clsx("rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action", "hover:bg-action/85")}
+              className={clsx(
+                "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+                "hover:bg-action/85"
+              )}
             >
               Study {counts.due} {counts.due === 1 ? "card" : "cards"}
             </Link>
@@ -174,7 +181,9 @@ export default function FlashcardsPage({
                     {card.page_id && card.page_title && (
                       <Link
                         to={`/courses/${course.id}/modules/${module.id}/pages/${card.page_id}`}
-                        className={clsx("max-w-full truncate hover:text-ink hover:underline underline-offset-4")}
+                        className={clsx(
+                          "max-w-full truncate hover:text-ink hover:underline underline-offset-4"
+                        )}
                       >
                         {card.page_title}
                       </Link>
@@ -188,10 +197,18 @@ export default function FlashcardsPage({
                   </Caption>
                 </div>
                 <div className={clsx("flex shrink-0 items-start gap-1")}>
-                  <button type="button" onClick={() => show({ kind: "edit", card })} className={rowAction("edit")}>
+                  <button
+                    type="button"
+                    onClick={() => show({ kind: "edit", card })}
+                    className={rowAction("edit")}
+                  >
                     Edit
                   </button>
-                  <button type="button" onClick={() => show({ kind: "delete", card })} className={rowAction("danger")}>
+                  <button
+                    type="button"
+                    onClick={() => show({ kind: "delete", card })}
+                    className={rowAction("danger")}
+                  >
                     Delete
                   </button>
                 </div>
@@ -211,10 +228,16 @@ export default function FlashcardsPage({
       <ConfirmDeleteDialog
         open={open && dialog.kind === "delete"}
         title="Delete this card?"
-        message={dialog.kind === "delete" ? `“${dialog.card.front}” and its review history are deleted for good.` : ""}
+        message={
+          dialog.kind === "delete"
+            ? `“${dialog.card.front}” and its review history are deleted for good.`
+            : ""
+        }
         confirmLabel="Delete card"
         failure="Couldn’t delete this card. Try again."
-        onConfirm={() => (dialog.kind === "delete" ? deleteCard(dialog.card.id) : Promise.resolve())}
+        onConfirm={() =>
+          dialog.kind === "delete" ? deleteCard(dialog.card.id) : Promise.resolve()
+        }
         onClose={() => setOpen(false)}
         onDeleted={() => {
           setOpen(false);

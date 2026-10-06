@@ -1,6 +1,5 @@
+import type { StudyDayRow } from "@/shared/lib/db/schema/study-day";
 import { desktop, sql } from "@chain/sdk";
-
-import type { StudyDayRow } from "../db/schema/study-day";
 
 const studyDayTable = () => desktop.storage.table<StudyDayRow>("study_day");
 

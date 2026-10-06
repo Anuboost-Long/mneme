@@ -1,9 +1,9 @@
+import { formatDuration } from "@/shared/lib/formatDuration";
+import { playbackSpeeds, useSkipInterval } from "@/shared/lib/playbackPreferences";
+import type { usePlayback } from "@/shared/lib/usePlayback";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 
-import { formatDuration } from "../lib/formatDuration";
-import { playbackSpeeds, useSkipInterval } from "../lib/playbackPreferences";
-import type { usePlayback } from "../lib/usePlayback";
 import CassetteDeck, { DeckIcon, DeckKey } from "./CassetteDeck";
 import Select from "./Select";
 

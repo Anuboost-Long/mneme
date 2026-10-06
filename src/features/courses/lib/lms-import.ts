@@ -1,5 +1,6 @@
-import { apiGet } from "../../../shared/lib/api";
-import { downloadImage } from "../../../shared/lib/downloadImage";
+import { apiGet } from "@/shared/lib/api";
+import { downloadImage } from "@/shared/lib/downloadImage";
+
 import { detectType, escapeHtml, sanitizeChildren, type ParsedImport } from "./import-sanitize";
 import { pageImage } from "./page-image";
 
@@ -77,7 +78,10 @@ export async function storePageImages(
 }
 
 export function isSignInPage(html: string) {
-  return new DOMParser().parseFromString(html, "text/html").querySelector("input[type='password']") !== null;
+  return (
+    new DOMParser().parseFromString(html, "text/html").querySelector("input[type='password']") !==
+    null
+  );
 }
 
 function pageTitle(doc: Document): string {

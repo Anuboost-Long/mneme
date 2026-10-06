@@ -1,3 +1,16 @@
+import { askAssistant, openAssistant } from "@/features/agent-chat/lib/assistant";
+import { searchAttachmentLinks } from "@/features/courses/lib/attachment/actions";
+import type { AttachmentLink } from "@/features/courses/lib/attachment/types";
+import type { Course } from "@/features/courses/lib/course/types";
+import { searchModuleLinks } from "@/features/courses/lib/module/actions";
+import type { ModuleLink } from "@/features/courses/lib/module/types";
+import { searchPageLinks } from "@/features/courses/lib/page/actions";
+import type { PageLink } from "@/features/courses/lib/page/types";
+import type { PassageMatch } from "@/features/search/lib/passage/types";
+import { searchByMeaning } from "@/features/search/lib/searchIndex";
+import { loadCommandGroups, runCommand, type PaletteCommand } from "@/shared/lib/commandSources";
+import { useShortcut } from "@/shared/lib/shortcuts/shortcutsState";
+import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import {
   useCallback,
@@ -9,20 +22,6 @@ import {
   type KeyboardEvent
 } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
-
-import { askAssistant, openAssistant } from "../features/agent-chat/lib/assistant";
-import type { PassageMatch } from "../features/search/lib/passage/types";
-import { searchByMeaning } from "../features/search/lib/searchIndex";
-import { searchAttachmentLinks } from "../features/courses/lib/attachment/actions";
-import type { AttachmentLink } from "../features/courses/lib/attachment/types";
-import type { Course } from "../features/courses/lib/course/types";
-import { searchModuleLinks } from "../features/courses/lib/module/actions";
-import type { ModuleLink } from "../features/courses/lib/module/types";
-import { searchPageLinks } from "../features/courses/lib/page/actions";
-import type { PageLink } from "../features/courses/lib/page/types";
-import { loadCommandGroups, runCommand, type PaletteCommand } from "../shared/lib/commandSources";
-import { useShortcut } from "../shared/lib/shortcuts/shortcutsState";
-import { Caption } from "../shared/ui/Typography";
 
 // `path` marks a navigation item, so it can be reopened from Recent after
 // the search that found it is gone.
@@ -71,7 +70,9 @@ const searchDelayMs = 120;
 const meaningDelayMs = 350;
 
 function passageSnippet({ text, page_title }: PassageMatch) {
-  const body = text.startsWith(page_title) ? text.slice(page_title.length).replace(/^( — |: )/, "") : text;
+  const body = text.startsWith(page_title)
+    ? text.slice(page_title.length).replace(/^( — |: )/, "")
+    : text;
   return body.length > 90 ? `${body.slice(0, 89)}…` : body;
 }
 
@@ -89,7 +90,11 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
   const [commandGroups, setCommandGroups] = useState<
     { group: string; commands: PaletteCommand[] }[]
   >([]);
-  const [found, setFound] = useState<{ modules: ModuleLink[]; pages: PageLink[]; attachments: AttachmentLink[] }>({
+  const [found, setFound] = useState<{
+    modules: ModuleLink[];
+    pages: PageLink[];
+    attachments: AttachmentLink[];
+  }>({
     modules: [],
     pages: [],
     attachments: []
@@ -124,7 +129,11 @@ function Palette({ courses, onClose }: Readonly<{ courses: Course[]; onClose: ()
     }
     let current = true;
     const timer = setTimeout(() => {
-      Promise.all([searchModuleLinks(query, 6), searchPageLinks(query, 8), searchAttachmentLinks(query, 6)])
+      Promise.all([
+        searchModuleLinks(query, 6),
+        searchPageLinks(query, 8),
+        searchAttachmentLinks(query, 6)
+      ])
         .then(([modules, pages, attachments]) => {
           if (current) setFound({ modules, pages, attachments });
         })

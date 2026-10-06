@@ -1,4 +1,5 @@
-import type { AgentUsageRow } from "../../../../shared/lib/db/schema/agent-usage";
+import type { AgentUsageRow } from "@/shared/lib/db/schema/agent-usage";
+
 import { insertUsage } from "./table";
 
 export { getUsageSummary } from "./table";

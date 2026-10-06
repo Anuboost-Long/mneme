@@ -1,15 +1,14 @@
+import type { Page } from "@/features/courses/lib/page/types";
+import { addCards, editCard } from "@/features/flashcards/lib/card/actions";
+import type { Flashcard } from "@/features/flashcards/lib/card/types";
+import { useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import Dialog from "@/shared/ui/Dialog";
+import { TextArea } from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { BodyText } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState, type SubmitEvent } from "react";
-
-import { useResetOnOpen } from "../../../shared/lib/dialogState";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import Dialog from "../../../shared/ui/Dialog";
-import { TextArea } from "../../../shared/ui/Input";
-import Select from "../../../shared/ui/Select";
-import { BodyText } from "../../../shared/ui/Typography";
-import type { Page } from "../../courses/lib/page/types";
-import { addCards, editCard } from "../lib/card/actions";
-import type { Flashcard } from "../lib/card/types";
 
 export default function CardForm({
   open,
@@ -40,7 +39,10 @@ export default function CardForm({
     setError("");
   });
 
-  async function save(event: SubmitEvent<HTMLFormElement>, complete: (callback: () => void) => void) {
+  async function save(
+    event: SubmitEvent<HTMLFormElement>,
+    complete: (callback: () => void) => void
+  ) {
     event.preventDefault();
     setBusy(true);
     setError("");
@@ -82,7 +84,10 @@ export default function CardForm({
             label="Comes from"
             value={pageId}
             onChange={setPageId}
-            options={[{ value: 0, label: "No page" }, ...pages.map((page) => ({ value: page.id, label: page.title }))]}
+            options={[
+              { value: 0, label: "No page" },
+              ...pages.map((page) => ({ value: page.id, label: page.title }))
+            ]}
           />
           {error && (
             <BodyText role="alert" tone="error">
@@ -94,14 +99,20 @@ export default function CardForm({
               type="button"
               disabled={busy}
               onClick={close}
-              className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+                "hover:bg-ink/5"
+              )}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className={clsx("rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action", "hover:bg-action/85")}
+              className={clsx(
+                "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+                "hover:bg-action/85"
+              )}
             >
               {card ? "Save card" : "Add card"}
             </button>
