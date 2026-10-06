@@ -250,9 +250,39 @@
   border-radius: 999px;
 }
 
+/* No value yet (the agent hasn't written anything): a band sweeps across. */
+.import-progress:indeterminate {
+  background:
+    linear-gradient(90deg, transparent, var(--action), transparent) 0 0 / 40% 100% no-repeat,
+    color-mix(in srgb, var(--ink) 10%, transparent);
+  animation: progress-sweep 1.3s ease-in-out infinite;
+}
+
+.import-progress:indeterminate::-webkit-progress-bar {
+  background: transparent;
+}
+
+.import-progress:indeterminate::-moz-progress-bar {
+  background: transparent;
+}
+
+@keyframes progress-sweep {
+  from {
+    background-position: -70% 0, 0 0;
+  }
+  to {
+    background-position: 170% 0, 0 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .import-progress::-webkit-progress-value {
     transition: none;
+  }
+
+  .import-progress:indeterminate {
+    animation: none;
+    background-position: 50% 0, 0 0;
   }
 }
 

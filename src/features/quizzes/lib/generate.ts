@@ -87,7 +87,8 @@ export async function writeQuiz(
   pages: Pick<Page, "id" | "title" | "content">[],
   count: number,
   kinds: QuestionKind[],
-  courseId?: number
+  courseId: number | undefined,
+  onWritten: (questions: number) => void
 ) {
   const connection = await getActionConnection();
   if (!connection) throw new Error("No agent connected yet. Add one in Chat, then try again.");
@@ -98,6 +99,7 @@ export async function writeQuiz(
   const mix = kinds.map((kind) => kindNames[kind]).join(", ");
   const task = `Write a practice quiz of ${count} questions on the course material ${viaStdin ? "provided on stdin" : "below"}, each page in its own <page> element. Mix these question types: ${mix}. Each question tests something that matters for an exam: a fact, term, cause, comparison or idea, not trivia about the page itself. Use only what the material says. Multiple-choice options are all plausible, with exactly one right. Each explanation says in one or two sentences why the answer is right. Reply with only a JSON array, no other text, of objects shaped like:\n${kinds.map((kind) => kindShapes[kind]).join("\n")}`;
   const profile = await getActiveProfile(courseId);
+  let streamed = "";
   return new Promise<QuestionDraft[]>((resolve, reject) => {
     runOnce(
       connection,
@@ -106,6 +108,10 @@ export async function writeQuiz(
       profile,
       (event) => {
         if (event.type === "error") reject(new Error(event.message));
+        if (event.type === "text") {
+          streamed += event.text;
+          onWritten(Math.min(count, streamed.split('"question"').length - 1));
+        }
         if (event.type !== "done") return;
         try {
           const questions = parseQuestions(event.text, kinds, new Set(pages.map((page) => page.id)));

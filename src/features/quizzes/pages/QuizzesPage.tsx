@@ -1,17 +1,19 @@
 import clsx from "clsx";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import ModuleSubpageHeader from "@/features/courses/components/ModuleSubpageHeader";
 import type { Course } from "@/features/courses/lib/course/types";
 import type { Module } from "@/features/courses/lib/module/types";
 import type { Page } from "@/features/courses/lib/page/types";
+import { useJobs } from "@/shared/lib/backgroundJobs";
 import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
 import { rowAction } from "@/shared/ui/rowAction";
 import { BodyText, Caption, PageTitle, SectionTitle } from "@/shared/ui/Typography";
 
 import NewQuizDialog from "../components/NewQuizDialog";
 import { deleteQuiz } from "../lib/quiz/actions";
+import { quizJobScope } from "../lib/quizJobs";
 import type { Quiz } from "../lib/quiz/types";
 
 function scoreLine(quiz: Quiz) {
@@ -36,9 +38,15 @@ export default function QuizzesPage({
   ready: boolean;
   reload: () => Promise<void>;
 }>) {
-  const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Quiz | null>(null);
+  const jobs = useJobs().filter((job) => module && job.scope === quizJobScope(module.id));
+  const writing = jobs.filter((job) => job.status === "running");
+  const finished = jobs.length - writing.length;
+
+  useEffect(() => {
+    if (finished) void reload();
+  }, [finished, reload]);
 
   if (!ready)
     return (
@@ -76,14 +84,25 @@ export default function QuizzesPage({
           New quiz
         </button>
       </div>
-      {quizzes.length === 0 ? (
+      {writing.length > 0 && (
+        <ul aria-label="Quizzes being written" className={clsx("mt-6 divide-y divide-ink/10 border-t border-ink/10")}>
+          {writing.map((job) => (
+            <li key={job.id} className={clsx("py-3")}>
+              <p className={clsx("text-sm font-medium wrap-anywhere")}>{job.detail}</p>
+              <progress aria-label={job.title} max={1} value={job.progress ?? undefined} className={clsx("import-progress mt-2 block h-1.5 w-full max-w-md")} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {quizzes.length === 0 && writing.length === 0 && (
         <div className={clsx("mt-6 border-t border-ink/10 py-16 text-center sm:py-24")}>
           <SectionTitle>No quizzes yet</SectionTitle>
           <BodyText tone="muted" className={clsx("mx-auto mt-2 max-w-sm")}>
             New quiz writes multiple-choice, true-or-false and short-answer questions from this module’s pages.
           </BodyText>
         </div>
-      ) : (
+      )}
+      {quizzes.length > 0 && (
         <ul className={clsx("mt-6 divide-y divide-ink/10 border-t border-ink/10")}>
           {quizzes.map((quiz) => (
             <li key={quiz.id} className={clsx("flex flex-wrap items-center gap-3 py-3")}>
@@ -112,7 +131,6 @@ export default function QuizzesPage({
         courseId={course.id}
         module={module}
         pages={pages}
-        onCreated={(quizId) => navigate(`/courses/${course.id}/modules/${module.id}/quizzes/${quizId}`)}
         onClose={() => setCreating(false)}
       />
       <ConfirmDeleteDialog

@@ -1,4 +1,5 @@
 import type { Page } from "@/features/courses/lib/page/types";
+import { startJob, type JobAction } from "@/shared/lib/backgroundJobs";
 import { getSetting, putSetting } from "@/shared/lib/settings/actions";
 import { useSyncExternalStore } from "react";
 
@@ -26,10 +27,13 @@ export async function setMakesCardsForImports(on: boolean) {
   await putSetting(AUTO_KEY, on ? "on" : "off");
 }
 
+// `announce` puts the run in the jobs tray, with a pop-up when it ends;
+// the quiet runs after an import leave it out.
 export async function makeFlashcards(
   moduleId: number,
   pages: Pick<Page, "id" | "title" | "content">[],
-  courseId?: number
+  courseId?: number,
+  announce?: { moduleName: string; deck: JobAction }
 ) {
   const current = making.get(moduleId);
   if (current && current.done < current.total) return;
@@ -39,21 +43,26 @@ export async function makeFlashcards(
   if (worthMaking.length === 0) return;
   making.set(moduleId, { done: 0, total: worthMaking.length, error: "" });
   notify();
+  const job = announce && startJob(`flashcards:${moduleId}`, "Making flashcards", `${announce.moduleName} · page 1 of ${worthMaking.length}`);
+  let added = 0;
   for (const [index, page] of worthMaking.entries()) {
     try {
-      await addCards(moduleId, await suggestFlashcards([page], courseId));
+      const cards = await suggestFlashcards([page], courseId);
+      await addCards(moduleId, cards);
+      added += cards.length;
       making.set(moduleId, { ...(making.get(moduleId) as Making), done: index + 1 });
+      if (job && index + 1 < worthMaking.length)
+        job.update(`${announce.moduleName} · page ${index + 2} of ${worthMaking.length}`, (index + 1) / worthMaking.length);
     } catch (error) {
-      making.set(moduleId, {
-        done: worthMaking.length,
-        total: worthMaking.length,
-        error: error instanceof Error ? error.message : "Couldn’t make flashcards. Try again."
-      });
+      const message = error instanceof Error ? error.message : "Couldn’t make flashcards. Try again.";
+      making.set(moduleId, { done: worthMaking.length, total: worthMaking.length, error: message });
+      job?.fail("Couldn’t make flashcards", message);
       notify();
       return;
     }
     notify();
   }
+  job?.finish("Your flashcards are ready", `${added} new ${added === 1 ? "card" : "cards"} in ${announce?.moduleName}`, announce?.deck);
 }
 
 export async function makeFlashcardsForImport(

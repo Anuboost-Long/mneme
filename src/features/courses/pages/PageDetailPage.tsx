@@ -22,7 +22,7 @@ import CourseIcon from "@/shared/ui/CourseIcon";
 import { BodyText, PageTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function asSibling(page: Page): Sibling {
   return { id: page.id, name: page.title, icon: page.icon };
@@ -52,7 +52,6 @@ export default function PageDetailPage({
   onDeletePage: () => void;
 }>) {
   const [dialog, setDialog] = useState<"edit" | "delete" | "quiz" | null>(null);
-  const navigate = useNavigate();
   const [audioView, setAudioView] = useState<"closed" | "download" | "play">("closed");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [doneError, setDoneError] = useState<string | null>(null);
@@ -422,7 +421,6 @@ export default function PageDetailPage({
         module={{ id: page.module_id, name: moduleName ?? "Module" }}
         pages={modulePages}
         pageId={page.id}
-        onCreated={(quizId) => navigate(`/courses/${course.id}/modules/${page.module_id}/quizzes/${quizId}`)}
         onClose={() => setDialog(null)}
       />
     </div>

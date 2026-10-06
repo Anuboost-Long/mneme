@@ -27,7 +27,10 @@ to highlight or write cards by hand.
     cards yet, one page at a time, with a progress bar. Pages with
     80 characters of text or fewer are skipped. Cards are saved straight
     into the deck, with no review step; one run per module at a time,
-    and it keeps going while the student moves around the app.
+    and it keeps going while the student moves around the app. It also
+    shows in the jobs tray (bottom right) with page-by-page progress and
+    pops up "Your flashcards are ready" with Open flashcards when done.
+    The quiet runs after an import don't use the tray.
   - The agent writes 8–15 cards per page from the page's own words,
     as JSON. Cards without a front or back are dropped.
 - **The deck screen** shows how many cards are due, new and in total;

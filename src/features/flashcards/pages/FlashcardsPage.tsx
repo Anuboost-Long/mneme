@@ -103,7 +103,12 @@ export default function FlashcardsPage({
           <button
             type="button"
             disabled={isMaking || pagesWithout.length === 0}
-            onClick={() => void makeFlashcards(module.id, pagesWithout, course.id)}
+            onClick={() =>
+              void makeFlashcards(module.id, pagesWithout, course.id, {
+                moduleName: module.name,
+                deck: { label: "Open flashcards", path: `/courses/${course.id}/modules/${module.id}/flashcards` }
+              })
+            }
             title={pagesWithout.length === 0 ? "Every page already has cards" : undefined}
             className={clsx(
               "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",

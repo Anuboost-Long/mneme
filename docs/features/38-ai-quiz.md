@@ -21,6 +21,11 @@ quiz was deleted through Delete afterwards. `tests/quizzes.test.mjs`
 covers reading the agent's reply, the shuffle, marking, scores, deleting,
 hiding with a deleted module and backups.
 
+Added after first use: quizzes are written in the background with a
+progress bar and a pop-up when ready (checked in the dev build with a
+test job: sweeping bar, then 2 of 5, then the pop-up with Start quiz,
+then dismissed).
+
 The flashcard screens' header became `courses/components/ModuleSubpageHeader.tsx`,
 shared with the quiz screens.
 
@@ -43,6 +48,16 @@ right, and watch their score improve over attempts.
   wrong in shape are dropped, and the order of multiple-choice options is
   shuffled so the right one isn't always first. ⌘P → **Make a quiz** on a
   page opens the same dialog on that page.
+- **Written in the background.** Make quiz closes the dialog at once;
+  the quiz is written while the student keeps working anywhere in the
+  app. The jobs tray (bottom right, `app/JobsTray.tsx`, on the shared
+  store `shared/lib/backgroundJobs.ts`) shows "Writing a quiz" with a
+  progress bar: a sweeping bar until the agent starts writing, then
+  "3 of 10 questions" counted from its streamed reply (Codex sends its
+  reply in one piece, so its bar jumps), then "saving". When it's done the
+  card becomes a pop-up, "Your quiz is ready" with **Start quiz**; a
+  failure says why. The Quizzes screen lists quizzes being written with
+  the same bar and refreshes when one is ready.
 - **Taking a quiz** (`…/quizzes/:quizId`): one question at a time,
   answers hidden. Pick an option (or keys 1–4), or type a short answer,
   then **Check answer**:
