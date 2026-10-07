@@ -1,5 +1,5 @@
 import { acceptsStdin, MAX_ARGV_CONTEXT_CHARS, runOnce } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
 import { kindShapes, readQuestion, text, type RawQuestion } from "@/features/quizzes/lib/generate";
 import { questionKinds, type QuestionDraft } from "@/features/quizzes/lib/quiz/types";
@@ -45,14 +45,15 @@ async function askAgent(
   task: string,
   content: string,
   courseId: number | undefined,
+  connectionId: number | null,
   control: AgentControl = {}
 ) {
-  const connection = await getActionConnection();
+  const connection = await getAgentConnection(connectionId);
   if (!connection) throw new Error("No agent connected yet. Add one in Chat, then try again.");
   const viaStdin = acceptsStdin(connection);
   if (!viaStdin && content.length > MAX_ARGV_CONTEXT_CHARS)
     throw new Error(
-      "This material is too long for this agent. Choose Claude or Codex under Run with in the AI actions menu."
+      "This material is too long for this agent. Choose Claude or Codex as the agent."
     );
   const profile = await getActiveProfile(courseId);
   let streamed = "";
@@ -83,10 +84,11 @@ export async function condensePage(
   page: PageMaterial,
   share: number,
   courseId: number | undefined,
+  connectionId: number | null,
   control?: AgentControl
 ) {
   const task = `Condense the course material in the <page> element (below, or on stdin) into study notes of at most ${share} characters. Keep every fact, term, definition, name, number, formula, date and example that matters for an exam; drop repetition, navigation and filler. Use only what the material says. Reply with only the notes, as plain text.`;
-  const digest = (await askAgent(task, pageElements([page]), courseId, control)).trim();
+  const digest = (await askAgent(task, pageElements([page]), courseId, connectionId, control)).trim();
   if (!digest) throw new Error(`The agent didn’t condense “${page.title}”. Try again.`);
   return digest.slice(0, share * 2);
 }
@@ -143,6 +145,7 @@ export async function writePrep(
   pages: PageMaterial[],
   withQuiz: boolean,
   courseId: number | undefined,
+  connectionId: number | null,
   onQuestions: (written: number) => void,
   control: AgentControl = {}
 ) {
@@ -151,7 +154,7 @@ export async function writePrep(
     : "";
   const shape = `{"overview": "...", "topics": [{"name": "...", "summary": "...", "page_ids": [<id>, ...], "terms": [{"term": "...", "definition": "..."}], "points": ["...", "..."]}]${withQuiz ? ', "questions": [...]' : ""}}`;
   const task = `Prepare revision material for the course module whose pages are below (or on stdin), each in its own <page> element. A page may include text read from its pictures, attached files and recordings. Use only what the material says. "overview" is a summary of the whole module in two to four paragraphs. "topics" is the 3 to 7 key topics a student must know, in a sensible study order, each with a summary of one or two sentences, the ids of the pages it comes from, its key terms with short definitions, and 3 to 6 key points worth remembering.${quizPart} Reply with only a JSON object, no other text, shaped like:\n${shape}`;
-  const answer = await askAgent(task, pageElements(pages), courseId, {
+  const answer = await askAgent(task, pageElements(pages), courseId, connectionId, {
     ...control,
     onText: (streamed) =>
       onQuestions(Math.min(PRACTICE_QUESTIONS, streamed.split('"question"').length - 1))

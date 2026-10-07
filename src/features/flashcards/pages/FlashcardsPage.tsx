@@ -1,3 +1,5 @@
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
 import type { Course } from "@/features/courses/lib/course/types";
 import type { Module } from "@/features/courses/lib/module/types";
 import type { Page } from "@/features/courses/lib/page/types";
@@ -48,6 +50,7 @@ export default function FlashcardsPage({
   const [dialog, setDialog] = useState<Dialog>({ kind: "add" });
   const [open, setOpen] = useState(false);
   const [forImports, setForImports] = useState(true);
+  const agent = useAgentChoice();
   const making = useMakingFlashcards(module?.id);
   const isMaking = making !== undefined && making.done < making.total;
 
@@ -89,7 +92,8 @@ export default function FlashcardsPage({
               : `${counts.due} due now · ${counts.fresh} new · ${counts.total} ${counts.total === 1 ? "card" : "cards"}`}
           </BodyText>
         </div>
-        <div className={clsx("flex flex-wrap gap-2")}>
+        <div className={clsx("flex flex-wrap items-end gap-2")}>
+          {pagesWithout.length > 0 && <AgentSelect choice={agent} className={clsx("w-44")} />}
           <button
             type="button"
             onClick={() => show({ kind: "add" })}
@@ -102,12 +106,12 @@ export default function FlashcardsPage({
           </button>
           <button
             type="button"
-            disabled={isMaking || pagesWithout.length === 0}
+            disabled={isMaking || pagesWithout.length === 0 || agent.connectionId === null}
             onClick={() =>
               void makeFlashcards(module.id, pagesWithout, course.id, {
                 moduleName: module.name,
                 deck: { label: "Open flashcards", path: `/courses/${course.id}/modules/${module.id}/flashcards` }
-              })
+              }, agent.connectionId)
             }
             title={pagesWithout.length === 0 ? "Every page already has cards" : undefined}
             className={clsx(

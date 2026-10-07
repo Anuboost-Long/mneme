@@ -1,6 +1,3 @@
-import { getConnections } from "@/features/agent-chat/lib/connection/actions";
-import { getSettingId, putSetting } from "@/shared/lib/settings/actions";
-
 import {
   deleteActionRow,
   insertAction,
@@ -11,8 +8,6 @@ import {
 import { ActionScope, type ActionInput, type AiAction } from "./types";
 
 export { getActions, getEnabledActions } from "./table";
-
-const connectionKey = "ai-actions.connection-id";
 
 function columns(input: ActionInput) {
   if (!input.name.trim()) throw new Error("Enter a name for the action.");
@@ -52,17 +47,4 @@ export async function deleteAction(id: number) {
 
 export async function saveActionOrder(actions: AiAction[]) {
   await saveActionPositions(actions.map((action) => action.id));
-}
-
-export function getActionConnectionId() {
-  return getSettingId(connectionKey);
-}
-
-export async function getActionConnection() {
-  const [connections, savedId] = await Promise.all([getConnections(), getActionConnectionId()]);
-  return connections.find((connection) => connection.id === savedId) ?? connections[0] ?? null;
-}
-
-export async function setActionConnectionId(id: number) {
-  await putSetting(connectionKey, String(id));
 }

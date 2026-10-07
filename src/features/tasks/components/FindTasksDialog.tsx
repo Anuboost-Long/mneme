@@ -1,3 +1,5 @@
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
 import type { Course } from "@/features/courses/lib/course/types";
 import { getModules } from "@/features/courses/lib/module/actions";
 import type { Module } from "@/features/courses/lib/module/types";
@@ -48,6 +50,7 @@ export default function FindTasksDialog({
   const [aiAdded, setAiAdded] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const agent = useAgentChoice(open);
   const today = localDay();
   const picked = rows?.filter((row) => row.picked) ?? [];
 
@@ -116,7 +119,7 @@ export default function FindTasksDialog({
     setAsking(true);
     setError("");
     try {
-      const found = await findModuleTasksWithAi(asked, rows ?? []);
+      const found = await findModuleTasksWithAi(asked, rows ?? [], agent.connectionId);
       if (asked !== shownModule.current) return;
       const known = latestRows.current ?? [];
       const added = newCandidates(found, [...existing, ...known.map((row) => row.title)]);
@@ -257,20 +260,25 @@ export default function FindTasksDialog({
           )}
           <div
             className={clsx(
-              "flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-5"
+              "flex flex-wrap items-end justify-between gap-3 border-t border-ink/10 pt-5"
             )}
           >
-            <button
-              type="button"
-              disabled={!module || rows === null || asking || askedAi || busy}
-              onClick={() => void askAi()}
-              className={clsx(
-                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-                "hover:bg-ink/5 disabled:opacity-50"
-              )}
-            >
-              {asking ? "Asking AI…" : "Ask AI to look too"}
-            </button>
+            <div className={clsx("flex flex-wrap items-end gap-2")}>
+              {!askedAi && <AgentSelect choice={agent} disabled={asking} className={clsx("w-40")} />}
+              <button
+                type="button"
+                disabled={
+                  !module || rows === null || asking || askedAi || busy || agent.connectionId === null
+                }
+                onClick={() => void askAi()}
+                className={clsx(
+                  "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+                  "hover:bg-ink/5 disabled:opacity-50"
+                )}
+              >
+                {asking ? "Asking AI…" : "Ask AI to look too"}
+              </button>
+            </div>
             <div className={clsx("flex gap-3")}>
               <button
                 type="button"

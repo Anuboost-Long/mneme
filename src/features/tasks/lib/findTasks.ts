@@ -1,5 +1,5 @@
 import { runOnce } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 import { detectContent, pageOutline, type DueDate } from "@/features/courses/lib/content-detection";
 import { getPages } from "@/features/courses/lib/page/actions";
 import type { Page } from "@/features/courses/lib/page/types";
@@ -148,9 +148,10 @@ export function withoutRenamedPageTasks(found: TaskCandidate[], known: TaskCandi
 export async function findModuleTasksWithAi(
   moduleId: number,
   known: TaskCandidate[],
+  connectionId: number | null,
   today = new Date()
 ): Promise<TaskCandidate[]> {
-  const connection = await getActionConnection();
+  const connection = await getAgentConnection(connectionId);
   if (!connection) throw new Error("No agent connected yet. Add one in Chat, then try again.");
   const pages = await getPages(moduleId);
   if (!pages.length) return [];

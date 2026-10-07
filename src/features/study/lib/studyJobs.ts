@@ -13,7 +13,8 @@ export const studyJobScope = (moduleId: number) => `study:${moduleId}`;
 export function startStudySession(
   courseId: number,
   module: Pick<Module, "id" | "name">,
-  pages: Page[]
+  pages: Page[],
+  connectionId: number | null
 ) {
   const job = startJob(
     studyJobScope(module.id),
@@ -27,6 +28,7 @@ export function startStudySession(
         pages,
         deck.length === 0,
         courseId,
+        connectionId,
         (written) => {
           if (written > 0)
             job.update(

@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import { useState, type SubmitEvent } from "react";
 
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
 import type { Module } from "@/features/courses/lib/module/types";
 import { pageContentPreview, type Page } from "@/features/courses/lib/page/types";
 import { useResetOnOpen } from "@/shared/lib/dialogState";
@@ -33,6 +35,7 @@ export default function NewQuizDialog({
   const [size, setSize] = useState(10);
   const [kinds, setKinds] = useState<QuestionKind[]>(questionKinds);
   const [error, setError] = useState("");
+  const agent = useAgentChoice(open);
 
   useResetOnOpen(open, () => {
     setSource(pageId ?? WHOLE_MODULE);
@@ -53,7 +56,7 @@ export default function NewQuizDialog({
       setError(page ? "This page has no text to quiz on yet." : "This module’s pages have no text to quiz on yet.");
       return;
     }
-    startQuiz({ courseId, module, page, pages: covered, size, kinds });
+    startQuiz({ courseId, module, page, pages: covered, size, kinds, connectionId: agent.connectionId });
     close();
   }
 
@@ -69,6 +72,7 @@ export default function NewQuizDialog({
               options={[{ value: WHOLE_MODULE, label: `All of ${module.name}` }, ...pages.map((page) => ({ value: page.id, label: page.title }))]}
             />
             <Select label="Length" value={size} onChange={setSize} options={sizes} />
+            <AgentSelect choice={agent} />
           </div>
           <fieldset className={clsx("space-y-2")}>
             <legend>
@@ -108,7 +112,7 @@ export default function NewQuizDialog({
             </button>
             <button
               type="submit"
-              disabled={!kinds.length}
+              disabled={!kinds.length || agent.connectionId === null}
               className={clsx("rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action", "hover:bg-action/85 disabled:opacity-50")}
             >
               Make quiz

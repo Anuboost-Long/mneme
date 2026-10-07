@@ -1,5 +1,7 @@
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
 import { compactHtml } from "@/features/ai-actions/lib/context";
 import { markdownToEditorHtml } from "@/features/ai-actions/lib/editorHtml";
 import { runAction } from "@/features/ai-actions/lib/runAction";
@@ -30,6 +32,7 @@ export default function AiBlockNodeView({
   const [running, setRunning] = useState(false);
   const [streamed, setStreamed] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const agent = useAgentChoice();
   const kill = useRef<(() => Promise<void>) | null>(null);
   const hasOutput = node.content.size > 0;
 
@@ -63,7 +66,7 @@ export default function AiBlockNodeView({
     setStreamed("");
     setRunning(true);
     try {
-      const connection = await getActionConnection();
+      const connection = await getAgentConnection(agent.connectionId);
       if (!connection)
         throw new Error("No agent connected yet. Add one in Agent chat to use AI blocks.");
       const location = extension.options as AiBlockLocation;
@@ -151,6 +154,12 @@ export default function AiBlockNodeView({
             "px-1 text-sm",
             "focus-visible:outline-none"
           )}
+        />
+        <AgentSelect
+          choice={agent}
+          compact
+          disabled={!editor.isEditable || running}
+          className={clsx("w-36 shrink-0")}
         />
         {running ? (
           <button

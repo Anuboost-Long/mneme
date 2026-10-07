@@ -1,3 +1,5 @@
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
 import ModuleSubpageHeader from "@/features/courses/components/ModuleSubpageHeader";
 import type { Course } from "@/features/courses/lib/course/types";
 import type { Module } from "@/features/courses/lib/module/types";
@@ -51,6 +53,7 @@ export default function StudyPage({
 }>) {
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<StudySession | null>(null);
+  const agent = useAgentChoice();
   const jobs = useJobs().filter((job) => module && job.scope === studyJobScope(module.id));
   const preparing = jobs.filter((job) => job.status === "running");
   const finished = jobs.length - preparing.length;
@@ -86,7 +89,7 @@ export default function StudyPage({
       return;
     }
     setError("");
-    startStudySession(course.id, module, covered);
+    startStudySession(course.id, module, covered, agent.connectionId);
   }
 
   return (
@@ -100,17 +103,20 @@ export default function StudyPage({
             work.
           </BodyText>
         </div>
-        <button
-          type="button"
-          onClick={prepare}
-          disabled={preparing.length > 0}
-          className={clsx(
-            "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
-            "hover:bg-action/85 disabled:opacity-50"
-          )}
-        >
-          New study session
-        </button>
+        <div className={clsx("flex flex-wrap items-end gap-3")}>
+          <AgentSelect choice={agent} className={clsx("w-48")} />
+          <button
+            type="button"
+            onClick={prepare}
+            disabled={preparing.length > 0 || agent.connectionId === null}
+            className={clsx(
+              "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+              "hover:bg-action/85 disabled:opacity-50"
+            )}
+          >
+            New study session
+          </button>
+        </div>
       </div>
       {error && (
         <BodyText role="alert" tone="error" className={clsx("mt-4")}>

@@ -53,6 +53,7 @@ export function estimateRuns(
 async function fitMaterial(
   pages: PageMaterial[],
   courseId: number,
+  connectionId: number | null,
   onCondensing: (page: PageMaterial, index: number, total: number) => void,
   control: AgentControl,
   stopped: () => boolean
@@ -69,7 +70,7 @@ async function fitMaterial(
     let digest = await getDigest(page.id, hash);
     if (!digest) {
       onCondensing(page, ids.indexOf(page.id), ids.length);
-      digest = await condensePage(page, share, courseId, control);
+      digest = await condensePage(page, share, courseId, connectionId, control);
       await putDigest(page.id, hash, digest);
     }
     fitted.push({ ...page, text: digest });
@@ -80,7 +81,8 @@ async function fitMaterial(
 export function startPrepare(
   courseId: number,
   module: Pick<Module, "id" | "name">,
-  outputs: PrepOutput[]
+  outputs: PrepOutput[],
+  connectionId: number | null
 ) {
   let stopped = false;
   let kill: (() => Promise<void>) | null = null;
@@ -104,6 +106,7 @@ export function startPrepare(
     const fitted = await fitMaterial(
       material.pages,
       courseId,
+      connectionId,
       (page, index, total) =>
         job.update(
           `Condensing “${page.title}” · ${index + 1} of ${total}`,
@@ -118,6 +121,7 @@ export function startPrepare(
       fitted,
       outputs.includes("quiz"),
       courseId,
+      connectionId,
       (written) => {
         if (written > 0)
           job.update(
@@ -159,7 +163,7 @@ export function startPrepare(
         `Making flashcards · page ${index + 1} of ${needing.length}`,
         0.75 + (index / needing.length) * 0.25
       );
-      const drafts = await suggestFlashcards([page], courseId);
+      const drafts = await suggestFlashcards([page], courseId, connectionId);
       await addCards(module.id, drafts);
       added += drafts.length;
     }

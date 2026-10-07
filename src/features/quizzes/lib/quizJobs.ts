@@ -17,7 +17,8 @@ export function startQuiz({
   page,
   pages,
   size,
-  kinds
+  kinds,
+  connectionId
 }: {
   courseId: number;
   module: Pick<Module, "id" | "name">;
@@ -25,12 +26,13 @@ export function startQuiz({
   pages: Page[];
   size: number;
   kinds: QuestionKind[];
+  connectionId: number | null;
 }) {
   const title = `Quiz: ${page?.title ?? module.name}`;
   const job = startJob(quizJobScope(module.id), "Writing a quiz", `${title} · starting the agent`);
   void (async () => {
     try {
-      const questions = await writeQuiz(page ? [page] : pages, size, kinds, courseId, (written) => {
+      const questions = await writeQuiz(page ? [page] : pages, size, kinds, courseId, connectionId, (written) => {
         if (written > 0) job.update(`${title} · ${written} of ${size} questions`, written / (size + 1));
       });
       job.update(`${title} · saving`, size / (size + 1));

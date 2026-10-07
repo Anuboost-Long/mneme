@@ -33,7 +33,8 @@ export async function makeFlashcards(
   moduleId: number,
   pages: Pick<Page, "id" | "title" | "content">[],
   courseId?: number,
-  announce?: { moduleName: string; deck: JobAction }
+  announce?: { moduleName: string; deck: JobAction },
+  connectionId?: number | null
 ) {
   const current = making.get(moduleId);
   if (current && current.done < current.total) return;
@@ -53,7 +54,7 @@ export async function makeFlashcards(
   let added = 0;
   for (const [index, page] of worthMaking.entries()) {
     try {
-      const cards = await suggestFlashcards([page], courseId);
+      const cards = await suggestFlashcards([page], courseId, connectionId);
       await addCards(moduleId, cards);
       added += cards.length;
       making.set(moduleId, { ...(making.get(moduleId) as Making), done: index + 1 });

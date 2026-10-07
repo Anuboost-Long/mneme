@@ -97,7 +97,7 @@ export default function PreparePage({
           hasQuiz={!!quiz}
           cardPages={cardPages}
           condensed={condensed}
-          onPrepare={(outputs) => startPrepare(course.id, module, outputs)}
+          onPrepare={(outputs, connectionId) => startPrepare(course.id, module, outputs, connectionId)}
         />
       )}
       {prep?.prepared_at && (

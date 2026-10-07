@@ -1,5 +1,5 @@
 import { runOnce, acceptsStdin, MAX_ARGV_CONTEXT_CHARS } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
 import type { Page } from "@/features/courses/lib/page/types";
 
@@ -55,9 +55,10 @@ export function readCard(item: unknown, pageIds: Set<number>): CardDraft | null 
 
 export async function suggestFlashcards(
   pages: Pick<Page, "id" | "title" | "content">[],
-  courseId?: number
+  courseId?: number,
+  connectionId?: number | null
 ) {
-  const connection = await getActionConnection();
+  const connection = await getAgentConnection(connectionId);
   if (!connection) throw new Error("No agent connected yet. Add one in Chat, then try again.");
   const count = pages.length === 1 ? "8 to 15" : "15 to 30";
   const viaStdin = acceptsStdin(connection);
@@ -65,7 +66,7 @@ export async function suggestFlashcards(
   const task = `Write ${count} flashcards for studying the course material ${viaStdin ? "provided on stdin" : "below"}, each in its own <page> element. Each card tests one fact, term, definition, cause or idea that matters for an exam: a short question or term on the front, a short, complete answer on the back. Use the material's own words and facts; don't invent anything. Reply with only a JSON array, no other text: [{"front": "...", "back": "...", "page_id": <the id of the page it comes from>}].`;
   if (!viaStdin && text.length > MAX_ARGV_CONTEXT_CHARS)
     throw new Error(
-      "This material is too long for this agent. Choose Claude or Codex under Run with in the AI actions menu."
+      "This material is too long for this agent. Choose Claude or Codex as the agent."
     );
   const profile = await getActiveProfile(courseId);
   return new Promise<CardDraft[]>((resolve, reject) => {

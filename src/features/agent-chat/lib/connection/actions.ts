@@ -1,9 +1,14 @@
 import { parseArgs } from "@/features/agent-chat/lib/presets";
+import { getSettingId, putSetting } from "@/shared/lib/settings/actions";
 
 import { deleteConnectionRow, insertConnection, updateConnectionColumns } from "./table";
 import type { ConnectionInput } from "./types";
 
+import { getConnections } from "./table";
+
 export { getConnections } from "./table";
+
+const defaultConnectionKey = "ai-actions.connection-id";
 
 function columns(input: ConnectionInput) {
   if (!input.name.trim()) throw new Error("Enter a connection name.");
@@ -31,4 +36,22 @@ export async function deleteConnection(id: number) {
 
 export async function updateConnectionModel(id: number, model: string | null) {
   await updateConnectionColumns(id, { model: model?.trim() || null });
+}
+
+export function getDefaultConnectionId() {
+  return getSettingId(defaultConnectionKey);
+}
+
+export async function setDefaultConnectionId(id: number) {
+  await putSetting(defaultConnectionKey, String(id));
+}
+
+export async function getAgentConnection(connectionId?: number | null) {
+  const [connections, defaultId] = await Promise.all([getConnections(), getDefaultConnectionId()]);
+  return (
+    connections.find((connection) => connection.id === connectionId) ??
+    connections.find((connection) => connection.id === defaultId) ??
+    connections[0] ??
+    null
+  );
 }

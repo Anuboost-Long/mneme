@@ -1,5 +1,6 @@
 import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection, getEnabledActions } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
+import { getEnabledActions } from "@/features/ai-actions/lib/action/actions";
 import { ActionScope } from "@/features/ai-actions/lib/action/types";
 import { imageActions } from "@/features/ai-actions/lib/imageActions";
 import { useAiAction, type ActionLocation } from "@/features/ai-actions/lib/useAiAction";
@@ -45,7 +46,7 @@ export default function AiActions({
 
   // Nothing to offer until an agent is chosen to run actions with.
   async function availableActions() {
-    const [actions, connection] = await Promise.all([getEnabledActions(), getActionConnection()]);
+    const [actions, connection] = await Promise.all([getEnabledActions(), getAgentConnection()]);
     return connection ? actions.map((action) => ({ action, connection })) : [];
   }
 
@@ -85,11 +86,11 @@ export default function AiActions({
 
   useEffect(() => {
     editor.storage.image.runAiAction = async (kind) => {
-      const connection = await getActionConnection();
+      const connection = await getAgentConnection();
       if (!connection)
         return "No agent connected yet. Add one in Agent chat to explain or summarize images.";
       if (!acceptsImages(connection))
-        return `${connection.name} can’t see images. Choose Claude or Codex under Run with in AI actions.`;
+        return `${connection.name} can’t see images. Make Claude or Codex your default agent in Settings → AI.`;
       void start(connection, imageActions[kind], true);
       return null;
     };

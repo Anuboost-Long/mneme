@@ -1,3 +1,4 @@
+import DefaultAgentSettings from "@/features/agent-chat/components/DefaultAgentSettings";
 import ChatRetention from "@/features/agent-chat/components/ChatRetention";
 import AgentActivity from "@/features/agent-server/components/AgentActivity";
 import AgentPermissions from "@/features/agent-server/components/AgentPermissions";
@@ -537,6 +538,7 @@ export default function SettingsPage({ section }: Readonly<{ section: SettingsSe
               case "ai":
                 return (
                   <>
+                    <DefaultAgentSettings />
                     <ProfileSettings />
                     <ActionSettings />
                   </>

@@ -1,5 +1,5 @@
 import { acceptsStdin, MAX_ARGV_CONTEXT_CHARS, runOnce } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
 import type { Page } from "@/features/courses/lib/page/types";
 import type { CardDraft } from "@/features/flashcards/lib/card/types";
@@ -74,16 +74,17 @@ export async function writeSession(
   pages: Pick<Page, "id" | "title" | "content">[],
   withCards: boolean,
   courseId: number | undefined,
+  connectionId: number | null,
   onWritten: (questions: number) => void,
   knownTopics: Topic[] = []
 ) {
-  const connection = await getActionConnection();
+  const connection = await getAgentConnection(connectionId);
   if (!connection) throw new Error("No agent connected yet. Add one in Chat, then try again.");
   const viaStdin = acceptsStdin(connection);
   const content = material(pages);
   if (!viaStdin && content.length > MAX_ARGV_CONTEXT_CHARS)
     throw new Error(
-      "This material is too long for this agent. Choose Claude or Codex under Run with in the AI actions menu."
+      "This material is too long for this agent. Choose Claude or Codex as the agent."
     );
   const topicsInstruction = knownTopics.length
     ? "exactly these key topics, already chosen for this module, with the same names, summaries and page ids: " +

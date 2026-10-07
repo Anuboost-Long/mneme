@@ -1,5 +1,6 @@
 import ActionIcon from "@/features/ai-actions/components/ActionIcon";
-import { getActionConnection, getEnabledActions } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
+import { getEnabledActions } from "@/features/ai-actions/lib/action/actions";
 import { typeGlyph } from "@/features/courses/components/pageDisplay";
 import type { Course } from "@/features/courses/lib/course/types";
 import { pageTypeLabel } from "@/features/courses/lib/page-type/pageTypesState";
@@ -106,7 +107,7 @@ export function QuickActionsWidget({ widget }: Readonly<WidgetProps>) {
   const data = useWidgetData(async () => {
     const [actions, connection, [page]] = await Promise.all([
       getEnabledActions(),
-      getActionConnection(),
+      getAgentConnection(),
       getPages({}, "opened", 1)
     ]);
     return { actions, connection, page };

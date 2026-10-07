@@ -1,16 +1,12 @@
-import { getConnections } from "@/features/agent-chat/lib/connection/actions";
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
 import type { AgentConnection } from "@/features/agent-chat/lib/connection/types";
-import {
-  getActionConnectionId,
-  getEnabledActions,
-  setActionConnectionId
-} from "@/features/ai-actions/lib/action/actions";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
+import { getEnabledActions } from "@/features/ai-actions/lib/action/actions";
 import { ActionScope, type AiAction } from "@/features/ai-actions/lib/action/types";
 import { getPacks } from "@/features/ai-actions/lib/pack/actions";
 import type { ActionPack } from "@/features/ai-actions/lib/pack/types";
 import ProfilePicker, { type CourseProfile } from "@/features/ai-profiles/components/ProfilePicker";
 import { errorMessage } from "@/shared/lib/errorMessage";
-import Select from "@/shared/ui/Select";
 import { BodyText, Caption } from "@/shared/ui/Typography";
 import type { Editor } from "@tiptap/react";
 import clsx from "clsx";
@@ -38,8 +34,7 @@ export default function AiActionsMenu({
   const [onSelection, setOnSelection] = useState(false);
   const [actions, setActions] = useState<AiAction[]>([]);
   const [packs, setPacks] = useState<ActionPack[]>([]);
-  const [connections, setConnections] = useState<AgentConnection[]>([]);
-  const [connectionId, setConnectionId] = useState<number | null>(null);
+  const agent = useAgentChoice(open);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,20 +61,9 @@ export default function AiActionsMenu({
     setOpen(true);
     setError("");
     try {
-      const [loadedActions, loadedPacks, loadedConnections, savedId] = await Promise.all([
-        getEnabledActions(),
-        getPacks(),
-        getConnections(),
-        getActionConnectionId()
-      ]);
+      const [loadedActions, loadedPacks] = await Promise.all([getEnabledActions(), getPacks()]);
       setActions(loadedActions);
       setPacks(loadedPacks);
-      setConnections(loadedConnections);
-      setConnectionId(
-        loadedConnections.some((connection) => connection.id === savedId)
-          ? savedId
-          : (loadedConnections[0]?.id ?? null)
-      );
     } catch (error) {
       setError(errorMessage(error, "Couldn’t load AI actions. Try again."));
     } finally {
@@ -87,13 +71,8 @@ export default function AiActionsMenu({
     }
   }
 
-  function chooseConnection(id: number) {
-    setConnectionId(id);
-    setActionConnectionId(id).catch(() => {});
-  }
-
   function runAction(action: AiAction) {
-    const connection = connections.find((item) => item.id === connectionId);
+    const connection = agent.connections?.find((item) => item.id === agent.connectionId);
     if (!connection) return;
     setOpen(false);
     onRun(connection, action);
@@ -159,25 +138,7 @@ export default function AiActionsMenu({
           )}
           {loaded && (
             <div className={clsx("mb-1 space-y-3 border-b border-ink/10 px-2 pt-1 pb-3")}>
-              {connectionId === null ? (
-                <BodyText tone="muted">
-                  No agent connected yet.{" "}
-                  <Link to="/agent-chat" className={clsx("text-ink underline underline-offset-4")}>
-                    Add one in Agent chat
-                  </Link>{" "}
-                  to run actions.
-                </BodyText>
-              ) : (
-                <Select
-                  label="Run with"
-                  value={connectionId}
-                  onChange={chooseConnection}
-                  options={connections.map((connection) => ({
-                    value: connection.id,
-                    label: connection.name
-                  }))}
-                />
-              )}
+              <AgentSelect choice={agent} />
               <ProfilePicker course={course} />
             </div>
           )}
@@ -194,7 +155,7 @@ export default function AiActionsMenu({
                     <li key={action.id}>
                       <button
                         type="button"
-                        disabled={connectionId === null}
+                        disabled={agent.connectionId === null}
                         onClick={() => runAction(action)}
                         className={clsx(
                           "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left",

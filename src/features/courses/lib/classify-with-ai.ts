@@ -1,5 +1,5 @@
 import { runOnce } from "@/features/agent-chat/lib/runTurn";
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 
 import { CONTENT_KINDS, pageOutline, type ContentKind } from "./content-detection";
 
@@ -12,7 +12,7 @@ function kindIn(answer: string): ContentKind | undefined {
 }
 
 export async function classifyWithAi(title: string, html: string): Promise<ContentKind> {
-  const connection = await getActionConnection();
+  const connection = await getAgentConnection();
   if (!connection)
     throw new Error("No agent connected yet. Add one in Agent chat, then try again.");
   const question = `What kind of course page is this? Reply with exactly one word from: ${CONTENT_KINDS.join(", ")}.\n\n${pageOutline(title, html)}`;

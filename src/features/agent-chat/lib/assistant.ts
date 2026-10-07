@@ -1,4 +1,4 @@
-import { getActionConnection } from "@/features/ai-actions/lib/action/actions";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
 import { buildChatContext } from "@/features/ai-context/lib/builder";
 import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
 
@@ -26,7 +26,7 @@ export function openAssistant() {
 }
 
 export async function askAssistant(question: string, pageId: number | null) {
-  const connection = await getActionConnection().catch(() => null);
+  const connection = await getAgentConnection().catch(() => null);
   if (!connection) {
     notify({
       conversationId: null,

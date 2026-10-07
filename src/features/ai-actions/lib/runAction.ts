@@ -26,11 +26,11 @@ const subjects: Record<RunScope, string> = {
 
 const tooLong: Record<RunScope, string> = {
   selection:
-    "The selection is too long for this agent. Select less, or choose Claude or Codex under Run with.",
-  image: "This picture is too large for this agent. Choose Claude or Codex under Run with.",
-  page: "This page is too long for this agent. Select part of it, or choose Claude or Codex under Run with.",
-  module: "This module is too long for this agent. Choose Claude or Codex under Run with.",
-  course: "This course is too long for this agent. Choose Claude or Codex under Run with."
+    "The selection is too long for this agent. Select less, or choose Claude or Codex as the agent.",
+  image: "This picture is too large for this agent. Choose Claude or Codex as the agent.",
+  page: "This page is too long for this agent. Select part of it, or choose Claude or Codex as the agent.",
+  module: "This module is too long for this agent. Choose Claude or Codex as the agent.",
+  course: "This course is too long for this agent. Choose Claude or Codex as the agent."
 };
 
 // Only Claude and Codex read this (see runTurn.ts's invokers); it keeps

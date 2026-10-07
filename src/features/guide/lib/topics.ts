@@ -151,7 +151,7 @@ export const guideTopics: GuideTopic[] = [
         title: "Press Ask AI",
         body: [
           "mneme leaves the Type at Lesson and offers Ask AI instead of guessing.",
-          "It sends the title, the headings and the start of the text to the agent your AI actions use, the one chosen under Run with in the AI actions menu. Connect an agent in Agent chat first."
+          "It sends the title, the headings and the start of the text to your default agent, the one chosen in Settings → AI. Connect an agent in Agent chat first."
         ],
         screenshots: [
           {

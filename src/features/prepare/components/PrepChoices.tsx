@@ -1,3 +1,5 @@
+import AgentSelect from "@/features/agent-chat/components/AgentSelect";
+import { useAgentChoice } from "@/features/agent-chat/lib/useAgentChoice";
 import type { Page } from "@/features/courses/lib/page/types";
 import { BodyText, Caption, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
@@ -65,9 +67,10 @@ export default function PrepChoices({
   hasQuiz: boolean;
   cardPages: number;
   condensed: Set<number>;
-  onPrepare: (outputs: PrepOutput[]) => void;
+  onPrepare: (outputs: PrepOutput[], connectionId: number) => void;
 }>) {
   const options = choices(prep, hasQuiz, cardPages);
+  const agent = useAgentChoice();
   const [chosen, setChosen] = useState<PrepOutput[]>(["summary", "notes", "flashcards", "quiz"]);
   const outputs = options
     .filter((option) => !option.disabled && chosen.includes(option.output))
@@ -82,7 +85,7 @@ export default function PrepChoices({
 
   function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (outputs.length) onPrepare(outputs);
+    if (outputs.length && agent.connectionId !== null) onPrepare(outputs, agent.connectionId);
   }
 
   return (
@@ -126,6 +129,7 @@ export default function PrepChoices({
           ))}
         </ul>
       </fieldset>
+      <AgentSelect choice={agent} className={clsx("mt-4 max-w-xs")} />
       <div
         className={clsx(
           "mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4"
@@ -134,7 +138,7 @@ export default function PrepChoices({
         <BodyText tone="muted">{runsLine(outputs, runs)}</BodyText>
         <button
           type="submit"
-          disabled={!outputs.length}
+          disabled={!outputs.length || agent.connectionId === null}
           className={clsx(
             "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
             "hover:bg-action/85 disabled:opacity-50"
