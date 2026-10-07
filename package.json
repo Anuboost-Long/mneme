@@ -68,7 +68,8 @@
           "centerY": 30
         }
       },
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "showWhen": "firstPaint"
     },
     "permissions": {
       "microphone": "Mneme records lectures and notes you choose to capture.",

@@ -1,5 +1,6 @@
 import CommandPalette from "@/app/CommandPalette";
 import JobsTray from "@/app/JobsTray";
+import { dismissLaunchScreen, playLaunchScreenWhenShown } from "@/app/launchScreen";
 import NavBar from "@/app/NavBar";
 import Sidebar from "@/app/Sidebar";
 import AgentChatPanel from "@/features/agent-chat/components/AgentChatPanel";
@@ -99,6 +100,12 @@ export default function RootLayout() {
     });
     return () => animation?.cancel();
   }, [pathname]);
+
+  useEffect(playLaunchScreenWhenShown, []);
+
+  useEffect(() => {
+    if (status !== "loading") dismissLaunchScreen();
+  }, [status]);
 
   useCustomPageTypes();
   useEffect(unloadVoiceWhenIdle, []);
