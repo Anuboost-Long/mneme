@@ -26,6 +26,9 @@ export class AgentConversation {
 
   external_session_id!: string | null;
 
+  @Column({ default: 1 })
+  mode!: number;
+
   @Column({ defaultSql: "datetime('now')" })
   created_at!: string;
 

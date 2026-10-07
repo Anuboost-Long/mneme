@@ -1,4 +1,4 @@
-import type { AgentConnection } from "./connections";
+import type { AgentConnection } from "./connection/types";
 
 export type ParsedCommand = { name: string; args: string };
 
@@ -16,14 +16,20 @@ export function parseCommand(message: string): ParsedCommand | null {
 // passthroughModelFlags) are both sourced from each CLI's own published
 // docs — see runTurn.ts's comment on passthroughModelFlags for links.
 const modelHints: Partial<Record<AgentConnection["kind"], string>> = {
-  claude: "An alias for the latest model (opus, sonnet, fable, haiku) or a full model name. /model alone resets to Claude Code's own default.",
+  claude:
+    "An alias for the latest model (opus, sonnet, fable, haiku) or a full model name. /model alone resets to Claude Code's own default.",
   codex: "A model name Codex accepts. /model alone resets to Codex's own default.",
-  gemini: "An alias (auto, pro, flash, flash-lite) or a full model name like gemini-2.5-pro. /model alone resets to Gemini CLI's own default.",
-  copilot: "A model name Copilot CLI accepts, e.g. gpt-5.4 or claude-haiku-4.5. /model alone resets to Copilot's own default.",
-  cursor: "A model name Cursor CLI accepts, e.g. claude-3-5-sonnet — run \"cursor-agent models\" in a terminal to see what's available for your account. /model alone resets to Cursor's own default.",
+  gemini:
+    "An alias (auto, pro, flash, flash-lite) or a full model name like gemini-2.5-pro. /model alone resets to Gemini CLI's own default.",
+  copilot:
+    "A model name Copilot CLI accepts, e.g. gpt-5.4 or claude-haiku-4.5. /model alone resets to Copilot's own default.",
+  cursor:
+    "A model name Cursor CLI accepts, e.g. claude-3-5-sonnet — run \"cursor-agent models\" in a terminal to see what's available for your account. /model alone resets to Cursor's own default."
 };
 
-export function supportsModelCommand(connection: Pick<AgentConnection, "kind"> | undefined): boolean {
+export function supportsModelCommand(
+  connection: Pick<AgentConnection, "kind"> | undefined
+): boolean {
   return connection !== undefined && connection.kind !== "custom";
 }
 
@@ -42,7 +48,7 @@ export function isModelCommand(name: string): boolean {
 // which the hint above points to instead of guessing at a static list).
 const modelAliases: Partial<Record<AgentConnection["kind"], string[]>> = {
   claude: ["opus", "sonnet", "fable", "haiku"],
-  gemini: ["auto", "pro", "flash", "flash-lite"],
+  gemini: ["auto", "pro", "flash", "flash-lite"]
 };
 
 export function modelOptionsFor(connection: Pick<AgentConnection, "kind"> | undefined): string[] {

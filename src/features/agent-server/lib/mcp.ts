@@ -1,13 +1,30 @@
+import { getConversation } from "@/features/agent-chat/lib/conversation/actions";
+import { ConversationMode } from "@/features/agent-chat/lib/conversation/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
 import type { AgentServerRequest, AgentServerResponse } from "@chain/sdk";
-import { tools } from "./tools";
+
+import { logActivity } from "./activity/actions";
+import { ActivityOutcome } from "./activity/types";
 import { requestApproval } from "./approvals";
-import { errorMessage } from "../../../shared/lib/errorMessage";
+import { SAME_CALLS_IN_A_ROW, spendToolCall, TOOL_CALLS_PER_MESSAGE } from "./budget";
+import {
+  AgentPermission,
+  canAlwaysAllow,
+  getTrustedPermissions,
+  setPermissionTrusted
+} from "./permissions";
+import { isToolContent, tools, type Tool } from "./tools";
 
 const PROTOCOL_VERSION = "2024-11-05";
 const SERVER_INFO = { name: "mneme", version: "0.1.0" };
 
 type JsonRpcId = number | string;
-type JsonRpcRequest = { jsonrpc: "2.0"; id?: JsonRpcId; method: string; params?: Record<string, unknown> };
+type JsonRpcRequest = {
+  jsonrpc: "2.0";
+  id?: JsonRpcId;
+  method: string;
+  params?: Record<string, unknown>;
+};
 
 function jsonResponse(status: number, body: unknown): AgentServerResponse {
   return { status, headers: { "content-type": "application/json" }, body: JSON.stringify(body) };
@@ -33,32 +50,134 @@ function conversationIdFromPath(path: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+async function conversationMode(conversationId: number) {
+  if (conversationId === 0) return { mode: ConversationMode.Agent, loggedId: null };
+  const conversation = await getConversation(conversationId).catch(() => undefined);
+  return { mode: conversation?.mode ?? ConversationMode.Ask, loggedId: conversation?.id ?? null };
+}
+
+const askModeRefusal =
+  "This conversation is in Ask mode, so it can't change the user's workspace. Describe the change in your reply instead; the user can switch to Agent mode to let you make it.";
+
+const failure = (text: string) => ({ content: [{ type: "text", text }], isError: true });
+
+const limitRefusal = `This reply has used its ${TOOL_CALLS_PER_MESSAGE} tool calls. Stop calling tools and tell the user what you found or did so far, and what's left.`;
+
+const repeatRefusal = (tool: string) =>
+  `You've made this exact ${tool} call ${SAME_CALLS_IN_A_ROW} times in a row, so calling it again won't change the result. Try a different approach, or stop and tell the user what's blocking you.`;
+
+function describeRead(tool: Tool, args: Record<string, unknown>) {
+  const action = tool.name.replace(/_/g, " ");
+  const target = typeof args.id === "number" ? ` #${args.id}` : "";
+  const query = typeof args.query === "string" ? ` for “${args.query}”` : "";
+  return `${action[0].toUpperCase()}${action.slice(1)}${target}${query}.`;
+}
+
+async function authorize(
+  tool: Tool,
+  args: Record<string, unknown>,
+  description: string,
+  mode: ConversationMode
+): Promise<{ outcome: ActivityOutcome; refusal?: string }> {
+  const permission = tool.permission ?? AgentPermission.Read;
+  if (permission === AgentPermission.Read) return { outcome: ActivityOutcome.Read };
+  if (mode === ConversationMode.Ask)
+    return { outcome: ActivityOutcome.BlockedInAskMode, refusal: askModeRefusal };
+  try {
+    await tool.check?.(args);
+  } catch (error) {
+    return { outcome: ActivityOutcome.Failed, refusal: errorMessage(error, String(error)) };
+  }
+  const trustable = canAlwaysAllow(permission) && !(tool.destructive?.(args) ?? false);
+  if (trustable && (await getTrustedPermissions()).has(permission))
+    return { outcome: ActivityOutcome.AllowedAutomatically };
+  const answer = await requestApproval({
+    toolName: tool.name,
+    description,
+    permission,
+    canAlwaysAllow: trustable
+  });
+  if (!answer.approved)
+    return {
+      outcome: ActivityOutcome.Denied,
+      refusal: "The user denied permission for this action."
+    };
+  if (answer.always) await setPermissionTrusted(permission, true);
+  return { outcome: ActivityOutcome.Allowed };
+}
+
 async function callTool(params: Record<string, unknown> | undefined, conversationId: number) {
   const name = params?.name;
-  if (typeof name !== "string") throw new Error("tools/call requires a string \"name\".");
+  if (typeof name !== "string") throw new Error('tools/call requires a string "name".');
   const tool = tools.find((candidate) => candidate.name === name);
-  if (!tool) return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
+  if (!tool) return failure(`Unknown tool: ${name}`);
 
   const args = (params?.arguments as Record<string, unknown> | undefined) ?? {};
-  if (tool.mutates) {
-    const description = tool.describeCall?.(args) ?? `Run ${tool.name}.`;
-    const approved = await requestApproval(conversationId, tool.name, description);
-    if (!approved) return { content: [{ type: "text", text: "The user denied permission for this action." }], isError: true };
+  const { mode, loggedId } = await conversationMode(conversationId);
+  const description = tool.describeCall?.(args) ?? describeRead(tool, args);
+  const log = (outcome: ActivityOutcome, detail?: string) =>
+    logActivity({
+      conversation_id: loggedId,
+      tool: tool.name,
+      permission: tool.permission ?? AgentPermission.Read,
+      description,
+      outcome,
+      detail
+    });
+
+  const spent = spendToolCall(conversationId, `${tool.name} ${JSON.stringify(args)}`);
+  if (spent !== "ok") {
+    await log(
+      spent === "limit" ? ActivityOutcome.StoppedAtLimit : ActivityOutcome.StoppedRepeating
+    );
+    return failure(spent === "limit" ? limitRefusal : repeatRefusal(tool.name));
+  }
+
+  const { outcome, refusal } = await authorize(tool, args, description, mode);
+  if (refusal) {
+    await log(outcome, outcome === ActivityOutcome.Failed ? refusal : undefined);
+    return failure(refusal);
   }
   try {
     const result = await tool.execute(args);
+    await log(outcome);
+    if (isToolContent(result)) return { ...result, isError: false };
     return { content: [{ type: "text", text: JSON.stringify(result) }], isError: false };
   } catch (error) {
-    return { content: [{ type: "text", text: errorMessage(error, String(error)) }], isError: true };
+    const message = errorMessage(error, String(error));
+    await log(ActivityOutcome.Failed, message);
+    return failure(message);
   }
 }
 
-async function dispatch(method: string, params: Record<string, unknown> | undefined, conversationId: number): Promise<unknown> {
+async function dispatch(
+  method: string,
+  params: Record<string, unknown> | undefined,
+  conversationId: number
+): Promise<unknown> {
   switch (method) {
     case "initialize":
-      return { protocolVersion: PROTOCOL_VERSION, capabilities: { tools: {} }, serverInfo: SERVER_INFO };
-    case "tools/list":
-      return { tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) };
+      return {
+        protocolVersion: PROTOCOL_VERSION,
+        capabilities: { tools: {} },
+        serverInfo: SERVER_INFO
+      };
+    case "tools/list": {
+      const { mode } = await conversationMode(conversationId);
+      const offered =
+        mode === ConversationMode.Ask
+          ? tools.filter(
+              (tool) => (tool.permission ?? AgentPermission.Read) === AgentPermission.Read
+            )
+          : tools;
+      return {
+        tools: offered.map(({ name, description, inputSchema }) => ({
+          name,
+          description,
+          inputSchema
+        }))
+      };
+    }
     case "tools/call":
       return callTool(params, conversationId);
     default:
@@ -71,7 +190,8 @@ async function dispatch(method: string, params: Record<string, unknown> | undefi
 // — nothing here needs the server to push messages the client didn't ask
 // for, so there's nothing an event stream would buy over a plain response.
 export async function handleMcpRequest(request: AgentServerRequest): Promise<AgentServerResponse> {
-  if (request.method !== "POST") return jsonResponse(405, { error: "Method not allowed — POST a JSON-RPC message." });
+  if (request.method !== "POST")
+    return jsonResponse(405, { error: "Method not allowed — POST a JSON-RPC message." });
   const conversationId = conversationIdFromPath(request.path);
 
   let rpc: JsonRpcRequest;

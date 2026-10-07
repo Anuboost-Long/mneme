@@ -12,13 +12,17 @@
     "tauri": "tauri",
     "dev:web": "vite",
     "dev:website": "npm --prefix website run dev",
-    "build:web": "tsc && vite build"
+    "build:web": "tsc && vite build",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "bench": "node tests/perf/bench.mjs"
   },
   "dependencies": {
     "@chain/sdk": "file:../chain-sdk/packages/sdk",
     "@floating-ui/dom": "^1.8.0",
+    "@mozilla/readability": "^0.6.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tiptap/extension-details": "^3.31.3",
     "@tiptap/extension-drag-handle-react": "^3.31.3",
     "@tiptap/extension-highlight": "^3.31.3",
     "@tiptap/extension-image": "^3.31.3",
@@ -30,6 +34,9 @@
     "@tiptap/starter-kit": "^3.31.3",
     "@tiptap/suggestion": "^3.31.3",
     "clsx": "^2",
+    "jotai": "^2.20.3",
+    "jszip": "^3.10.2",
+    "lucide-react": "^1.52.0",
     "mammoth": "^1.12.3",
     "marked": "^18.0.13",
     "pdfjs-dist": "^6.3.289",
@@ -45,8 +52,29 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
+    "linkedom": "^0.18.13",
     "tailwindcss": "^4",
     "typescript": "~6.0.3",
     "vite": "^8.0.16"
+  },
+  "chain": {
+    "gpl": true,
+    "window": {
+      "titleBarStyle": "overlay",
+      "titleBarSize": "large",
+      "windowButtons": {
+        "position": {
+          "left": 20,
+          "centerY": 30
+        }
+      },
+      "backgroundColor": "#ffffff",
+      "showWhen": "firstPaint"
+    },
+    "permissions": {
+      "microphone": "Mneme records lectures and notes you choose to capture.",
+      "systemAudio": "Mneme records the sound your computer plays, like an online lecture, when you choose to.",
+      "speechRecognition": "Mneme turns your recordings into text on this Mac."
+    }
   }
 }

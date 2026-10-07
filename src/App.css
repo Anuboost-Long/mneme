@@ -7,6 +7,7 @@
   --color-chain-navy: #171b24;
   --color-chain-lime: #c5f74f;
   --color-chain-cream: #eef2e4;
+  --animate-reel: spin 2.4s linear infinite;
 }
 
 @theme inline {
@@ -16,34 +17,78 @@
   --color-muted: var(--muted);
   --color-action: var(--action);
   --color-on-action: var(--on-action);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
   --color-info: var(--info);
+  --color-warning: var(--warning);
   --color-success: var(--success);
 }
 
 :root {
   color-scheme: light;
   --surface: #ffffff;
-  --sidebar: #f8faf4;
+  --sidebar: color-mix(in srgb, var(--accent) 3%, #f9f9f8);
   --ink: #171b24;
   --muted: #70747c;
   --action: #171b24;
   --on-action: #ffffff;
   --danger: #b91c1c;
   --info: #1d4ed8;
+  --warning: #b45309;
   --success: #15803d;
 }
+
+:root {
+  --accent: var(--color-chain-lime);
+  --on-accent: var(--color-chain-navy);
+  --accent-ink: #4d6a08;
+  --sidebar-width: 15rem;
+  --page-width: none;
+  --page-font: inherit;
+  --page-text: 0.9375rem;
+}
+
+:root[data-accent="ocean"] { --action: #2f5f8a; --on-action: #ffffff; --accent: #8ec5f0; }
+:root[data-accent="fern"] { --action: #3f6b4a; --on-action: #ffffff; --accent: #9fd8a8; }
+:root[data-accent="iris"] { --action: #5f4b8b; --on-action: #ffffff; --accent: #c3b2f0; }
+:root[data-accent="ochre"] { --action: #8a5a1c; --on-action: #ffffff; --accent: #f0c27a; }
+:root[data-accent="rose"] { --action: #9a3f5c; --on-action: #ffffff; --accent: #f2a7bf; }
+:root[data-theme="dark"][data-accent="ocean"] { --action: #8ec5f0; --on-action: #171b24; }
+:root[data-theme="dark"][data-accent="fern"] { --action: #9fd8a8; --on-action: #171b24; }
+:root[data-theme="dark"][data-accent="iris"] { --action: #c3b2f0; --on-action: #171b24; }
+:root[data-theme="dark"][data-accent="ochre"] { --action: #f0c27a; --on-action: #171b24; }
+:root[data-theme="dark"][data-accent="rose"] { --action: #f2a7bf; --on-action: #171b24; }
+
+:root:not([data-accent="mneme"])[data-accent],
+:root[data-theme="dark"] { --accent-ink: var(--action); }
+
+:root[data-sidebar="narrow"] { --sidebar-width: 13rem; }
+:root[data-sidebar="wide"] { --sidebar-width: 18rem; }
+:root[data-page-width="wide"] { --page-width: 56rem; }
+:root[data-page-width="readable"] { --page-width: 42rem; }
+[data-page-font="avenir"] { --page-font: "Avenir Next", Avenir, "Segoe UI", sans-serif; }
+[data-page-font="system"] { --page-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+[data-page-font="serif"] { --page-font: ui-serif, "New York", "Iowan Old Style", Georgia, serif; }
+[data-page-font="rounded"] { --page-font: ui-rounded, "SF Pro Rounded", "Avenir Next", sans-serif; }
+[data-text-size="standard"] { --page-text: 0.9375rem; }
+[data-text-size="small"] { --page-text: 0.875rem; }
+[data-text-size="large"] { --page-text: 1.0625rem; }
+[data-text-size="extra-large"] { --page-text: 1.1875rem; }
+:root[data-compact="true"] { font-size: 87.5%; }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
   --surface: #171b24;
-  --sidebar: #12161e;
+  --sidebar: color-mix(in srgb, var(--accent) 2%, #12161e);
   --ink: #eef2e4;
   --muted: #a4abaf;
   --action: #c5f74f;
   --on-action: #171b24;
   --danger: #fca5a5;
   --info: #93c5fd;
+  --warning: #fcd34d;
   --success: #86efac;
 }
 
@@ -110,7 +155,7 @@
   }
 
   .sidebar-push[data-expanded="true"] {
-    width: 15rem;
+    width: var(--sidebar-width);
   }
 }
 
@@ -160,18 +205,101 @@
   }
 }
 
+.tour-spotlight {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 2px var(--action),
+    0 0 0 100vmax rgb(0 0 0 / 0.45);
+  transition:
+    left 200ms ease,
+    top 200ms ease,
+    width 200ms ease,
+    height 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight {
+    transition: none;
+  }
+}
+
+.import-progress {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--action);
+}
+
+.import-progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+.import-progress::-webkit-progress-value {
+  background: var(--action);
+  border-radius: 999px;
+  transition: width 250ms linear;
+}
+
+.import-progress::-moz-progress-bar {
+  background: var(--action);
+  border-radius: 999px;
+}
+
+/* No value yet (the agent hasn't written anything): a band sweeps across. */
+.import-progress:indeterminate {
+  background:
+    linear-gradient(90deg, transparent, var(--action), transparent) 0 0 / 40% 100% no-repeat,
+    color-mix(in srgb, var(--ink) 10%, transparent);
+  animation: progress-sweep 1.3s ease-in-out infinite;
+}
+
+.import-progress:indeterminate::-webkit-progress-bar {
+  background: transparent;
+}
+
+.import-progress:indeterminate::-moz-progress-bar {
+  background: transparent;
+}
+
+@keyframes progress-sweep {
+  from {
+    background-position: -70% 0, 0 0;
+  }
+  to {
+    background-position: 170% 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .import-progress::-webkit-progress-value {
+    transition: none;
+  }
+
+  .import-progress:indeterminate {
+    animation: none;
+    background-position: 50% 0, 0 0;
+  }
+}
+
+/* Quick on purpose: a dialog is something the user asked for, so it
+   appears at once and fades in over 180ms; closing (160ms) matches the
+   timer in Dialog.tsx. Opacity only, and no backdrop blur: a blur of the
+   whole window is expensive compositor work in WebKit, redone every frame
+   the backdrop fades, and was the likely cause of a reported ~1s delay
+   before the course form showed (JS rendering measured under 70ms). */
 .app-dialog {
   opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity 300ms cubic-bezier(0, 0, 0.2, 1),
-    transform 300ms cubic-bezier(0, 0, 0.2, 1);
+  transition: opacity 160ms cubic-bezier(0.3, 0, 1, 1);
 }
 
 .app-dialog[data-visible="true"] {
   opacity: 1;
-  transform: translateY(0);
-  transition-delay: 150ms;
+  transition: opacity 180ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 /* Dialog.tsx's `origin` animates the box itself; only the backdrop keeps
@@ -182,9 +310,17 @@
   transition: none;
 }
 
+/* Dialog.tsx keeps a closed dialog mounted and laid out, so opening it only
+   shows it. */
+.app-dialog:not([open]) {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .app-dialog::backdrop {
   opacity: 0;
-  transition: opacity 300ms cubic-bezier(0, 0, 0.2, 1);
+  transition: opacity 180ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .app-dialog[data-visible="true"]::backdrop {
@@ -205,7 +341,9 @@
 }
 
 .page-editor-content {
-  font-size: 0.9375rem;
+  max-width: var(--page-width);
+  font-family: var(--page-font);
+  font-size: var(--page-text);
   line-height: 1.7;
 }
 
@@ -214,19 +352,19 @@
 }
 
 .page-editor-content h1 {
-  font-size: 1.5rem;
+  font-size: 1.6em;
   font-weight: 600;
   margin-top: 1.75em;
 }
 
 .page-editor-content h2 {
-  font-size: 1.25rem;
+  font-size: 1.333em;
   font-weight: 600;
   margin-top: 1.5em;
 }
 
 .page-editor-content h3 {
-  font-size: 1.0625rem;
+  font-size: 1.133em;
   font-weight: 600;
   margin-top: 1.25em;
 }
@@ -278,7 +416,7 @@
 }
 
 .page-editor-content mark {
-  background: color-mix(in srgb, var(--color-chain-lime) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
   color: inherit;
   border-radius: 2px;
   box-decoration-break: clone;
@@ -388,6 +526,123 @@
   font-weight: 600;
 }
 
+.page-editor-content .callout {
+  --tone: var(--info);
+  background: color-mix(in srgb, var(--tone) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.page-editor-content .callout[data-callout="tip"] {
+  --tone: var(--success);
+}
+
+.page-editor-content .callout[data-callout="warning"] {
+  --tone: var(--warning);
+}
+
+.page-editor-content .callout-icon {
+  color: var(--tone);
+}
+
+/* Blocks drawn by React (callout, AI block) hold their content one
+   wrapper deeper, so it doesn't get the page's own block spacing. */
+.page-editor-content [data-node-view-content-react] > * + * {
+  margin-top: 0.75em;
+}
+
+/* Collapsible section: @tiptap/extension-details renders a toggle button
+   beside a summary and its content. */
+.page-editor-content div[data-type="details"] {
+  display: flex;
+  gap: 0.25em;
+}
+
+.page-editor-content div[data-type="details"] > button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.5em;
+  height: 1.7em;
+  border-radius: 0.375em;
+  color: var(--muted);
+}
+
+.page-editor-content div[data-type="details"] > button:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.page-editor-content div[data-type="details"] > button:focus-visible {
+  outline: 1px solid var(--ink);
+}
+
+.page-editor-content div[data-type="details"] > button::before {
+  content: "";
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease;
+}
+
+.page-editor-content div[data-type="details"].is-open > button::before {
+  transform: rotate(45deg);
+}
+
+.page-editor-content div[data-type="details"] > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-editor-content div[data-type="details"] summary {
+  font-weight: 600;
+  list-style: none;
+}
+
+.page-editor-content div[data-type="details"] summary::-webkit-details-marker {
+  display: none;
+}
+
+.page-editor-content div[data-type="details"] div[data-type="detailsContent"] {
+  margin-top: 0.25em;
+}
+
+.page-editor-content div[data-type="details"] div[data-type="detailsContent"] > * + * {
+  margin-top: 0.5em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-editor-content div[data-type="details"] > button::before {
+    transition: none;
+  }
+}
+
+/* Home's edit mode, like arranging an iPhone home screen: a slight
+   wiggle, offset per widget so they don't move in lockstep. */
+@media (prefers-reduced-motion: no-preference) {
+  .widget-wiggle {
+    animation: widget-wiggle 0.28s ease-in-out infinite alternate;
+  }
+
+  li:nth-child(2n) > .widget-wiggle {
+    animation-delay: -0.14s;
+  }
+
+  li:nth-child(3n) > .widget-wiggle {
+    animation-duration: 0.32s;
+  }
+}
+
+@keyframes widget-wiggle {
+  from {
+    transform: rotate(-0.35deg);
+  }
+  to {
+    transform: rotate(0.35deg);
+  }
+}
+
 @layer base {
   body {
     margin: 0;
@@ -413,9 +668,22 @@
     outline-offset: 2px;
   }
 
-  ::selection {
+  /* A selected node (e.g. a just-inserted recording block) keeps a hidden
+     text selection; recolouring its text would blank it on the dark surface. */
+  :not(.ProseMirror-hideselection, .ProseMirror-hideselection *)::selection {
     color: var(--color-chain-navy);
-    background: color-mix(in srgb, var(--color-chain-lime) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  /* The word read-aloud is saying (see useReadAloud). */
+  ::highlight(read-aloud) {
+    color: var(--color-chain-navy);
+    background-color: var(--accent);
+  }
+
+  /* The sentence page audio is playing (see AudiobookBar). */
+  ::highlight(audiobook) {
+    background-color: color-mix(in srgb, var(--accent) 40%, transparent);
   }
 
   .ProseMirror-hideselection::selection,

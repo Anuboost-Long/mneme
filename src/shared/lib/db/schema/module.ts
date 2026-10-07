@@ -1,10 +1,11 @@
-import { Column, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Column, Index, PrimaryKey, Table } from "@chain/sdk/schema";
 
 @Table()
 export class Module {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
 
+  @Index({ name: "module_course" })
   course_id!: number;
 
   name!: string;
@@ -25,6 +26,18 @@ export class Module {
 
   @Column({ default: 1 })
   status!: number;
+
+  // A preset name, an emoji, or a small data URL, like course.icon.
+  icon!: string | null;
+
+  // Order within its course; ties fall back to creation order.
+  @Column({ default: 0 })
+  position!: number;
+
+  // When it moved to Recently deleted. Everything deleted along with it gets
+  // the same value, which is how a restore finds what to bring back.
+  @Index({ name: "module_deleted", where: "deleted_at IS NOT NULL" })
+  deleted_at!: string | null;
 }
 
 // The name the rest of the app uses for a row of this table.

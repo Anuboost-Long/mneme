@@ -123,3 +123,20 @@ test('0015 adds agent_message.attachments and leaves existing messages without a
     { content: 'After', attachments: '[{"name":"notes.md","size":12}]' },
   ]);
 });
+
+test('0031 keeps existing actions turned on and outside any pack, and removing a pack removes its actions', async () => {
+  const database = new DatabaseSync(':memory:');
+  for (const name of ['0001-initial', '0011-ai-action-defaults', '0012-custom-ai-actions']) database.exec(await loadMigration(name));
+  const before = database.prepare('SELECT id, name FROM ai_action ORDER BY id').all().map((row) => ({ ...row }));
+  database.exec(await loadMigration('0031-action-packs'));
+
+  const after = database.prepare('SELECT id, name, pack_id, enabled FROM ai_action ORDER BY id').all();
+  assert.deepEqual(after.map(({ id, name }) => ({ id, name })), before);
+  assert.ok(after.every((action) => action.pack_id === null && action.enabled === 1));
+
+  database.exec("INSERT INTO action_pack (id, catalog_key, name) VALUES (1, 'mathematics', 'Mathematics')");
+  database.exec("INSERT INTO ai_action (name, prompt, pack_id) VALUES ('Solve step by step', 'Solve it.', 1)");
+  assert.throws(() => database.exec("INSERT INTO action_pack (catalog_key, name) VALUES ('mathematics', 'Again')"));
+  database.exec('DELETE FROM action_pack WHERE id = 1');
+  assert.equal(database.prepare('SELECT COUNT(*) AS count FROM ai_action').get().count, before.length);
+});

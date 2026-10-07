@@ -1,51 +1,165 @@
-import { useEffect } from "react";
+import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
+import { getAgentConnection } from "@/features/agent-chat/lib/connection/actions";
+import { getEnabledActions } from "@/features/ai-actions/lib/action/actions";
+import { ActionScope } from "@/features/ai-actions/lib/action/types";
+import { imageActions } from "@/features/ai-actions/lib/imageActions";
+import { useAiAction, type ActionLocation } from "@/features/ai-actions/lib/useAiAction";
+import { addCommandSource } from "@/shared/lib/commandSources";
 import type { Editor } from "@tiptap/react";
 import clsx from "clsx";
-import { useAiAction, type ActionLocation } from "../lib/useAiAction";
-import { ActionScope, getActionConnection, getActions } from "../lib/actions";
-import { addCommandSource } from "../../../shared/lib/commandSources";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
 import AiActionResult from "./AiActionResult";
 import AiActionsMenu from "./AiActionsMenu";
 
 const wideScopes: Partial<Record<ActionScope, string>> = {
   [ActionScope.Module]: "Whole module",
-  [ActionScope.Course]: "Whole course",
+  [ActionScope.Course]: "Whole course"
 };
 
 // Sticky so the menu stays reachable after scrolling down to select text
 // deep in a long page; the wrapper ignores pointer events so it never
 // blocks clicks on the content scrolling underneath it.
-export default function AiActions({ editor, location, onChangeProfile }: Readonly<{ editor: Editor; location: ActionLocation; onChangeProfile: (id: number | null) => Promise<void> }>) {
-  const { run, start, stop, discard, insertBelow, addSection, replaceSelection, saveAsPage, undoNotice, undo, dismissUndo } = useAiAction(editor, location);
+export default function AiActions({
+  editor,
+  location,
+  onChangeProfile
+}: Readonly<{
+  editor: Editor;
+  location: ActionLocation;
+  onChangeProfile: (id: number | null) => Promise<void>;
+}>) {
+  const {
+    run,
+    start,
+    stop,
+    discard,
+    insertBelow,
+    addSection,
+    replaceSelection,
+    saveAsPage,
+    undoNotice,
+    undo,
+    dismissUndo
+  } = useAiAction(editor, location);
 
-  useEffect(() => addCommandSource({
-    group: "AI actions",
-    load: async () => {
-      const [actions, connection] = await Promise.all([getActions(), getActionConnection()]);
-      if (!connection) return [];
-      const target = editor.state.selection.empty ? "Whole page" : "Selected text";
-      return actions.map((action) => ({
+  // Nothing to offer until an agent is chosen to run actions with.
+  async function availableActions() {
+    const [actions, connection] = await Promise.all([getEnabledActions(), getAgentConnection()]);
+    return connection ? actions.map((action) => ({ action, connection })) : [];
+  }
+
+  useEffect(
+    () =>
+      addCommandSource({
+        group: "AI actions",
+        load: async () => {
+          const target = editor.state.selection.empty ? "Whole page" : "Selected text";
+          return (await availableActions()).map(({ action, connection }) => ({
+            id: `ai-action-${action.id}`,
+            label: action.name,
+            detail: `${wideScopes[action.scope] ?? target} · ${connection.name}`,
+            run: () => void start(connection, action)
+          }));
+        }
+      }),
+    [editor, start]
+  );
+
+  // The same actions in the `/` menu. Typed on an empty line, so a page
+  // action runs on the whole page.
+  useEffect(() => {
+    editor.storage.slashCommands.loadAiItems = async () =>
+      (await availableActions()).map(({ action, connection }) => ({
         id: `ai-action-${action.id}`,
         label: action.name,
-        detail: `${wideScopes[action.scope] ?? target} · ${connection.name}`,
-        run: () => void start(connection, action),
+        hint: `${wideScopes[action.scope] ?? "Whole page"} · ${connection.name}`,
+        category: "AI" as const,
+        keywords: ["ai", "ask", "agent"],
+        run: () => void start(connection, action)
       }));
-    },
-  }), [editor, start]);
+    return () => {
+      editor.storage.slashCommands.loadAiItems = null;
+    };
+  }, [editor, start]);
+
+  useEffect(() => {
+    editor.storage.image.runAiAction = async (kind) => {
+      const connection = await getAgentConnection();
+      if (!connection)
+        return "No agent connected yet. Add one in Agent chat to explain or summarize images.";
+      if (!acceptsImages(connection))
+        return `${connection.name} can’t see images. Make Claude or Codex your default agent in Settings → AI.`;
+      void start(connection, imageActions[kind], true);
+      return null;
+    };
+    return () => {
+      editor.storage.image.runAiAction = null;
+    };
+  }, [editor, start]);
+
+  // Home's quick actions open a page with the action to run in the route
+  // state; it's cleared first so going back doesn't run it again.
+  const routeState = useLocation().state as { runActionId?: number } | null;
+  const navigate = useNavigate();
+  useEffect(() => {
+    const id = routeState?.runActionId;
+    if (!id) return;
+    navigate(".", { replace: true, state: null });
+    void availableActions().then((available) => {
+      const found = available.find(({ action }) => action.id === id);
+      if (found) void start(found.connection, found.action);
+    });
+  }, [routeState]);
 
   return (
     <>
       <div className={clsx("pointer-events-none sticky top-3 z-20 mb-2 flex justify-end")}>
         <div className={clsx("pointer-events-auto")}>
-          <AiActionsMenu editor={editor} course={{ profileId: location.aiProfileId, onChange: onChangeProfile }} onRun={(connection, action) => void start(connection, action)} />
+          <AiActionsMenu
+            editor={editor}
+            course={{ profileId: location.aiProfileId, onChange: onChangeProfile }}
+            onRun={(connection, action) => void start(connection, action)}
+          />
         </div>
       </div>
-      {run && <AiActionResult run={run} onStop={stop} onInsert={insertBelow} onAddSection={addSection} onReplace={replaceSelection} onSaveAsPage={() => void saveAsPage()} onDiscard={discard} />}
+      {run && (
+        <AiActionResult
+          run={run}
+          onStop={stop}
+          onInsert={insertBelow}
+          onAddSection={addSection}
+          onReplace={replaceSelection}
+          onSaveAsPage={() => void saveAsPage()}
+          onDiscard={discard}
+        />
+      )}
       {!run && undoNotice && (
-        <div role="status" className={clsx("fixed right-4 bottom-20 z-40 flex items-center gap-3", "rounded-lg border border-ink/20 bg-surface shadow-lg", "py-2 pr-2 pl-4 text-sm")}>
+        <div
+          role="status"
+          className={clsx(
+            "fixed right-4 bottom-20 z-40 flex items-center gap-3",
+            "rounded-lg border border-ink/20 bg-surface shadow-lg",
+            "py-2 pr-2 pl-4 text-sm"
+          )}
+        >
           <span>{undoNotice}</span>
-          <button type="button" onClick={undo} className={clsx("rounded-md px-3 py-1.5 font-medium", "hover:bg-ink/5")}>Undo</button>
-          <button type="button" onClick={dismissUndo} aria-label="Dismiss" className={clsx("size-8 rounded-md text-lg text-muted", "hover:bg-ink/5")}>×</button>
+          <button
+            type="button"
+            onClick={undo}
+            className={clsx("rounded-md px-3 py-1.5 font-medium", "hover:bg-ink/5")}
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={dismissUndo}
+            aria-label="Dismiss"
+            className={clsx("size-8 rounded-md text-lg text-muted", "hover:bg-ink/5")}
+          >
+            ×
+          </button>
         </div>
       )}
     </>

@@ -16,7 +16,7 @@ Free text stacked a second, unpredictable prompt on top of every AI
 action's own prompt: a profile like "only give clues" turned "Translate"
 or "Extract tasks" into hints. Now each setting sends one known
 sentence (`ai-profiles/lib/preferences.ts`), worded as a preference about
-*how* to write, and the framing states that the action's task wins on
+_how_ to write, and the framing states that the action's task wins on
 conflict. Existing profiles keep their name with every setting at "no
 preference".
 
@@ -92,13 +92,13 @@ foreign-key enforcement.
 
 ## Code layout
 
-- `features/ai-profiles/lib/profiles.ts`: queries, `getActiveProfile(courseId?)`,
+- `features/ai-profiles/lib/profile/`: queries, `getActiveProfile(courseId?)`,
   `withProfile(framing, profile)`.
 - `features/ai-profiles/components/ProfileSettings.tsx`, `ProfileForm.tsx`.
 - `agent-chat/lib/runTurn.ts`: chat framing includes the default profile.
 - `ai-actions/lib/useAiAction.ts` / `runAction.ts`: resolve the course's
   profile and add it to the action's framing.
-- `courses/components/CourseForm.tsx`, `courses/lib/courses.ts`:
+- `courses/components/CourseForm.tsx`, `courses/lib/course/`:
   `ai_profile_id` on the course.
 
 ## Out of scope

@@ -39,6 +39,14 @@ function bucketLabel(key: string, groupBy: Exclude<DateGroupBy, "none">): string
   return dateFromKey(`${key}-01`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
+// Groups by any key, in `keyOrder`, skipping keys with no items; within a
+// group items keep the order they came in (the caller's sort).
+export function groupItems<T, K extends string | number>(items: T[], keyOf: (item: T) => K, keyOrder: readonly K[], labelOf: (key: K) => string): DateGroup<T>[] {
+  return keyOrder
+    .map((key) => ({ key: String(key), label: labelOf(key), items: items.filter((item) => keyOf(item) === key) }))
+    .filter((group) => group.items.length > 0);
+}
+
 // Groups preserve each item's position relative to other items already in
 // the same bucket, so whatever sort order the caller applied upstream
 // (name, date, ...) still holds within a group — only which bucket an item

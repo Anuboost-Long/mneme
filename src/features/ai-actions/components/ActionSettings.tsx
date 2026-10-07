@@ -1,44 +1,113 @@
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { useLocation } from "react-router-dom";
+import {
+  deleteAction,
+  duplicateAction,
+  getActions,
+  saveActionOrder,
+  setActionEnabled
+} from "@/features/ai-actions/lib/action/actions";
+import { ActionOutput, ActionScope, type AiAction } from "@/features/ai-actions/lib/action/types";
+import {
+  exportPack,
+  exportStandaloneActions,
+  getPacks,
+  installPack,
+  readPackFile,
+  removePack
+} from "@/features/ai-actions/lib/pack/actions";
+import type { ActionPack, PackContent } from "@/features/ai-actions/lib/pack/types";
+import { useLastValue, useResetOnOpen } from "@/shared/lib/dialogState";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { pickFiles } from "@/shared/lib/pickFiles";
+import { claimSetting } from "@/shared/lib/settings/actions";
+import { useDragReorder } from "@/shared/lib/useDragReorder";
+import ConfirmDeleteDialog from "@/shared/ui/ConfirmDeleteDialog";
+import Dialog from "@/shared/ui/Dialog";
+import DragHandle from "@/shared/ui/DragHandle";
+import { rowAction } from "@/shared/ui/rowAction";
+import Tour, { type TourStep } from "@/shared/ui/Tour";
+import { BodyText, Caption, SectionTitle } from "@/shared/ui/Typography";
 import clsx from "clsx";
-import Dialog from "../../../shared/ui/Dialog";
-import { rowAction } from "../../../shared/ui/rowAction";
-import { BodyText, Caption, SectionTitle } from "../../../shared/ui/Typography";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { ActionOutput, ActionScope, deleteAction, duplicateAction, getActions, saveActionOrder, type AiAction } from "../lib/actions";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+
 import ActionForm from "./ActionForm";
 import ActionIcon from "./ActionIcon";
+import PackBrowser, { PackActionList } from "./PackBrowser";
 
 const scopeLabels: Record<ActionScope, string> = {
   [ActionScope.Page]: "Selection or page",
   [ActionScope.Module]: "Whole module",
-  [ActionScope.Course]: "Whole course",
+  [ActionScope.Course]: "Whole course"
 };
-
-const reorderAnimation: KeyframeAnimationOptions = { duration: 200, easing: "cubic-bezier(0.2, 0, 0, 1)" };
-
-const dragThresholdPx = 4;
-
-type Drag = { id: number; startY: number; lastY: number; startTop: number; saved: AiAction[]; active: boolean; detach: () => void };
-
-function setDragCursor(on: boolean) {
-  document.body.style.cursor = on ? "grabbing" : "";
-  document.body.style.userSelect = on ? "none" : "";
-}
 
 const outputLabels: Record<ActionOutput, string> = {
   [ActionOutput.Preview]: "Preview",
   [ActionOutput.InsertBelow]: "Insert below",
-  [ActionOutput.NewPage]: "New page",
+  [ActionOutput.NewPage]: "New page"
 };
 
-type DialogState = { kind: "create" } | { kind: "edit"; action: AiAction } | { kind: "delete"; action: AiAction } | null;
+const tourSteps: TourStep[] = [
+  {
+    target: "browse-packs",
+    title: "Add actions for your subject",
+    body: "Choose Browse packs, pick your subject, and select Install. A pack adds ready-made AI actions, like Solve step by step for maths or Case brief for law."
+  },
+  {
+    target: "installed-pack",
+    title: "Your installed packs",
+    body: "Each pack you install appears here. On a page, its actions show as their own group in the AI actions menu."
+  },
+  {
+    target: "action-switch",
+    title: "Hide what you don’t use",
+    body: "Untick an action to hide it from the AI actions menu. It stays here, so you can tick it again later."
+  },
+  {
+    target: "export-actions",
+    title: "Share your actions",
+    body: "Export my actions, or Export next to a pack, saves a .mneme-pack.json file. Send it to classmates so they get the same actions."
+  },
+  {
+    target: "import-pack",
+    title: "Use a pack someone shared",
+    body: "Choose Import pack, then pick the .mneme-pack.json file you received. You’ll see its actions before anything is added."
+  },
+  {
+    target: "show-tour",
+    title: "Watch this again",
+    body: "Choose Show me how any time to replay this tour."
+  }
+];
 
-function DeleteAction({ action, onClose, onDelete }: Readonly<{ action: AiAction; onClose: () => void; onDelete: () => void }>) {
+type DialogState =
+  | { kind: "create" }
+  | { kind: "edit"; action: AiAction }
+  | { kind: "delete"; action: AiAction }
+  | { kind: "browse" }
+  | { kind: "import" }
+  | { kind: "remove"; pack: ActionPack; count: number }
+  | null;
+
+function DeleteAction({
+  open,
+  action,
+  onClose,
+  onDelete
+}: Readonly<{
+  open: boolean;
+  action: AiAction | null;
+  onClose: () => void;
+  onDelete: () => void;
+}>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setBusy(false);
+    setError("");
+  });
 
   async function confirmDelete(complete: (callback: () => void) => void) {
+    if (!action) return;
     setBusy(true);
     try {
       await deleteAction(action.id);
@@ -50,16 +119,267 @@ function DeleteAction({ action, onClose, onDelete }: Readonly<{ action: AiAction
   }
 
   return (
-    <Dialog title="Delete action?" busy={busy} onClose={onClose}>
-      {(close, complete) => <>
-        <BodyText tone="muted" className={clsx("wrap-anywhere")}>“{action.name}” will be removed from the AI actions menu. Your pages aren’t affected.</BodyText>
-        {error && <BodyText role="alert" tone="error" className={clsx("mt-4")}>{error}</BodyText>}
-        <div className={clsx("mt-8 flex justify-end gap-3")}>
-          <button type="button" disabled={busy} onClick={close} className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}>Cancel</button>
-          <button type="button" disabled={busy} onClick={() => confirmDelete(complete)} className={clsx("rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white", "hover:bg-red-800")}>{busy ? "Deleting…" : "Delete action"}</button>
-        </div>
-      </>}
+    <Dialog open={open} title="Delete action?" busy={busy} onClose={onClose}>
+      {(close, complete) => (
+        <>
+          <BodyText tone="muted" className={clsx("wrap-anywhere")}>
+            “{action?.name}” will be removed from the AI actions menu. Your pages aren’t affected.
+          </BodyText>
+          {error && (
+            <BodyText role="alert" tone="error" className={clsx("mt-4")}>
+              {error}
+            </BodyText>
+          )}
+          <div className={clsx("mt-8 flex justify-end gap-3")}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={close}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => confirmDelete(complete)}
+              className={clsx(
+                "rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white",
+                "hover:bg-red-800"
+              )}
+            >
+              {busy ? "Deleting…" : "Delete action"}
+            </button>
+          </div>
+        </>
+      )}
     </Dialog>
+  );
+}
+
+function ImportPack({
+  open,
+  onClose,
+  onInstall
+}: Readonly<{
+  open: boolean;
+  onClose: () => void;
+  onInstall: () => void;
+}>) {
+  const [pack, setPack] = useState<PackContent | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useResetOnOpen(open, () => {
+    setPack(null);
+    setBusy(false);
+    setError("");
+  });
+
+  async function chooseFile() {
+    setError("");
+    try {
+      const [file] = await pickFiles({ extensions: ["json"] });
+      if (file) setPack(readPackFile(await file.text()));
+    } catch (error) {
+      setError(errorMessage(error, "Couldn’t open the file. Try again."));
+    }
+  }
+
+  let confirmLabel = "Choose file";
+  if (pack) confirmLabel = busy ? "Installing…" : "Install pack";
+
+  async function install(pack: PackContent, complete: (callback: () => void) => void) {
+    setBusy(true);
+    try {
+      await installPack(pack);
+      complete(onInstall);
+    } catch (error) {
+      setError(errorMessage(error, "Couldn’t install the pack. Try again."));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      title={pack ? `Install “${pack.name}”?` : "Import pack"}
+      busy={busy}
+      onClose={onClose}
+    >
+      {(close, complete) => (
+        <>
+          {pack ? (
+            <>
+              {pack.description && (
+                <BodyText tone="muted" className={clsx("mb-4 wrap-anywhere")}>
+                  {pack.description}
+                </BodyText>
+              )}
+              <Caption tone="muted" className={clsx("mb-3")}>
+                These {pack.actions.length} actions will be added to the AI actions menu, in their
+                own group:
+              </Caption>
+              <PackActionList actions={pack.actions} />
+            </>
+          ) : (
+            <div className={clsx("space-y-3")}>
+              <BodyText tone="muted">
+                A pack file holds a set of AI actions someone has shared. It ends in{" "}
+                <code className={clsx("text-ink")}>.mneme-pack.json</code>.
+              </BodyText>
+              <ol className={clsx("m-0 list-decimal space-y-1 pl-5 text-sm text-muted")}>
+                <li>
+                  To make one, choose <span className={clsx("text-ink")}>Export</span> next to a
+                  pack, or <span className={clsx("text-ink")}>Export my actions</span>, and send the
+                  saved file to someone.
+                </li>
+                <li>
+                  To use one you’ve received, choose the file below. You’ll see its actions before
+                  anything is added.
+                </li>
+                <li>
+                  Once installed, its actions appear as their own group in every page’s AI actions
+                  menu. You can edit, turn off or remove them here.
+                </li>
+              </ol>
+            </div>
+          )}
+          {error && (
+            <BodyText role="alert" tone="error" className={clsx("mt-4")}>
+              {error}
+            </BodyText>
+          )}
+          <div className={clsx("mt-8 flex justify-end gap-3")}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={close}
+              className={clsx(
+                "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                "hover:bg-ink/5"
+              )}
+            >
+              Cancel
+            </button>
+            {pack && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void chooseFile()}
+                className={clsx(
+                  "rounded-md border border-ink/15 px-4 py-2 text-sm",
+                  "hover:bg-ink/5"
+                )}
+              >
+                Choose another file
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void (pack ? install(pack, complete) : chooseFile())}
+              className={clsx(
+                "rounded-md bg-action px-4 py-2 text-sm font-medium text-on-action",
+                "hover:bg-action/85"
+              )}
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        </>
+      )}
+    </Dialog>
+  );
+}
+
+function ActionRows({
+  actions,
+  busy,
+  onReorder,
+  onToggle,
+  onEdit,
+  onDuplicate,
+  onDelete
+}: Readonly<{
+  actions: AiAction[];
+  busy: boolean;
+  onReorder: (next: AiAction[]) => void;
+  onToggle: (action: AiAction) => void;
+  onEdit: (action: AiAction) => void;
+  onDuplicate: (action: AiAction) => void;
+  onDelete: (action: AiAction) => void;
+}>) {
+  const reorderable = useDragReorder(actions, onReorder);
+  return (
+    <ol className={clsx("relative m-0 grid list-none gap-2 p-0")}>
+      {reorderable.items.map((action, index) => (
+        <li
+          key={action.id}
+          ref={reorderable.itemRef(action.id)}
+          className={clsx(
+            "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-ink/10 bg-surface py-2 pr-2 pl-1",
+            reorderable.draggingId === action.id && "relative z-10 border-ink/25 shadow-lg"
+          )}
+        >
+          <DragHandle name={action.name} {...reorderable.handleProps(action.id, index)} />
+          <input
+            type="checkbox"
+            data-tour="action-switch"
+            checked={action.enabled}
+            disabled={busy}
+            onChange={() => onToggle(action)}
+            aria-label={`Show “${action.name}” in the AI actions menu`}
+            className={clsx("size-4 shrink-0 accent-current")}
+          />
+          <span
+            className={clsx(
+              "flex min-w-0 flex-1 items-center gap-2",
+              !action.enabled && "text-muted"
+            )}
+          >
+            <ActionIcon icon={action.icon} />
+            <span className={clsx("min-w-0")}>
+              <BodyText as="span" tone="inherit" className={clsx("block truncate font-medium")}>
+                {action.name}
+              </BodyText>
+              <Caption as="span" tone="muted">
+                {scopeLabels[action.scope]} · {outputLabels[action.output]}
+                {!action.enabled && " · Hidden from menu"}
+              </Caption>
+            </span>
+          </span>
+          <span className={clsx("flex shrink-0 items-center gap-1")}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onEdit(action)}
+              className={rowAction("edit")}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onDuplicate(action)}
+              className={rowAction("create")}
+            >
+              Duplicate
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onDelete(action)}
+              className={rowAction("danger")}
+            >
+              Delete
+            </button>
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -67,33 +387,21 @@ export default function ActionSettings() {
   const section = useRef<HTMLElement>(null);
   const { hash } = useLocation();
   const [actions, setActions] = useState<AiAction[]>([]);
+  const [packs, setPacks] = useState<ActionPack[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [draggingId, setDraggingId] = useState<number | null>(null);
-  const drag = useRef<Drag | null>(null);
-  const cards = useRef(new Map<number, HTMLLIElement>());
-  const cardTops = useRef(new Map<number, number>());
-  const order = useRef<AiAction[]>([]);
-
-  useLayoutEffect(() => {
-    order.current = actions;
-    const animate = !matchMedia("(prefers-reduced-motion: reduce)").matches;
-    for (const [id, card] of cards.current) {
-      const top = card.offsetTop;
-      const previous = cardTops.current.get(id);
-      cardTops.current.set(id, top);
-      if (drag.current?.active && drag.current.id === id) followPointer();
-      else if (animate && previous !== undefined && previous !== top) {
-        card.animate([{ transform: `translateY(${previous - top}px)` }, { transform: "translateY(0)" }], reorderAnimation);
-      }
-    }
-  }, [actions]);
+  const dialogAction = useLastValue(dialog && "action" in dialog ? dialog.action : null);
+  const removing = useLastValue(dialog?.kind === "remove" ? dialog : null);
+  const [touring, setTouring] = useState(false);
 
   async function load() {
     try {
-      setActions(await getActions());
+      const [loadedActions, loadedPacks] = await Promise.all([getActions(), getPacks()]);
+      setActions(loadedActions);
+      setPacks(loadedPacks);
     } catch (error) {
       setError(errorMessage(error, "Couldn’t load your AI actions. Try again."));
     } finally {
@@ -101,100 +409,25 @@ export default function ActionSettings() {
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    claimSetting("tour.ai-actions", "seen")
+      .then((firstVisit) => setTouring(firstVisit))
+      .catch(() => {});
+  }, [loaded]);
 
   function reorder(next: AiAction[]) {
-    setActions(next);
+    const moved = new Set(next.map((action) => action.id));
+    setActions((current) => [...current.filter((action) => !moved.has(action.id)), ...next]);
     setError("");
     saveActionOrder(next).catch((error) => {
       setError(errorMessage(error, "Couldn’t save the new order. Try again."));
       void load();
     });
-  }
-
-  function moved(list: AiAction[], id: number, to: number) {
-    const next = list.filter((action) => action.id !== id);
-    next.splice(to, 0, list.find((action) => action.id === id)!);
-    return next;
-  }
-
-  function followPointer() {
-    const current = drag.current;
-    const card = current && cards.current.get(current.id);
-    if (!current || !card) return;
-    card.style.transform = `translateY(${current.startTop + current.lastY - current.startY - card.offsetTop}px)`;
-  }
-
-  function pointerDown(event: PointerEvent<HTMLButtonElement>, id: number) {
-    const card = cards.current.get(id);
-    if (event.button !== 0 || !card) return;
-    const move = (moveEvent: globalThis.PointerEvent) => pointerMove(moveEvent.clientY);
-    const drop = () => endDrag(true);
-    const cancel = () => endDrag(false);
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", drop);
-    window.addEventListener("pointercancel", cancel);
-    const detach = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", drop);
-      window.removeEventListener("pointercancel", cancel);
-    };
-    drag.current = { id, startY: event.clientY, lastY: event.clientY, startTop: card.offsetTop, saved: actions, active: false, detach };
-  }
-
-  function pointerMove(clientY: number) {
-    const current = drag.current;
-    const card = current && cards.current.get(current.id);
-    if (!current || !card) return;
-    current.lastY = clientY;
-    if (!current.active) {
-      if (Math.abs(current.lastY - current.startY) < dragThresholdPx) return;
-      current.active = true;
-      setDraggingId(current.id);
-      setDragCursor(true);
-    }
-    followPointer();
-    const center = current.startTop + current.lastY - current.startY + card.offsetHeight / 2;
-    const list = order.current;
-    const target = list.filter((action) => {
-      const other = cards.current.get(action.id);
-      return action.id !== current.id && other !== undefined && other.offsetTop + other.offsetHeight / 2 < center;
-    }).length;
-    if (target !== list.findIndex((action) => action.id === current.id)) setActions(moved(list, current.id, target));
-  }
-
-  function endDrag(keep: boolean) {
-    const current = drag.current;
-    drag.current = null;
-    current?.detach();
-    if (!current?.active) return;
-    setDraggingId(null);
-    setDragCursor(false);
-    const card = cards.current.get(current.id);
-    if (card) {
-      const from = card.style.transform;
-      card.style.transform = "";
-      if (from && !matchMedia("(prefers-reduced-motion: reduce)").matches) card.animate([{ transform: from }, { transform: "translateY(0)" }], reorderAnimation);
-    }
-    if (!keep) setActions(current.saved);
-    else if (order.current.some((action, index) => action.id !== current.saved[index]?.id)) reorder(order.current);
-  }
-
-  useEffect(() => () => {
-    drag.current?.detach();
-    setDragCursor(false);
-  }, []);
-
-  function moveWithKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    if (event.key === "Escape" && drag.current?.active) {
-      event.preventDefault();
-      endDrag(false);
-      return;
-    }
-    const target = { ArrowUp: index - 1, ArrowDown: index + 1 }[event.key];
-    if (target === undefined) return;
-    event.preventDefault();
-    if (target >= 0 && target < actions.length) reorder(moved(actions, actions[index].id, target));
   }
 
   // The AI actions menu's "Manage actions" link lands here.
@@ -205,6 +438,7 @@ export default function ActionSettings() {
   async function change(operation: () => Promise<void>, failure: string) {
     setBusy(true);
     setError("");
+    setNotice("");
     try {
       await operation();
       await load();
@@ -215,47 +449,230 @@ export default function ActionSettings() {
     }
   }
 
+  async function saveExport(task: () => Promise<string | null>) {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const name = await task();
+      if (name) setNotice(`Saved as ${name}.`);
+    } catch (error) {
+      if ((error as { code?: string } | null)?.code !== "UNAVAILABLE")
+        setError(errorMessage(error, "Couldn’t save the file. Try again."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const rowHandlers = {
+    busy,
+    onReorder: reorder,
+    onToggle: (action: AiAction) =>
+      change(
+        () => setActionEnabled(action.id, !action.enabled),
+        "Couldn’t change the action. Try again."
+      ),
+    onEdit: (action: AiAction) => setDialog({ kind: "edit", action }),
+    onDuplicate: (action: AiAction) =>
+      change(() => duplicateAction(action), "Couldn’t duplicate the action. Try again."),
+    onDelete: (action: AiAction) => setDialog({ kind: "delete", action })
+  };
+
+  function closeAndReload() {
+    setDialog(null);
+    void load();
+  }
+
   return (
-    <section ref={section} id="ai-actions" aria-labelledby="ai-actions-title" className={clsx("grid gap-6 border-t border-ink/10 py-6 @min-3xl:grid-cols-3")}>
+    <section
+      ref={section}
+      id="ai-actions"
+      aria-labelledby="ai-actions-title"
+      className={clsx("grid gap-6 border-t border-ink/10 py-6 @min-3xl:grid-cols-3")}
+    >
       <div>
         <SectionTitle id="ai-actions-title">AI actions</SectionTitle>
-        <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>The actions in a page’s AI actions menu. Edit the defaults or add your own.</BodyText>
+        <BodyText tone="muted" className={clsx("mt-2 max-w-xs")}>
+          The actions in a page’s AI actions menu. Edit the defaults, add your own, or install a
+          pack for your subject.
+        </BodyText>
+        <button
+          type="button"
+          data-tour="show-tour"
+          disabled={!loaded}
+          onClick={() => setTouring(true)}
+          className={clsx("mt-3 text-sm text-muted underline underline-offset-4", "hover:text-ink")}
+        >
+          Show me how
+        </button>
       </div>
       <div className={clsx("min-w-0 w-full max-w-xl @min-3xl:col-span-2")}>
-        {!loaded && <BodyText role="status" tone="muted">Loading actions…</BodyText>}
-        {loaded && actions.length === 0 && <BodyText tone="muted">No actions yet. Create one to add it to every page’s AI actions menu.</BodyText>}
-        <ol className={clsx("relative m-0 grid list-none gap-2 p-0")}>
-          {actions.map((action, index) => (
-            <li key={action.id} ref={(card) => { if (card) cards.current.set(action.id, card); else cards.current.delete(action.id); }}
-              className={clsx("flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-ink/10 bg-surface py-2 pr-2 pl-1", draggingId === action.id && "relative z-10 border-ink/25 shadow-lg")}>
-              <button type="button" onPointerDown={(event) => pointerDown(event, action.id)} onKeyDown={(event) => moveWithKeys(event, index)}
-                aria-label={`Reorder ${action.name}. Drag, or use the up and down arrow keys.`} title="Drag to reorder, or use ↑ ↓"
-                className={clsx("flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted", "hover:bg-ink/5 hover:text-ink active:cursor-grabbing")}>
-                <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.3" /><circle cx="9" cy="3" r="1.3" /><circle cx="3" cy="8" r="1.3" /><circle cx="9" cy="8" r="1.3" /><circle cx="3" cy="13" r="1.3" /><circle cx="9" cy="13" r="1.3" /></svg>
-              </button>
-              <span className={clsx("flex min-w-0 flex-1 items-center gap-2")}>
-                <ActionIcon icon={action.icon} />
-                <span className={clsx("min-w-0")}>
-                  <BodyText as="span" className={clsx("block truncate font-medium")}>{action.name}</BodyText>
-                  <Caption as="span" tone="muted">{scopeLabels[action.scope]} · {outputLabels[action.output]}</Caption>
-                </span>
-              </span>
-              <span className={clsx("flex shrink-0 items-center gap-1")}>
-                <button type="button" disabled={busy} onClick={() => setDialog({ kind: "edit", action })} className={rowAction("edit")}>Edit</button>
-                <button type="button" disabled={busy} onClick={() => change(() => duplicateAction(action), "Couldn’t duplicate the action. Try again.")} className={rowAction("create")}>Duplicate</button>
-                <button type="button" disabled={busy} onClick={() => setDialog({ kind: "delete", action })} className={rowAction("danger")}>Delete</button>
-              </span>
-            </li>
-          ))}
-        </ol>
-        <button type="button" disabled={busy} onClick={() => setDialog({ kind: "create" })} className={clsx("mt-4 rounded-md border border-ink/15 px-4 py-2 text-sm font-medium", "hover:bg-ink/5")}>New action</button>
-        <div className={clsx("mt-2 min-h-6")}>
-          {error && <BodyText role="alert" tone="error">{error}</BodyText>}
+        {!loaded && (
+          <BodyText role="status" tone="muted">
+            Loading actions…
+          </BodyText>
+        )}
+        {loaded && actions.length === 0 && (
+          <BodyText tone="muted">
+            No actions yet. Create one to add it to every page’s AI actions menu.
+          </BodyText>
+        )}
+        <ActionRows actions={actions.filter((action) => action.packId === null)} {...rowHandlers} />
+        <div className={clsx("mt-4 flex flex-wrap items-center gap-2")}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setDialog({ kind: "create" })}
+            className={clsx(
+              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
+              "hover:bg-ink/5"
+            )}
+          >
+            New action
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            data-tour="browse-packs"
+            onClick={() => setDialog({ kind: "browse" })}
+            className={clsx("rounded-md border border-ink/15 px-4 py-2 text-sm", "hover:bg-ink/5")}
+          >
+            Browse packs
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            data-tour="import-pack"
+            onClick={() => setDialog({ kind: "import" })}
+            className={clsx(
+              "px-2 py-2 text-sm text-muted underline underline-offset-4",
+              "hover:text-ink"
+            )}
+          >
+            Import pack
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            data-tour="export-actions"
+            onClick={() => void saveExport(exportStandaloneActions)}
+            className={clsx(
+              "px-2 py-2 text-sm text-muted underline underline-offset-4",
+              "hover:text-ink"
+            )}
+          >
+            Export my actions
+          </button>
         </div>
+        <div className={clsx("mt-2 min-h-6")}>
+          {error && (
+            <BodyText role="alert" tone="error">
+              {error}
+            </BodyText>
+          )}
+          {notice && (
+            <BodyText role="status" tone="muted">
+              {notice}
+            </BodyText>
+          )}
+        </div>
+        {packs.map((pack) => {
+          const packActions = actions.filter((action) => action.packId === pack.id);
+          return (
+            <section
+              key={pack.id}
+              aria-label={pack.name}
+              className={clsx("mt-6 border-t border-ink/10 pt-6")}
+            >
+              <div
+                data-tour="installed-pack"
+                className={clsx("mb-3 flex flex-wrap items-start justify-between gap-2")}
+              >
+                <div className={clsx("min-w-0")}>
+                  <BodyText as="h3" className={clsx("font-medium wrap-anywhere")}>
+                    {pack.name}
+                  </BodyText>
+                  {pack.description && (
+                    <Caption tone="muted" className={clsx("wrap-anywhere")}>
+                      {pack.description}
+                    </Caption>
+                  )}
+                </div>
+                <span className={clsx("flex shrink-0 items-center gap-1")}>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void saveExport(() => exportPack(pack))}
+                    className={rowAction()}
+                  >
+                    Export
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      setDialog({
+                        kind: "remove",
+                        pack,
+                        count: packActions.length
+                      })
+                    }
+                    className={rowAction("danger")}
+                  >
+                    Remove pack
+                  </button>
+                </span>
+              </div>
+              <ActionRows actions={packActions} {...rowHandlers} />
+            </section>
+          );
+        })}
       </div>
-      {dialog?.kind === "create" && <ActionForm onClose={() => setDialog(null)} onSave={() => { setDialog(null); void load(); }} />}
-      {dialog?.kind === "edit" && <ActionForm action={dialog.action} onClose={() => setDialog(null)} onSave={() => { setDialog(null); void load(); }} />}
-      {dialog?.kind === "delete" && <DeleteAction action={dialog.action} onClose={() => setDialog(null)} onDelete={() => { setDialog(null); void load(); }} />}
+      <ActionForm
+        open={dialog?.kind === "create"}
+        onClose={() => setDialog(null)}
+        onSave={closeAndReload}
+      />
+      <ActionForm
+        open={dialog?.kind === "edit"}
+        action={dialogAction}
+        onClose={() => setDialog(null)}
+        onSave={closeAndReload}
+      />
+      <DeleteAction
+        open={dialog?.kind === "delete"}
+        action={dialogAction}
+        onClose={() => setDialog(null)}
+        onDelete={closeAndReload}
+      />
+      <PackBrowser
+        open={dialog?.kind === "browse"}
+        installedKeys={new Set(packs.flatMap((pack) => (pack.catalogKey ? [pack.catalogKey] : [])))}
+        onInstalled={() => void load()}
+        onClose={() => setDialog(null)}
+      />
+      <ImportPack
+        open={dialog?.kind === "import"}
+        onClose={() => setDialog(null)}
+        onInstall={closeAndReload}
+      />
+      {touring && <Tour steps={tourSteps} onClose={() => setTouring(false)} />}
+      <ConfirmDeleteDialog
+        open={dialog?.kind === "remove"}
+        title="Remove pack?"
+        message={
+          removing
+            ? `“${removing.pack.name}” and its ${removing.count} actions will be removed from the AI actions menu. Your pages aren’t affected.`
+            : ""
+        }
+        confirmLabel="Remove pack"
+        failure="Couldn’t remove the pack. Try again."
+        onConfirm={async () => {
+          if (removing) await removePack(removing.pack.id);
+        }}
+        onClose={() => setDialog(null)}
+        onDeleted={closeAndReload}
+      />
     </section>
   );
 }

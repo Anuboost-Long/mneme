@@ -1,24 +1,39 @@
+import type { AgentConnection } from "@/features/agent-chat/lib/connection/types";
+import { acceptsImages } from "@/features/agent-chat/lib/runTurn";
+import { buildActionContext } from "@/features/ai-context/lib/builder";
+import type { AiContext, ContextLayer } from "@/features/ai-context/lib/types";
+import { getActiveProfile } from "@/features/ai-profiles/lib/profile/actions";
+import { createPage } from "@/features/courses/lib/page/actions";
+import { PageType } from "@/features/courses/lib/page/types";
+import { errorMessage } from "@/shared/lib/errorMessage";
+import { extractImages } from "@/shared/lib/htmlImages";
+import { getHTMLFromFragment, type Editor, type EditorEvents } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getHTMLFromFragment, type Editor, type EditorEvents } from "@tiptap/react";
-import type { AgentConnection } from "../../agent-chat/lib/connections";
-import { createPage, PageType } from "../../courses/lib/pages";
-import { getActiveProfile } from "../../ai-profiles/lib/profiles";
-import { errorMessage } from "../../../shared/lib/errorMessage";
-import { ActionOutput, ActionScope, type AiAction } from "./actions";
+
+import { ActionOutput, ActionScope, type AiAction } from "./action/types";
 import { compactHtml, gatherContext } from "./context";
 import { markdownToEditorHtml } from "./editorHtml";
 import { runAction, type RunScope } from "./runAction";
 
 // Where the editor's page sits — module/course actions read their pages
 // from here, and "New page" output is created in this module.
-export type ActionLocation = { courseId: number; courseName: string; moduleId: number; moduleName: string; pageTitle: string; aiProfileId: number | null };
+export type ActionLocation = {
+  courseId: number;
+  courseName: string;
+  moduleId: number;
+  moduleName: string;
+  pageId: number;
+  pageTitle: string;
+  aiProfileId: number | null;
+};
 
 export type ActionRun = {
   action: AiAction;
   scope: RunScope;
   placement: Placement;
   text: string;
+  context?: AiContext;
   status: "running" | "done" | "error";
   error?: string;
 };
@@ -29,16 +44,36 @@ const undoNoticeMs = 10_000;
 
 const emptyMessages: Record<RunScope, string> = {
   selection: "",
+  image: "",
   page: "",
   module: "No pages in this module match this action’s page types.",
-  course: "No pages in this course match this action’s page types.",
+  course: "No pages in this course match this action’s page types."
 };
+
+const subjectLabels: Record<RunScope, string> = {
+  selection: "Selected text",
+  image: "The picture",
+  page: "The whole page",
+  module: "Every page in the module",
+  course: "Every page in the course"
+};
+
+function subjectLayer(scope: RunScope, html: string): ContextLayer {
+  const text = new DOMParser().parseFromString(html, "text/html").body.textContent ?? "";
+  const count = text.trim().split(/\s+/).filter(Boolean).length;
+  const words =
+    scope === "image" ? "" : `, ${count.toLocaleString()} ${count === 1 ? "word" : "words"}`;
+  return { label: "Working on", detail: `${subjectLabels[scope]}${words}`, chars: html.length };
+}
 
 function runScope(action: AiAction, hasSelection: boolean): RunScope {
   switch (action.scope) {
-    case ActionScope.Module: return "module";
-    case ActionScope.Course: return "course";
-    default: return hasSelection ? "selection" : "page";
+    case ActionScope.Module:
+      return "module";
+    case ActionScope.Course:
+      return "course";
+    default:
+      return hasSelection ? "selection" : "page";
   }
 }
 
@@ -57,7 +92,10 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
 
   useEffect(() => {
     function mapRange({ transaction }: EditorEvents["transaction"]) {
-      range.current = { from: transaction.mapping.map(range.current.from), to: transaction.mapping.map(range.current.to) };
+      range.current = {
+        from: transaction.mapping.map(range.current.from),
+        to: transaction.mapping.map(range.current.to)
+      };
       if (transaction.docChanged && editor.state.doc !== editedDoc.current) setUndoNotice(null);
     }
     function placeCursor() {
@@ -101,25 +139,36 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
   }
 
   async function createResultPage(action: AiAction, scope: RunScope, text: string) {
-    const subject = { selection: location.pageTitle, page: location.pageTitle, module: location.moduleName, course: location.courseName }[scope];
-    const page = await createPage(location.moduleId, { title: `${action.name}: ${subject}`, type: PageType.Notes, content: markdownToEditorHtml(text) });
+    const subject = {
+      selection: location.pageTitle,
+      image: location.pageTitle,
+      page: location.pageTitle,
+      module: location.moduleName,
+      course: location.courseName
+    }[scope];
+    const page = await createPage(location.moduleId, {
+      title: `${action.name}: ${subject}`,
+      type: PageType.Notes,
+      content: markdownToEditorHtml(text)
+    });
     navigate(`/courses/${location.courseId}/modules/${location.moduleId}/pages/${page.id}`);
   }
 
-  async function start(connection: AgentConnection, action: AiAction) {
+  async function start(connection: AgentConnection, action: AiAction, onImage = false) {
     void kill.current?.();
     kill.current = null;
     const id = ++runId.current;
     const update = (patch: (current: ActionRun) => ActionRun) => {
       if (runId.current === id) setRun((current) => current && patch(current));
     };
-    const fail = (message: string) => update((current) => ({ ...current, status: "error", error: message }));
+    const fail = (message: string) =>
+      update((current) => ({ ...current, status: "error", error: message }));
 
     const { selection } = editor.state;
     let placement: Placement = "end";
     if (!selection.empty) placement = "selection";
     else if (cursorPlaced.current) placement = "cursor";
-    const scope = runScope(action, !selection.empty);
+    const scope = onImage ? "image" : runScope(action, !selection.empty);
     range.current = { from: selection.from, to: selection.to };
     setUndoNotice(null);
     setRun({ action, scope, placement, text: "", status: "running" });
@@ -136,7 +185,12 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
             await createResultPage(action, scope, text);
             discard();
           } catch (error) {
-            update((current) => ({ ...current, text, status: "error", error: errorMessage(error, "Couldn’t create the new page. Copy the result instead.") }));
+            update((current) => ({
+              ...current,
+              text,
+              status: "error",
+              error: errorMessage(error, "Couldn’t create the new page. Copy the result instead.")
+            }));
           }
           break;
         default:
@@ -147,22 +201,61 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
     try {
       let html: string;
       if (scope === "module" || scope === "course") html = await gatherContext(action, location);
-      else html = compactHtml(scope === "selection" ? getHTMLFromFragment(selection.content().content, editor.schema) : editor.getHTML());
-      if (!html) { fail(emptyMessages[scope]); return; }
+      else
+        html = compactHtml(
+          scope === "selection" || scope === "image"
+            ? getHTMLFromFragment(selection.content().content, editor.schema)
+            : editor.getHTML()
+        );
+      if (!html) {
+        fail(emptyMessages[scope]);
+        return;
+      }
       const profile = await getActiveProfile(location.courseId);
+      const content = await extractImages(html);
+      const context = await buildActionContext(
+        location,
+        scope,
+        content.images,
+        acceptsImages(connection),
+        profile
+      );
       if (runId.current !== id) return;
+      update((current) => ({
+        ...current,
+        context: { ...context, layers: [subjectLayer(scope, content.html), ...context.layers] }
+      }));
 
-      const handle = await runAction(connection, action, scope, html, profile, (event) => {
-        switch (event.type) {
-          case "text": update((current) => ({ ...current, text: current.text + event.text })); break;
-          case "done": void finish(event.text); break;
-          case "error": fail(event.message); break;
+      const handle = await runAction(
+        connection,
+        action,
+        scope,
+        content,
+        context.text,
+        profile,
+        (event) => {
+          switch (event.type) {
+            case "text":
+              update((current) => ({ ...current, text: current.text + event.text }));
+              break;
+            case "done":
+              void finish(event.text);
+              break;
+            case "error":
+              fail(event.message);
+              break;
+          }
         }
-      });
+      );
       if (runId.current === id) kill.current = handle.kill;
       else void handle.kill();
     } catch (error) {
-      fail(errorMessage(error, `Couldn’t start ${connection.name}. Check it’s installed and try again.`));
+      fail(
+        errorMessage(
+          error,
+          `Couldn’t start ${connection.name}. Check it’s installed and try again.`
+        )
+      );
     }
   }
 
@@ -185,14 +278,21 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
 
   function addSection() {
     if (!run) return;
-    const text = run.text.trimStart().startsWith("#") ? run.text : `## ${run.action.name}\n\n${run.text}`;
+    const text = run.text.trimStart().startsWith("#")
+      ? run.text
+      : `## ${run.action.name}\n\n${run.text}`;
     insertResult(text, run.placement, `${run.action.name} added as a section.`);
     discard();
   }
 
   function replaceSelection() {
     if (!run) return;
-    edit(range.current.from, range.current.to, markdownToEditorHtml(run.text), "Selection replaced.");
+    edit(
+      range.current.from,
+      range.current.to,
+      markdownToEditorHtml(run.text),
+      "Selection replaced."
+    );
     discard();
   }
 
@@ -202,9 +302,25 @@ export function useAiAction(editor: Editor, location: ActionLocation) {
       await createResultPage(run.action, run.scope, run.text);
       discard();
     } catch (error) {
-      setRun({ ...run, status: "error", error: errorMessage(error, "Couldn’t create the new page. Copy the result instead.") });
+      setRun({
+        ...run,
+        status: "error",
+        error: errorMessage(error, "Couldn’t create the new page. Copy the result instead.")
+      });
     }
   }
 
-  return { run, start, stop, discard, insertBelow, addSection, replaceSelection, saveAsPage, undoNotice, undo, dismissUndo: () => setUndoNotice(null) };
+  return {
+    run,
+    start,
+    stop,
+    discard,
+    insertBelow,
+    addSection,
+    replaceSelection,
+    saveAsPage,
+    undoNotice,
+    undo,
+    dismissUndo: () => setUndoNotice(null)
+  };
 }

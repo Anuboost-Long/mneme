@@ -25,6 +25,7 @@ export class AgentUsage {
   conversation_id!: number | null;
 
   @Column({ defaultSql: "datetime('now')" })
+  @Index({ name: "agent_usage_invoked" })
   invoked_at!: string;
 
   duration_ms!: number | null;

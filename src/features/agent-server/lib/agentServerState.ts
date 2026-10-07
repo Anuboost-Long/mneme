@@ -1,9 +1,14 @@
+import { errorMessage } from "@/shared/lib/errorMessage";
 import { desktop, type ChainError } from "@chain/sdk";
+
 import { handleMcpRequest } from "./mcp";
-import { errorMessage } from "../../../shared/lib/errorMessage";
 
 export type AgentServerStatus = "stopped" | "starting" | "running" | "stopping";
-export type AgentServerState = { status: AgentServerStatus; port: number | null; error: string | null };
+export type AgentServerState = {
+  status: AgentServerStatus;
+  port: number | null;
+  error: string | null;
+};
 
 // Module-level, not component state: desktop.agentServer allows only one
 // server per app run, so its running/port status is a singleton that must

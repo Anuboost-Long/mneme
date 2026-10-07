@@ -5,13 +5,19 @@ import { Typography } from "./Typography";
 
 export type SelectOption<T extends string | number> = { value: T; label: string };
 
-export default function Select<T extends string | number>({ id, label, value, onChange, options, disabled }: Readonly<{
+// `compact` fits toolbars and control strips; `hideLabel` keeps the label
+// for screen readers only, where the surrounding controls already say
+// what the choice is.
+export default function Select<T extends string | number>({ id, label, value, onChange, options, disabled, compact = false, hideLabel = false, className }: Readonly<{
   id?: string;
   label: string;
   value: T;
   onChange: (value: T) => void;
   options: readonly SelectOption<T>[];
   disabled?: boolean;
+  compact?: boolean;
+  hideLabel?: boolean;
+  className?: string;
 }>) {
   const generatedId = useId();
   const selectId = id ?? generatedId;
@@ -102,9 +108,11 @@ export default function Select<T extends string | number>({ id, label, value, on
   const current = options.find((option) => option.value === value);
 
   return (
-    <div>
-      <div className={clsx("space-y-2")}>
-        <label htmlFor={selectId} className={clsx("block")}><Typography as="span" variant="label">{label}</Typography></label>
+    <div className={className}>
+      <div className={clsx(compact ? "space-y-1" : "space-y-2")}>
+        <label htmlFor={selectId} className={clsx(hideLabel ? "sr-only" : "block")}>
+          {compact ? <span className={clsx("text-xs font-medium text-muted")}>{label}</span> : <Typography as="span" variant="label">{label}</Typography>}
+        </label>
         <button
           ref={trigger}
           id={selectId}
@@ -116,9 +124,9 @@ export default function Select<T extends string | number>({ id, label, value, on
           onClick={() => setOpen((isOpen) => !isOpen)}
           onKeyDown={handleKeyDown}
           className={clsx(
-            "flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md",
+            "flex w-full min-w-0 items-center justify-between gap-2 rounded-md",
             "bg-surface border border-ink/20",
-            "px-3 py-2.5 text-left text-sm font-normal text-ink",
+            compact ? "h-8 px-2 text-left text-sm text-ink" : "h-11 px-3 py-2.5 text-left text-sm font-normal text-ink",
             "focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ink",
             disabled && "opacity-50",
           )}

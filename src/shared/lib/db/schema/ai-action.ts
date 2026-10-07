@@ -1,4 +1,6 @@
-import { Column, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Column, ForeignKey, Index, PrimaryKey, Table } from "@chain/sdk/schema";
+
+import { ActionPack } from "./action-pack";
 
 @Table()
 export class AiAction {
@@ -27,6 +29,13 @@ export class AiAction {
   output!: number;
 
   page_types!: string | null;
+
+  @Index({ name: "ai_action_pack" })
+  @ForeignKey(() => ActionPack, { onDelete: "cascade" })
+  pack_id!: number | null;
+
+  @Column({ default: 1 })
+  enabled!: number;
 }
 
 // The name the rest of the app uses for a row of this table.

@@ -1,0 +1,23 @@
+import { apiGet } from "./api";
+
+export const MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024;
+
+// A picture from the web, fetched natively (the webview's own fetch is
+// blocked cross-site). Null when it isn't reachable or isn't an image:
+// no cookies go with it, so a login-walled site answers with an error or
+// a sign-in page, which is ignored.
+export async function downloadImage(url: string): Promise<File | null> {
+  try {
+    const response = await apiGet<Uint8Array>(url, { responseType: "bytes", maxBytes: MAX_DOWNLOAD_BYTES });
+    return imageFile(response.data, response.headers["content-type"], url);
+  } catch {
+    return null;
+  }
+}
+
+export function imageFile(bytes: Uint8Array, contentType: string | undefined, url: string): File | null {
+  const type = contentType?.split(";")[0].trim() ?? "";
+  if (!type.startsWith("image/")) return null;
+  const name = new URL(url).pathname.split("/").pop() || "image";
+  return new File([new Uint8Array(bytes)], name, { type });
+}

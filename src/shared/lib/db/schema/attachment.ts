@@ -1,10 +1,11 @@
-import { Column, PrimaryKey, Table } from "@chain/sdk/schema";
+import { Column, Index, PrimaryKey, Table } from "@chain/sdk/schema";
 
 @Table()
 export class Attachment {
   @PrimaryKey({ autoIncrement: true })
   id!: number;
 
+  @Index({ name: "attachment_page" })
   page_id!: number;
 
   file_name!: string;
@@ -13,8 +14,13 @@ export class Attachment {
 
   mime_type!: string | null;
 
+  size_bytes!: number | null;
+
   @Column({ defaultSql: "datetime('now')" })
   created_at!: string;
+
+  @Column({ defaultSql: "datetime('now')" })
+  updated_at!: string;
 }
 
 // The name the rest of the app uses for a row of this table.

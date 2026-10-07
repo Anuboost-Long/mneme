@@ -56,15 +56,16 @@ get every action's content on stdin; the cap, renamed
   action and scope, streams the output (rendered Markdown), and has a
   Stop button while it runs.
 - **Output.**
-  - *Insert below*: after the block holding the end of the selection,
+  - _Insert below_: after the block holding the end of the selection,
     or at the end of the page for whole-page actions.
-  - *Replace selection*: only for selection actions.
-  - *Copy* and *Discard*.
+  - _Replace selection_: only for selection actions.
+  - _Copy_ and _Discard_.
 
   Insert and replace are normal editor transactions, so Cmd+Z undoes
   them and autosave picks them up. The selection range captured when
   the action started is mapped through every later edit, so typing
   during a run doesn't make the insert land in the wrong place.
+
 - **Usage.** Each run is recorded in `agent_usage` with
   `conversation_id = NULL`, like any other invocation.
 
@@ -98,7 +99,7 @@ because nothing reads it yet.
 
 ## Code layout
 
-- `src/features/ai-actions/lib/actions.ts`: `getActions()`, and the saved
+- `src/features/ai-actions/lib/action/`: `getActions()`, and the saved
   connection choice (`getActionConnectionId`/`setActionConnectionId`).
 - `src/features/ai-actions/lib/runAction.ts`: builds the prompt from the
   action and the context HTML, enforces `MAX_ARGV_CONTEXT_CHARS`, and runs it

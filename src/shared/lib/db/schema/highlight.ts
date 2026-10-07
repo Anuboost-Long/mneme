@@ -20,6 +20,7 @@ export class Highlight {
   position!: number;
 
   @Column({ defaultSql: "datetime('now')" })
+  @Index({ name: "highlight_created" })
   created_at!: string;
 
   orphaned_at!: string | null;

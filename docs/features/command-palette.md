@@ -28,8 +28,8 @@ doesn't open over another dialog.
 - `src/shared/lib/commandSources.ts`: features register commands while
   they're on screen. `AiActions.tsx` registers its page's actions; the
   palette loads all sources each time it opens.
-- `searchModuleLinks()` (`courses/lib/modules.ts`) and `searchPageLinks()`
-  (`courses/lib/pages.ts`): joined, limited queries with `LIKE` escaping.
+- `searchModuleLinks()` (`courses/lib/module/`) and `searchPageLinks()`
+  (`courses/lib/page/`): joined, limited queries with `LIKE` escaping.
 
 ## Not included
 

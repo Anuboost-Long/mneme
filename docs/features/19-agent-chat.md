@@ -75,17 +75,17 @@ function detectAgents(): Promise<DetectedAgent[]>;
 
 // src/features/agent-chat/lib/runTurn.ts
 type TurnEvent =
-  | { type: "text"; text: string }   // one incremental chunk of assistant text
-  | { type: "done"; text: string }   // full assistant text, turn complete
+  | { type: "text"; text: string } // one incremental chunk of assistant text
+  | { type: "done"; text: string } // full assistant text, turn complete
   | { type: "tool"; tool: { id: string; name: string; input: string; result?: string } }
   | { type: "error"; message: string };
 
 function runTurn(
-  connection: AgentConnection,   // from connections.ts; "claude" and "custom" are supported
+  connection: AgentConnection, // from connections.ts; "claude" and "custom" are supported
   conversationId: number,
-  sessionId: string | null,      // conversation.external_session_id, or null for a fresh turn
+  sessionId: string | null, // conversation.external_session_id, or null for a fresh turn
   message: string,
-  onEvent: (event: TurnEvent) => void,
+  onEvent: (event: TurnEvent) => void
 ): Promise<{ kill: () => Promise<void> }>;
 ```
 
@@ -215,7 +215,7 @@ migration when `transcriptUsage.ts` actually gets built, not before.
 
 **Implemented, don't rebuild:**
 
-- `src/features/agent-chat/lib/connections.ts`, `conversations.ts`,
+- `src/features/agent-chat/lib/connection/`, `conversations.ts`,
   `messages.ts`, `usage.ts` — CRUD + retention cleanup, already tested.
 - `src/features/agent-chat/lib/presets.ts` — Claude/Codex/Gemini preset
   metadata.
@@ -239,7 +239,7 @@ migration when `transcriptUsage.ts` actually gets built, not before.
   `SettingsPage.tsx`) implements the pre-correction flow — configure a
   connection in Settings before you can chat. Replace it with the picker
   described below. `connections.ts`'s functions underneath are fine and
-  reused by the picker's "Add custom agent" form — only the *page* that
+  reused by the picker's "Add custom agent" form — only the _page_ that
   calls them is wrong.
 
 **Build:**
@@ -360,7 +360,6 @@ transcript/tool history, retention cleanup on startup, storage failure and
 retry, and light/dark mobile layouts. Screenshots and the local browser check
 are in the ignored `.local-checks/agent-chat*` files.
 
-
 ## Implementation progress — picker and live chat UI
 
 - Replaced Settings connection CRUD with `AgentPicker`, opened by **New chat**.
@@ -392,7 +391,6 @@ Markdown safety, tool history, resume, navigation while generating, cancellation
 reload, retained settings, keyboard operation, and mobile layout. Settled dialog
 and transcript screenshots are in `.local-checks/agent-picker-*` and
 `.local-checks/agent-chat-live-*`. No standalone lint command is configured.
-
 
 Native UI verification also passed through the running app's dev inspector:
 installed-agent detection matched this machine; Claude streamed a real reply,

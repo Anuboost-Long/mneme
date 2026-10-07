@@ -27,7 +27,7 @@ This is the scaffold produced by `chain init`:
   should almost never need to open it (the real native logic lives in
   `chain-sdk`'s `crates/core`). `chain dev`/`chain build` point Tauri at
   it via the `TAURI_APP_PATH` env var, so running `tauri dev`/`tauri
-  build` directly (instead of through `chain`) won't find it.
+build` directly (instead of through `chain`) won't find it.
 - Tailwind CSS v4, wired through `@tailwindcss/vite` in `vite.config.ts`.
   `src/App.css` defines the `chain-navy`/`chain-lime`/`chain-cream` theme
   tokens (matched to `asset/app-icon.svg`) via a Tailwind `@theme` block —
@@ -35,6 +35,11 @@ This is the scaffold produced by `chain init`:
   don't reach for arbitrary-value brackets or a different palette without
   a reason. Add custom CSS there only when a utility class genuinely
   can't express it.
+- Imports from another folder start at `src/` with `@/`
+  (`@/shared/ui/Select`, `@/features/courses/lib/page/actions`); imports
+  in the same folder stay `./`. The alias is set in three places that
+  must agree: `tsconfig.json` (`paths`), `vite.config.ts`
+  (`resolve.alias`) and `tests/support/hooks.mjs` (the test loader).
 - Routing via `react-router-dom`'s data router, split into a husk/content
   layering (mirrors Lazify's own renderer structure):
   - `src/router.tsx` — `createBrowserRouter` route tree. Add new
@@ -42,8 +47,8 @@ This is the scaffold produced by `chain init`:
     routes genuinely share layout beyond `RootLayout`.
   - `src/routes/` — one husk per route (`HomeRoute.tsx`, `CourseRoute.tsx`,
     ...). A route component owns the wiring only: `useParams`, data
-    fetching, and the `useCourses()` outlet context, passed down as plain
-    props. It renders nothing but its feature's page component.
+    fetching, and app-wide state such as `useCourses()`, passed down as
+    plain props. It renders nothing but its feature's page component.
   - `src/features/<feature>/pages/` — the actual UI (`HomePage.tsx`,
     `CoursePage.tsx`, ...), receiving data/callbacks as props from its
     route. A feature can own several nested pages (e.g. `courses` spans
@@ -53,10 +58,23 @@ This is the scaffold produced by `chain init`:
   - `src/shared/ui/`, `src/shared/lib/`, `src/shared/providers/` — pieces
     used across more than one feature (`Typography`, `db/`,
     `ThemeProvider`, ...).
+  - `src/shared/lib/api.ts` — the only caller of `desktop.http`. Features
+    use `apiGet`/`apiRequest`, which reject with an `ApiError` (readable
+    `message`, plus `code` and `status`). App-wide request defaults, such
+    as headers, belong there. `tests/conventions.test.mjs` fails if any
+    other file calls `desktop.http`.
   - `src/app/` — the app shell's own pieces (`NavBar`, `Sidebar`), used
     only by `src/layouts/RootLayout.tsx`.
-  - `src/layouts/RootLayout.tsx` — shared chrome (`NavBar` + `<Outlet/>`)
-    and the `useCourses()` outlet-context hook routes pull course data from.
+  - `src/layouts/RootLayout.tsx` — shared chrome (`NavBar` + `<Outlet/>`).
+    It opens the database, loads the course list into its atom, and shows
+    the loading/error screen.
+  - App-wide state uses Jotai atoms, kept in the owning feature's
+    `lib/<feature>State.ts` with a hook in front of them (e.g.
+    `features/courses/lib/coursesState.ts` → `useCourses()`). Use an atom
+    only for state that more than one screen reads or changes; state that
+    belongs to one component stays local, and the database stays the source
+    of truth. After changing data behind a screen's back, reload the atom
+    (`refresh()`) rather than patching it by hand.
   - `src/App.tsx` just renders `<RouterProvider router={router} />`;
     `src/main.tsx` is untouched from `create-tauri-app`'s default.
     This is standard in-window SPA routing, not Tauri's multi-window API —
@@ -85,17 +103,67 @@ This is the scaffold produced by `chain init`:
     (`initDb()`) also applies pending ones.
   - Never edit a shipped migration — the runner stores a checksum. Add
     the next one instead.
-  - `features/<feature>/lib/*.ts` maps a table's raw `Row` type onto an
-    app-facing type (e.g. `bookmarked` 0/1 -> `boolean`, numeric enum
-    columns -> their TS enum) and owns that table's queries — see
-    `features/courses/lib/courses.ts` for the pattern, and
-    `features/courses/lib/completion-status.ts` for why status/type
-    columns are numeric enums (smaller storage) rather than TEXT.
+  - Each table's data access is a folder, `features/<feature>/lib/<entity>/`,
+    split by what a reader is looking for (`features/courses/lib/page/`
+    is the reference):
+    - `types.ts` — the app-facing types and enums, plus pure helpers that
+      only read those shapes (`percentDone`, `pageContentPreview`).
+    - `table.ts` — every database operation on the table, reads and
+      writes: the typed `<entity>Table()`, the mapping from the raw `Row`
+      onto the app-facing type (e.g. `bookmarked` 0/1 -> `boolean`,
+      numeric enum columns -> their TS enum), and each query or
+      statement. Nothing else: no files, validation or other features.
+    - `actions.ts` — the bridge the rest of the app calls: validation and
+      side effects (files, highlights, study days) around `table.ts`
+      operations, and plain reads passed straight through
+      (`export { getPage } from "./table"`). It holds no `<entity>Table()`
+      or SQL.
+      Only `actions.ts` imports `table.ts`; everything outside the folder
+      imports `actions.ts` or `types.ts` (`tests/conventions.test.mjs`
+      fails otherwise). Once `table.ts` passes 500 lines it becomes a
+      `table/` folder: `table/index.ts` creates the table connection
+      (`<entity>Table()` and the row mapping), and each operation gets its
+      own file.
+      Only `table.ts` files touch `desktop.storage` (plus `shared/lib/db/`:
+      opening the database and `savePositions`); a convention test fails
+      otherwise. Settings go through `shared/lib/settings/actions.ts`
+      (`getSetting`, `putSetting`, `claimSetting`), study-day counts and
+      streaks through `shared/lib/study-day/actions.ts`. Filters that span
+      calls (`erasePages`, `deleteRecordings`, ...) take a `sql` fragment,
+      never a SQL string; screens call the id versions (`erasePage(id)`).
+      See `features/courses/lib/completion-status.ts` for why status/type
+      columns are numeric enums (smaller storage) rather than TEXT.
+  - Typed queries are the default: `desktop.storage.table()` for reads
+    and writes, `desktop.storage.transaction()` for multi-step writes
+    (`page/table.ts` and `course/table.ts` show both). Raw
+    `desktop.storage.query`/`execute` stays only where `table()` can't say
+    it: joins, aggregates and `GROUP BY`, `UNION`, `LIKE` search over
+    chosen columns, `json_each`, and atomic upserts (`ON CONFLICT`,
+    `INSERT OR IGNORE`). SQL-computed values such as
+    `COALESCE(MAX(position), 0) + 1` go to `table()` as a `sql` fragment.
 - Chain's placeholder branding: `asset/app-icon.svg` (used in the nav
   bar) and `asset/icons/` (the full desktop icon set), also copied into
   `.chain/native/icons/` where Tauri's bundler actually reads them from
   (`.chain/native/tauri.conf.json`'s `bundle.icon` already points there —
   no config change needed to use them).
+
+## Feature development workflow
+
+When implementing application features:
+
+1. Start from the application's roadmap or requirement.
+2. Create or update `docs/features/<feature>.md` before substantial implementation.
+3. Record the feature's intended behaviour, relevant source locations,
+   dependencies and acceptance criteria.
+4. Use only `@chain/sdk` for native/platform functionality.
+5. If a required Chain capability does not exist:
+   - create `docs/chain-sdk-requests/<request>.md`;
+   - describe what the application needs, not how Chain should implement it;
+   - hand the request to the Chain SDK maintainers;
+   - do not bypass Chain with Tauri, Rust or OS APIs.
+6. After Chain provides the capability, complete the application feature.
+7. Update the feature document with what actually shipped and which Chain
+   capability/request it depends on.
 
 ## Staying in sync with chain-sdk
 

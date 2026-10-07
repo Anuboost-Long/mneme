@@ -7,7 +7,7 @@ editor and local-database work.
 
 ## Status — 27 September 2026
 
-**Implemented, except child pages** (see below). Typecheck and web build
+**Implemented.** Child pages were dropped from the plan (see below). Typecheck and web build
 pass. Not yet exercised with a live agent run.
 
 ## Already there before this phase
@@ -37,13 +37,14 @@ pass. Not yet exercised with a live agent run.
   offered while the page is exactly as the AI left it, so it can never
   undo the user's own typing. ⌘Z keeps working as before.
 
-## Not done: child pages
+## Dropped: child pages
 
 Pages are flat inside a module: no parent page, no page order column.
 "Create child page" needs a real page hierarchy first: a `parent_id`,
 nesting in the module page list and sidebar, moving/deleting subtrees,
 backup/restore, and the agent-server tools. That's a feature of its own,
-not an AI output option, so it's left for a separate decision.
+not an AI output option. On 6 October 2026 it was taken out of the
+roadmap: pages stay flat within a module.
 
 ## Code
 
