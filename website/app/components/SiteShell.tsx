@@ -7,7 +7,7 @@ export default function SiteShell({ children }: Readonly<{ children: ReactNode }
   return (
     <>
       <SiteHeader />
-      <main className="bg-paper text-ink">{children}</main>
+      <main>{children}</main>
       <SiteFooter />
     </>
   );

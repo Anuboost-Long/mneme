@@ -1,32 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { navLinks } from "../lib/site";
+
 export default function SiteFooter() {
   return (
-    <footer className="bg-ink px-5 py-10 text-paper sm:px-8 lg:px-12">
-      <div className="site-frame flex flex-col justify-between gap-8 sm:flex-row sm:items-end">
+    <footer className="border-t border-line">
+      <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-12 sm:flex-row sm:items-end sm:px-6">
         <div>
-          <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight">
-            <Image src="/app-icon.svg" alt="" width={34} height={34} />
-            Mneme
+          <Link href="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+            <Image src="/app-icon.svg" alt="" width={30} height={30} />
+            mneme
           </Link>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-paper/60">
-            A desktop workspace for making course material usable.
+          <p className="mt-3 max-w-xs text-sm leading-6 text-muted">
+            Your courses, notes and revision in one app on your Mac.
           </p>
         </div>
-        <div className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-paper/60">
-          <Link href="/features" className="hover:text-paper">
-            Features
-          </Link>
-          <Link href="/workflow" className="hover:text-paper">
-            How it works
-          </Link>
-          <Link href="/privacy" className="hover:text-paper">
-            Privacy
-          </Link>
-          <Link href="/terms" className="hover:text-paper">
-            Terms
-          </Link>
+        <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted">
+          {[...navLinks, ["Terms", "/terms"] as const].map(([label, href]) => (
+            <Link key={href} href={href} className="transition-colors hover:text-ink">
+              {label}
+            </Link>
+          ))}
         </div>
       </div>
     </footer>
