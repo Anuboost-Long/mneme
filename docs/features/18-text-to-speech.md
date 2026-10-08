@@ -18,9 +18,14 @@ listened to end to end in the native app yet.
   buttons reaches it).
 - **Read the whole page:** "Listen" on the page header reads the title,
   then each block.
-- **Read the module summary:** "Listen" on the module header reads the
-  module name and its description. It's shown only when the module has
-  a description.
+- **Read the module summary:** the headphones button on the module
+  header opens a reading window (`ReadAlongDialog`) with the module's
+  Summary page, or its description when there's no summary, and reads
+  it there with the word being spoken highlighted, so you can read
+  along. The player sits at the bottom of the window, and closing the
+  window stops reading (8 October 2026; before, it read the summary
+  with nothing on screen). It's shown only when the module has a
+  summary or a description.
 - **Player** (a bar at the bottom of the window): play/pause, previous
   and next paragraph, "Reading · 3 of 12", and stop. "1× · Voice" opens
   speed (0.75×–2×), language and voice. Choosing a language picks that

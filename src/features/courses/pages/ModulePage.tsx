@@ -20,7 +20,7 @@ import { pageTypeLabel, pageTypeOptions } from "@/features/courses/lib/page-type
 import { duplicatePage, setPageDone } from "@/features/courses/lib/page/actions";
 import { type Page } from "@/features/courses/lib/page/types";
 import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
-import { elementChunks, textChunks } from "@/features/read-aloud/lib/readableText";
+import ReadAlongDialog from "@/features/read-aloud/components/ReadAlongDialog";
 import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
 import FindTasksDialog from "@/features/tasks/components/FindTasksDialog";
 import { addCommandSource } from "@/shared/lib/commandSources";
@@ -120,7 +120,7 @@ export default function ModulePage({
   onReorderPages: (pages: Page[]) => void;
   onPagesChanged: () => void;
 }>) {
-  const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
+  const [dialog, setDialog] = useState<"edit" | "delete" | "listen" | null>(null);
   const [pageDialog, setPageDialog] = useState<
     { type: "edit" | "delete" | "move"; page: Page } | "create" | "import" | null
   >(null);
@@ -420,16 +420,7 @@ export default function ModulePage({
               type="button"
               aria-label={summaryPage ? "Listen to the summary" : "Listen to the description"}
               title={summaryPage ? "Listen to the summary" : "Listen to the description"}
-              onClick={() =>
-                reader.read([
-                  { text: module.name },
-                  ...(summaryPage
-                    ? elementChunks(
-                        new DOMParser().parseFromString(summaryPage.content ?? "", "text/html").body
-                      ).map(({ text }) => ({ text }))
-                    : textChunks(module.description ?? ""))
-                ])
-              }
+              onClick={() => setDialog("listen")}
               className={iconButton}
             >
               <Headphones aria-hidden="true" className={clsx("size-4")} />
@@ -747,7 +738,15 @@ export default function ModulePage({
           </>
         )}
       </section>
-      <ReadAloudBar reader={reader} />
+      {dialog !== "listen" && <ReadAloudBar reader={reader} />}
+      <ReadAlongDialog
+        open={dialog === "listen"}
+        title={summaryPage?.title ?? module.name}
+        html={summaryPage?.content}
+        text={module.description}
+        reader={reader}
+        onClose={() => setDialog(null)}
+      />
       <ModuleForm
         open={dialog === "edit"}
         courseId={course.id}

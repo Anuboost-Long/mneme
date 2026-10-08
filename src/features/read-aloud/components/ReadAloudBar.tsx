@@ -6,7 +6,7 @@ import { Caption } from "@/shared/ui/Typography";
 import clsx from "clsx";
 import { useState } from "react";
 
-export default function ReadAloudBar({ reader }: Readonly<{ reader: ReadAloud }>) {
+export default function ReadAloudBar({ reader, docked = false }: Readonly<{ reader: ReadAloud; docked?: boolean }>) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   if (reader.status === "idle" && !reader.error) return null;
 
@@ -36,7 +36,7 @@ export default function ReadAloudBar({ reader }: Readonly<{ reader: ReadAloud }>
   return (
     <section
       aria-label="Read aloud"
-      className={clsx("fixed inset-x-4 bottom-6 z-40 mx-auto max-w-xl")}
+      className={clsx(docked ? "sticky bottom-0" : "fixed inset-x-4 bottom-6 z-40", "mx-auto max-w-xl")}
     >
       {settingsOpen && (
         <div
