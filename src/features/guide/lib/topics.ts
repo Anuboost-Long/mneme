@@ -25,6 +25,9 @@ import prepareModule from "@/features/guide/assets/prepare-module.jpg";
 import prepareNotes from "@/features/guide/assets/prepare-notes.jpg";
 import prepareRunning from "@/features/guide/assets/prepare-running.jpg";
 import searchByMeaning from "@/features/guide/assets/search-by-meaning.jpg";
+import sharePdfDeck from "@/features/guide/assets/share-pdf-deck.jpg";
+import sharePdfMenu from "@/features/guide/assets/share-pdf-menu.jpg";
+import sharePdfPage from "@/features/guide/assets/share-pdf-page.jpg";
 import studyFlashcards from "@/features/guide/assets/study-flashcards.jpg";
 import studyPreparing from "@/features/guide/assets/study-preparing.jpg";
 import studyReady from "@/features/guide/assets/study-ready.jpg";
@@ -409,6 +412,39 @@ export const guideTopics: GuideTopic[] = [
             alt: "Studying a card with its answer and the four grades",
             landscape: true
           }
+        ]
+      }
+    ]
+  },
+  {
+    id: "share-pdf",
+    label: "Share as PDF",
+    title: "Send a page or flashcards to a friend as a PDF",
+    summary:
+      "Share as PDF turns a page, such as a summary or revision notes, or a whole flashcard deck into a PDF and opens the share menu, so you can send it by AirDrop, Messages or Mail. Your friend doesn’t need mneme.",
+    where: "A page → Share as PDF, or a module’s Flashcards → Share as PDF",
+    place: { label: "Go to your courses", path: "/courses" },
+    steps: [
+      {
+        title: "Press Share as PDF and pick where to send it",
+        body: [
+          "On any page, Share as PDF sits next to Edit page. On a module’s Flashcards it sits next to Add card. It’s greyed out while the page is empty or the deck has no cards.",
+          "The share menu opens under the button. Choose AirDrop, Messages, Mail or another app; the file is named after the page or deck."
+        ],
+        screenshots: [
+          { src: sharePdfMenu, alt: "The share menu under Share as PDF on a revision notes page", landscape: true }
+        ]
+      },
+      {
+        title: "What your friend gets",
+        body: [
+          "A page keeps its headings, lists, tables, pictures and highlights, on A4 or Letter paper with page numbers. Toggles print open, and recordings, attachments and videos are listed by name.",
+          "A deck lists every card, question in bold and answer below, with the page it came from. A card never splits across two pages, and your study progress isn’t included.",
+          "Khmer, Arabic and similar scripts look right in the PDF, but copying or searching that text in the PDF can give the wrong letters. That’s a limit of the PDF writer in macOS."
+        ],
+        screenshots: [
+          { src: sharePdfPage, alt: "The first page of revision notes as a PDF" },
+          { src: sharePdfDeck, alt: "The first page of a flashcard deck as a PDF" }
         ]
       }
     ]

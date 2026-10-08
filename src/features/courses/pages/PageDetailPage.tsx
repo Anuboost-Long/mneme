@@ -13,6 +13,8 @@ import { setPageDone, updatePage } from "@/features/courses/lib/page/actions";
 import type { Page } from "@/features/courses/lib/page/types";
 import NewQuizDialog from "@/features/quizzes/components/NewQuizDialog";
 import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
+import SharePdfButton from "@/features/share/components/SharePdfButton";
+import { pageHasContent, pagePdfHtml } from "@/features/share/lib/pdf";
 import { elementChunk, elementChunks } from "@/features/read-aloud/lib/readableText";
 import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
 import { addCommandSource } from "@/shared/lib/commandSources";
@@ -82,6 +84,7 @@ export default function PageDetailPage({
   const [audioView, setAudioView] = useState<"closed" | "download" | "play">("closed");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [doneError, setDoneError] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
   const backLink = useRef<HTMLAnchorElement>(null);
   const reader = useReadAloud();
   const heading = useRef<HTMLDivElement>(null);
@@ -332,6 +335,12 @@ export default function PageDetailPage({
           >
             {pageAudio ? "Play audio" : "Download audio"}
           </button>
+          <SharePdfButton
+            name={page.title}
+            build={() => pagePdfHtml(page, `${course.name} · ${moduleName ?? "Module"}`)}
+            disabledReason={pageHasContent(page.content) ? undefined : "This page is empty"}
+            onError={setShareError}
+          />
           <button
             type="button"
             onClick={() => setDialog("edit")}
@@ -357,6 +366,11 @@ export default function PageDetailPage({
       {doneError && (
         <BodyText role="alert" tone="error" className={clsx("mt-3")}>
           {doneError}
+        </BodyText>
+      )}
+      {shareError && (
+        <BodyText role="alert" tone="error" className={clsx("mt-3")}>
+          {shareError}
         </BodyText>
       )}
       <div ref={content} className={clsx("mt-6 border-t border-ink/10 pt-5")}>

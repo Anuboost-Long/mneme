@@ -6,6 +6,8 @@ import type { Page } from "@/features/courses/lib/page/types";
 import CardForm from "@/features/flashcards/components/CardForm";
 import ModuleSubpageHeader from "@/features/courses/components/ModuleSubpageHeader";
 import DeckMissing from "@/features/flashcards/components/DeckMissing";
+import SharePdfButton from "@/features/share/components/SharePdfButton";
+import { deckPdfHtml } from "@/features/share/lib/pdf";
 import {
   makeFlashcards,
   makesCardsForImports,
@@ -50,6 +52,7 @@ export default function FlashcardsPage({
   const [dialog, setDialog] = useState<Dialog>({ kind: "add" });
   const [open, setOpen] = useState(false);
   const [forImports, setForImports] = useState(true);
+  const [shareError, setShareError] = useState<string | null>(null);
   const agent = useAgentChoice();
   const making = useMakingFlashcards(module?.id);
   const isMaking = making !== undefined && making.done < making.total;
@@ -104,6 +107,12 @@ export default function FlashcardsPage({
           >
             Add card
           </button>
+          <SharePdfButton
+            name={`${module.name} flashcards`}
+            build={() => deckPdfHtml(cards, `${module.name} flashcards`, `${course.name} · ${module.name}`)}
+            disabledReason={cards.length === 0 ? "This deck has no cards yet" : undefined}
+            onError={setShareError}
+          />
           <button
             type="button"
             disabled={isMaking || pagesWithout.length === 0 || agent.connectionId === null}
@@ -146,6 +155,11 @@ export default function FlashcardsPage({
             Making flashcards from page {making.done + 1} of {making.total}…
           </Caption>
         </div>
+      )}
+      {shareError && (
+        <BodyText role="alert" tone="error" className={clsx("mt-4")}>
+          {shareError}
+        </BodyText>
       )}
       {making?.error && (
         <BodyText role="alert" tone="error" className={clsx("mt-4")}>
