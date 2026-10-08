@@ -418,21 +418,21 @@ export const guideTopics: GuideTopic[] = [
   },
   {
     id: "share-pdf",
-    label: "Share as PDF",
+    label: "PDF",
     title: "Send a page or flashcards to a friend as a PDF",
     summary:
-      "Share as PDF turns a page, such as a summary or revision notes, or a whole flashcard deck into a PDF and opens the share menu, so you can send it by AirDrop, Messages or Mail. Your friend doesn’t need mneme.",
-    where: "A page → Share as PDF, or a module’s Flashcards → Share as PDF",
+      "Turn a page, such as a summary or revision notes, or a whole flashcard deck into a PDF. Send it straight from the share menu, or save it and drag the file into any chat. Your friend doesn’t need mneme.",
+    where: "A page → Share as PDF or Save as PDF under its title, or a module’s Flashcards → PDF",
     place: { label: "Go to your courses", path: "/courses" },
     steps: [
       {
-        title: "Press Share as PDF and pick where to send it",
+        title: "Choose Share as PDF or Save as PDF",
         body: [
-          "On any page, Share as PDF sits next to Edit page. On a module’s Flashcards it sits next to Add card. It’s greyed out while the page is empty or the deck has no cards.",
-          "The share menu opens under the button. Choose AirDrop, Messages, Mail or another app; the file is named after the page or deck."
+          "On a page, they sit in the row under the title, next to Download audio. On a module’s Flashcards, press PDF next to Add card. They’re greyed out while the page is empty or the deck has no cards.",
+          "Share opens the share menu, so you can send it by AirDrop, Messages or Mail. Save asks where to keep the file, so you can drag it into any app. Either way the file is named after the page or deck."
         ],
         screenshots: [
-          { src: sharePdfMenu, alt: "The share menu under Share as PDF on a revision notes page", landscape: true }
+          { src: sharePdfMenu, alt: "A page with Share as PDF and Save as PDF under its title", landscape: true }
         ]
       },
       {
@@ -490,7 +490,7 @@ export const guideTopics: GuideTopic[] = [
         title: "Everything in one place",
         body: [
           "Prepared module lists the original material, the exercises and discussions, the Summary and Revision notes pages, your flashcards, the practice quiz and any tasks not yet in Tasks, with Review and add.",
-          "The Summary and Revision notes pages sit at the top of the module, and Listen on the module reads the summary. Study sessions use the same key topics."
+          "The Summary and Revision notes pages sit at the top of the module, and the headphones on the module open the summary and read it aloud, highlighting each word as it’s read. Study sessions use the same key topics."
         ],
         screenshots: [
           {

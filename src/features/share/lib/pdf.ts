@@ -64,14 +64,14 @@ ${card.page_title ? `<p class="card-source">${escapeHtml(card.page_title)}</p>` 
   });
 }
 
-export async function sharePdf(html: string, name: string, anchor: DOMRect) {
+export async function exportPdf(html: string, name: string, shareFrom?: DOMRect) {
   const pdf = await desktop.pdf.render(html, {
     title: name,
     footer: { left: "Made with mneme", right: "Page {page} of {pages}" }
   });
   try {
-    if ((await desktop.share.availability()).available) {
-      const { x, y, width, height } = anchor;
+    if (shareFrom && (await desktop.share.availability()).available) {
+      const { x, y, width, height } = shareFrom;
       await desktop.share.show([{ reference: pdf.reference, name }], { anchor: { x, y, width, height }, title: name });
     } else {
       await desktop.files.save(await desktop.files.read(pdf.reference), {
@@ -84,7 +84,7 @@ export async function sharePdf(html: string, name: string, anchor: DOMRect) {
   }
 }
 
-export function sharePdfError(error: unknown) {
+export function pdfError(error: unknown) {
   switch ((error as { code?: string } | null)?.code) {
     case "NOT_FOUND":
       return "An image couldn’t be loaded, so the PDF wasn’t made. Replace or remove it and try again.";

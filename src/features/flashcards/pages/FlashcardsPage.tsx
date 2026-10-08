@@ -6,7 +6,7 @@ import type { Page } from "@/features/courses/lib/page/types";
 import CardForm from "@/features/flashcards/components/CardForm";
 import ModuleSubpageHeader from "@/features/courses/components/ModuleSubpageHeader";
 import DeckMissing from "@/features/flashcards/components/DeckMissing";
-import SharePdfButton from "@/features/share/components/SharePdfButton";
+import PdfMenu from "@/features/share/components/PdfMenu";
 import { deckPdfHtml } from "@/features/share/lib/pdf";
 import {
   makeFlashcards,
@@ -107,7 +107,7 @@ export default function FlashcardsPage({
           >
             Add card
           </button>
-          <SharePdfButton
+          <PdfMenu
             name={`${module.name} flashcards`}
             build={() => deckPdfHtml(cards, `${module.name} flashcards`, `${course.name} · ${module.name}`)}
             disabledReason={cards.length === 0 ? "This deck has no cards yet" : undefined}

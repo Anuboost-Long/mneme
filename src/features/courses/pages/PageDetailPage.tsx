@@ -9,12 +9,12 @@ import { StatusChip } from "@/features/courses/components/StatusPicker";
 import { CompletionStatus } from "@/features/courses/lib/completion-status";
 import type { Course } from "@/features/courses/lib/course/types";
 import { pageTypeLabel } from "@/features/courses/lib/page-type/pageTypesState";
-import { setPageDone, updatePage } from "@/features/courses/lib/page/actions";
+import { updatePage } from "@/features/courses/lib/page/actions";
 import type { Page } from "@/features/courses/lib/page/types";
 import NewQuizDialog from "@/features/quizzes/components/NewQuizDialog";
 import ReadAloudBar from "@/features/read-aloud/components/ReadAloudBar";
-import SharePdfButton from "@/features/share/components/SharePdfButton";
 import { pageHasContent, pagePdfHtml } from "@/features/share/lib/pdf";
+import { usePdfExport } from "@/features/share/lib/usePdfExport";
 import { elementChunk, elementChunks } from "@/features/read-aloud/lib/readableText";
 import { useReadAloud } from "@/features/read-aloud/lib/useReadAloud";
 import { addCommandSource } from "@/shared/lib/commandSources";
@@ -23,8 +23,21 @@ import { useFileUrl } from "@/shared/lib/useFileUrl";
 import CourseIcon from "@/shared/ui/CourseIcon";
 import { BodyText, PageTitle, Typography } from "@/shared/ui/Typography";
 import clsx from "clsx";
+import { AudioLines, FileDown, Headphones, Pencil, Share, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+
+const iconButton = clsx(
+  "grid size-9 place-items-center rounded-md text-muted",
+  "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+);
+
+const pageTool = clsx(
+  "inline-flex h-9 items-center gap-2 rounded-md px-3",
+  "text-sm text-muted",
+  "hover:bg-ink/5 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink",
+  "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted"
+);
 
 function asSibling(page: Page): Sibling {
   return { id: page.id, name: page.title, icon: page.icon };
@@ -85,6 +98,11 @@ export default function PageDetailPage({
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [doneError, setDoneError] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
+  const pdf = usePdfExport(
+    page?.title ?? "",
+    () => (page ? pagePdfHtml(page, `${course?.name ?? "Course"} · ${moduleName ?? "Module"}`) : ""),
+    setShareError
+  );
   const backLink = useRef<HTMLAnchorElement>(null);
   const reader = useReadAloud();
   const heading = useRef<HTMLDivElement>(null);
@@ -142,14 +160,6 @@ export default function PageDetailPage({
     setAudioView(pageAudio ? "play" : "download");
   }
 
-  function toggleDone(done: boolean) {
-    if (!page) return;
-    setDoneError(null);
-    setPageDone(page.id, done)
-      .then(onSavePage)
-      .catch((error) => setDoneError(errorMessage(error, "Couldn’t update this page. Try again.")));
-  }
-
   function scrollToTop() {
     backLink.current?.closest("main")?.scrollTo({
       top: 0,
@@ -180,16 +190,16 @@ export default function PageDetailPage({
       </BodyText>
     );
 
+  const hasContent = pageHasContent(page.content);
+
   return (
     <div className={clsx("px-4 py-5 sm:px-6")}>
       <Link
         ref={backLink}
         to={`/courses/${course.id}/modules/${page.module_id}`}
         className={clsx(
-          "inline-flex items-center gap-2 rounded-md",
-          "border border-ink/15",
-          "px-3 py-2 text-sm font-medium",
-          "hover:bg-ink/5"
+          "-ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted",
+          "hover:bg-ink/5 hover:text-ink"
         )}
       >
         <svg
@@ -276,92 +286,77 @@ export default function PageDetailPage({
             {page.source && <PageSource source={page.source} />}
           </div>
         </div>
-        <div className={clsx("flex gap-2")}>
-          <label
-            className={clsx(
-              "flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium",
-              page.status === CompletionStatus.Completed
-                ? "bg-accent text-chain-navy"
-                : "border border-ink/15 hover:bg-ink/5",
-              "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink"
-            )}
-          >
-            <span className={clsx("relative flex size-4 shrink-0")}>
-              <input
-                type="checkbox"
-                checked={page.status === CompletionStatus.Completed}
-                onChange={(event) => toggleDone(event.target.checked)}
-                className={clsx(
-                  "peer size-4 cursor-pointer appearance-none rounded-sm",
-                  "border border-ink/40 checked:border-chain-navy checked:bg-chain-navy"
-                )}
-              />
-              <svg
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                className={clsx(
-                  "pointer-events-none absolute inset-0 hidden size-4 text-accent peer-checked:block"
-                )}
-              >
-                <path d="m4 8.5 2.5 2.5L12 5.5" />
-              </svg>
-            </span>
-            <span>Done</span>
-          </label>
+        <div className={clsx("flex flex-wrap items-center gap-1")}>
           {reader.supported && (
             <button
               type="button"
+              aria-label="Listen to this page"
+              title="Listen to this page"
               onClick={listen}
-              className={clsx(
-                "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-                "hover:bg-ink/5"
-              )}
+              className={iconButton}
             >
-              Listen
+              <Headphones aria-hidden="true" className={clsx("size-4")} />
             </button>
           )}
           <button
             type="button"
-            onClick={openPageAudio}
-            className={clsx(
-              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-              "hover:bg-ink/5"
-            )}
-          >
-            {pageAudio ? "Play audio" : "Download audio"}
-          </button>
-          <SharePdfButton
-            name={page.title}
-            build={() => pagePdfHtml(page, `${course.name} · ${moduleName ?? "Module"}`)}
-            disabledReason={pageHasContent(page.content) ? undefined : "This page is empty"}
-            onError={setShareError}
-          />
-          <button
-            type="button"
+            aria-label="Edit page"
+            title="Edit page"
             onClick={() => setDialog("edit")}
-            className={clsx(
-              "rounded-md border border-ink/15 px-4 py-2 text-sm font-medium",
-              "hover:bg-ink/5"
-            )}
+            className={iconButton}
           >
-            Edit page
+            <Pencil aria-hidden="true" className={clsx("size-4")} />
           </button>
           <button
             type="button"
+            aria-label="Delete page"
+            title="Delete page"
             onClick={() => setDialog("delete")}
+            className={clsx(iconButton, "hover:bg-danger/10 hover:text-danger")}
+          >
+            <Trash2 aria-hidden="true" className={clsx("size-4")} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog("quiz")}
             className={clsx(
-              "rounded-md px-3 py-2 text-sm text-muted",
-              "hover:bg-danger/10 hover:text-danger"
+              "ml-2 inline-flex h-9 items-center gap-2 rounded-md px-4",
+              "bg-action text-sm font-medium text-on-action",
+              "hover:bg-action/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             )}
           >
-            Delete
+            <Sparkles aria-hidden="true" className={clsx("size-4")} />
+            Make a quiz
           </button>
         </div>
+      </div>
+      <div className={clsx("mt-5 border-t border-ink/10 pt-1.5")}>
+        <nav aria-label="Page tools" className={clsx("-ml-3 flex flex-wrap gap-1")}>
+          <button type="button" onClick={openPageAudio} className={pageTool}>
+            <AudioLines aria-hidden="true" className={clsx("size-4")} />
+            {pageAudio ? "Play audio" : "Download audio"}
+          </button>
+          <button
+            type="button"
+            disabled={!hasContent || pdf.busy !== null}
+            title={hasContent ? undefined : "This page is empty"}
+            onClick={(event) => pdf.share(event.currentTarget)}
+            className={pageTool}
+          >
+            <Share aria-hidden="true" className={clsx("size-4")} />
+            {pdf.busy === "share" ? "Sharing…" : "Share as PDF"}
+          </button>
+          <button
+            type="button"
+            disabled={!hasContent || pdf.busy !== null}
+            title={hasContent ? undefined : "This page is empty"}
+            onClick={pdf.save}
+            className={pageTool}
+          >
+            <FileDown aria-hidden="true" className={clsx("size-4")} />
+            {pdf.busy === "save" ? "Saving…" : "Save as PDF"}
+          </button>
+        </nav>
       </div>
       {doneError && (
         <BodyText role="alert" tone="error" className={clsx("mt-3")}>
@@ -373,7 +368,7 @@ export default function PageDetailPage({
           {shareError}
         </BodyText>
       )}
-      <div ref={content} className={clsx("mt-6 border-t border-ink/10 pt-5")}>
+      <div ref={content} className={clsx("mt-4")}>
         <PageEditor
           key={page.id}
           pageId={page.id}
