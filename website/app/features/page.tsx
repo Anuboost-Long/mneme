@@ -9,6 +9,7 @@ import {
   CommandIcon,
   DownloadSimpleIcon,
   ExamIcon,
+  FilePdfIcon,
   GraduationCapIcon,
   HardDrivesIcon,
   HighlighterIcon,
@@ -84,7 +85,7 @@ const groups: Group[] = [
       {
         icon: SpeakerHighIcon,
         title: "Read aloud",
-        body: "Listen to a page, a selection or a module summary at the speed you like."
+        body: "Listen to a page, a selection or a module summary, with each word highlighted as it’s read."
       }
     ]
   },
@@ -142,6 +143,11 @@ const groups: Group[] = [
         icon: BrainIcon,
         title: "Study mode",
         body: "Summary, cards, then a quiz, ending with the topics you should review again."
+      },
+      {
+        icon: FilePdfIcon,
+        title: "Share as PDF",
+        body: "Send a summary, your notes or a flashcard deck to a friend by AirDrop, Messages or Mail, or save the file."
       }
     ]
   },
