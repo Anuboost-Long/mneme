@@ -37,7 +37,7 @@ const sections = [
   {
     title: "This website",
     paragraphs: [
-      "This website is a static project site and does not include an account system, advertising tracker or project-operated analytics service. A hosting provider may process technical connection information, such as IP address, browser details and request logs, to deliver and secure the website. Check the hosting provider’s policy for its handling of that information.",
+      "This website is a static project site and does not include an account system or advertising tracker. It uses Vercel Web Analytics to count page views and see which pages are visited, without cookies and without identifying you; visits are counted in aggregate and can’t be linked across days. A hosting provider may process technical connection information, such as IP address, browser details and request logs, to deliver and secure the website. Check the hosting provider’s policy for its handling of that information.",
     ],
   },
   {

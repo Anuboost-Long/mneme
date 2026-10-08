@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Mneme application icon</title>
+  <desc id="desc">A continuous cream m forms linked learning threads on a midnight square. A lime point marks the current thought.</desc>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="#171B24"/>
+  <path d="M52 182V91C52 74.984 64.984 62 81 62s29 12.984 29 29v54c0 16.016 12.984 29 29 29s29-12.984 29-29V91c0-16.016 12.984-29 29-29s29 12.984 29 29v91" transform="translate(-8 5)" stroke="#EEF2E4" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="44" cy="187" r="12" fill="#C5F74F"/>
+  <circle cx="196" cy="187" r="12" fill="#C5F74F"/>
+</svg>
